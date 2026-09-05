@@ -85,9 +85,31 @@ export const CRE_ATTESTATION_RECEIVER_ABI = [
 ] as const;
 
 export const SUBNAME_REGISTRY_ABI = [
+  // Writes. `issue` needs ISSUER_ROLE, held by the deployer; `syncRecords` is
+  // permissionless because every value it writes is already public on-chain.
+  "function issue(string label, address advertiser) returns (bytes32)",
+  "function syncRecords(address advertiser)",
+  // Reads.
   "function nodeOf(address advertiser) view returns (bytes32)",
   "function nameOfAdvertiser(address advertiser) view returns (string)",
+  "function fullNameOf(bytes32 node) view returns (string)",
+  "function advertiserOf(bytes32 node) view returns (address)",
   "function issuedCount() view returns (uint256)",
+  "function issuedAt(uint256 index) view returns (bytes32)",
+  "function parentName() view returns (string)",
+  "event SubnameIssued(bytes32 indexed node, address indexed advertiser, string label, string fullName, uint64 issuedAt)",
+  "error AdvertiserNotVerified(address advertiser)",
+  "error AdvertiserAlreadyNamed(address advertiser, bytes32 node)",
+  "error LabelTaken(string label)",
+  "error InvalidLabel(string label)",
+  "error NoSubname(address advertiser)",
+] as const;
+
+export const PERMISSIONED_RESOLVER_ABI = [
+  "function text(bytes32 node, string key) view returns (string)",
+  "function addr(bytes32 node) view returns (address)",
+  "function nodeOwner(bytes32 node) view returns (address)",
+  "function canWrite(bytes32 node, string key, address account) view returns (bool)",
 ] as const;
 
 export const SUSPICIOUS_PATTERN_RULE_ABI = [
