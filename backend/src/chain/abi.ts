@@ -9,6 +9,11 @@
  */
 
 export const ADVERTISER_REGISTRY_ABI = [
+  // Writes. Called by an advertiser's own wallet, not by the backend's keys -
+  // used by the seed and live-verification scripts.
+  "function register(string name, string domain) returns (bytes32)",
+  "function updateClaim(string name, string domain) returns (bytes32)",
+  // Reads.
   "function challengeOf(address advertiser) view returns (bytes32)",
   "function isVerified(address advertiser) view returns (bool)",
   "function statusOf(address advertiser) view returns (uint8)",
@@ -19,6 +24,21 @@ export const ADVERTISER_REGISTRY_ABI = [
   "function advertiserCount() view returns (uint256)",
   "function advertiserAt(uint256 index) view returns (address)",
   "function canonicalHash(string value) view returns (bytes32)",
+  "event AdvertiserRegistered(address indexed advertiser, string name, string domain, bytes32 indexed nameHash, bytes32 indexed domainHash, uint64 registeredAt)",
+  "event AdvertiserVerified(address indexed advertiser, bool verified, bytes32 indexed nameHash, bytes32 indexed domainHash, uint64 timestamp)",
+  // Declared so a revert decodes to a name instead of raw bytes.
+  "error AlreadyRegistered()",
+  "error NotRegistered()",
+  "error EmptyName()",
+  "error EmptyDomain()",
+  "error NameTooLong(uint256 length, uint256 maximum)",
+  "error DomainTooLong(uint256 length, uint256 maximum)",
+  "error InvalidNameCharacter(uint256 index, bytes1 character)",
+  "error InvalidDomainCharacter(uint256 index, bytes1 character)",
+  "error MalformedName()",
+  "error MalformedDomain()",
+  "error NameClaimedByAnother(address holder)",
+  "error DomainClaimedByAnother(address holder)",
 ] as const;
 
 export const PLACEMENT_ESCROW_ABI = [

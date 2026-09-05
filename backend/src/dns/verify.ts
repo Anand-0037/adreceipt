@@ -1,5 +1,6 @@
 import { ZeroHash } from "ethers";
 import { getAdvertiser, getChallenge } from "../chain/reads";
+import { getProvider } from "../chain/provider";
 import { buildRecord, matchesChallenge } from "./record";
 import { resolveTxt, type LookupResult } from "./resolve";
 
@@ -39,7 +40,13 @@ export interface VerifyResult {
  * enforces that too, but the check belongs here as well so we never even try.
  */
 export async function checkDomain(advertiser: string): Promise<VerifyResult> {
-  const checkedAt = Math.floor(Date.now() / 1000);
+  // Anchor to the chain's clock, not this machine's. The receiver rejects a
+  // checkedAt greater than block.timestamp, and a server even one second fast
+  // produces an attestation that reverts CheckTimestampInFuture. Block
+  // timestamps are non-decreasing, so the latest block's timestamp is always a
+  // safe value for the block this ends up in.
+  const latest = await getProvider().getBlock("latest");
+  const checkedAt = latest ? latest.timestamp : Math.floor(Date.now() / 1000);
   const record = await getAdvertiser(advertiser);
   const challenge = await getChallenge(advertiser);
 

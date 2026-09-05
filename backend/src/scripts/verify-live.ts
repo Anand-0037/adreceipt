@@ -135,7 +135,14 @@ async function main() {
       const sim = await registry.register.staticCall(name, domain, { from: advertiser });
       ok(`register("${name}", "${domain}") would succeed -> ${String(sim).slice(0, 14)}...`);
     } else {
-      const tx = await (registry.connect(advertiserWallet) as Contract).register(name, domain);
+      // Build a fresh instance bound to the advertiser's own wallet. The
+      // backend's keys must never be the ones registering a claim.
+      const asAdvertiser = new Contract(
+        contracts.AdvertiserRegistry,
+        ADVERTISER_REGISTRY_ABI as unknown as string[],
+        advertiserWallet,
+      );
+      const tx = await asAdvertiser.register(name, domain);
       const receipt = await tx.wait();
       ok(`registered as "${name}" / ${domain}`);
       info(`tx ${receipt.hash}`);

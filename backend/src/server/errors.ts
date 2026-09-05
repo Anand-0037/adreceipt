@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { isAddress } from "ethers";
+import { Interface, isAddress } from "ethers";
+import { ADVERTISER_REGISTRY_ABI, CRE_ATTESTATION_RECEIVER_ABI } from "../chain/abi";
 
 export class HttpError extends Error {
   constructor(
@@ -48,8 +49,34 @@ export function asyncRoute(
  * raise. Without that these all collapse into "execution reverted".
  */
 function describeRevert(error: unknown): { code: string; message: string } | undefined {
-  const anyErr = error as { shortMessage?: string; message?: string; revert?: { name?: string } };
-  const name = anyErr?.revert?.name;
+  const anyErr = error as {
+    shortMessage?: string;
+    message?: string;
+    revert?: { name?: string };
+    data?: string;
+    info?: { error?: { data?: string } };
+  };
+
+  // ethers fills `revert` for a decoded call, but a revert raised during gas
+  // estimation arrives as raw bytes with no interface attached, which is how a
+  // legible custom error turns into "unknown custom error". Decode it ourselves.
+  let name = anyErr?.revert?.name;
+  if (!name) {
+    const data = anyErr?.data ?? anyErr?.info?.error?.data;
+    if (data && data !== "0x") {
+      for (const iface of [
+        new Interface(CRE_ATTESTATION_RECEIVER_ABI as unknown as string[]),
+        new Interface(ADVERTISER_REGISTRY_ABI as unknown as string[]),
+      ]) {
+        try {
+          name = iface.parseError(data)?.name ?? undefined;
+        } catch {
+          name = undefined;
+        }
+        if (name) break;
+      }
+    }
+  }
   if (!name) return undefined;
 
   const known: Record<string, string> = {
