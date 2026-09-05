@@ -219,21 +219,21 @@ contract PlacementEscrow is AccessControl, ReentrancyGuard, Pausable, IPlacement
         return result;
     }
 
-<<<<<<< Updated upstream
+
     function placementsInCategory(
         string calldata category,
         uint256 offset,
         uint256 limit
     ) external view returns (uint256[] memory) {
         uint256[] storage ids = _byCategory[Canonical.hash(category)];
-=======
+
     function placementsOf(
         address advertiser,
         uint256 offset,
         uint256 limit
     ) external view returns (uint256[] memory) {
         uint256[] storage ids = _byAdvertiser[advertiser];
->>>>>>> Stashed changes
+
         uint256 len = ids.length;
         if (offset >= len) {
             return new uint256[](0);
@@ -248,13 +248,13 @@ contract PlacementEscrow is AccessControl, ReentrancyGuard, Pausable, IPlacement
             result[i] = ids[offset + i];
         }
         return result;
-<<<<<<< Updated upstream
-=======
+
+
     }
 
     function placementsInCategory(string calldata category) external view returns (uint256[] memory) {
         return _byCategory[Canonical.hash(category)];
->>>>>>> Stashed changes
+
     }
 
     function placementsInCategory(
