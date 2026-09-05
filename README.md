@@ -75,11 +75,13 @@ Three properties are enforced in code rather than promised:
 | Contracts | **Deployed to Sepolia.** 146 tests passing, 35/35 live wiring checks |
 | Backend API | **Built.** Challenge issuance, DNS verification, attestation submission, badge reads |
 | Confidential handler logic | **Built** and simulated, with the enclave boundary expressed as types |
-| CRE workflow registration | **Not done.** The SDK registration is the remaining gap — see [`backend/cre/README.md`](backend/cre/README.md) |
-| End-to-end run on Sepolia | **Not yet.** The registry is empty; no advertiser has been verified on-chain |
-| ENS subname issuance | **Not exercised.** Contracts deployed, zero subnames issued |
+| CRE workflow deployment | **Blocked.** Confidential Workflows are in private beta and need Chainlink enrollment; simulation output stands as track evidence |
+| Confidential workflow | **Runs in the CRE simulator** — TEE handler on AWS Nitro, DNS-over-HTTPS inside the enclave, verdict only |
+| End-to-end run on Sepolia | **Done.** Advertisers registered, verified and tiered on-chain |
+| ENS subname issuance | **Done.** Three subnames issued with permissioned records |
+| Demo data | **Seeded.** Four advertisers covering every badge state — see [`deployments/seed.json`](deployments/seed.json) |
+| Web application | **Built.** Ask view with live badges; registry, auditor and verify views in progress |
 | Subgraph | **Not indexing the live contracts** |
-| Web application | Not started |
 
 Nothing here should be read as more than it is: a passing test is not a deployed contract, and a
 deployed contract is not a verified advertiser.
@@ -106,6 +108,8 @@ test/             146 Hardhat tests
 deployments/      live contract addresses per network
 backend/src/      API, chain client, DNS verification, tier computation
 backend/cre/      confidential workflow handlers and enclave boundary
+cre/              CRE workflow project (TEE handler, runs in the simulator)
+frontend/         Next.js app
 subgraph/         indexing (in draft PR #8)
 ```
 
@@ -126,9 +130,22 @@ Backend:
 
 ```bash
 npm --prefix backend ci
-npm --prefix backend run dev              # API on :8080
+npm --prefix backend run dev              # API on :8787
 npm --prefix backend run cre:simulate     # confidential handler simulation
 npm --prefix backend run verify:live:dry  # full pipeline against Sepolia, writes nothing
+```
+
+Frontend:
+
+```bash
+npm --prefix frontend ci
+npm --prefix frontend run dev             # http://localhost:3000
+```
+
+Confidential workflow:
+
+```bash
+cd cre && cre workflow simulate domain-verification --target staging-settings
 ```
 
 The backend reads contract addresses from `deployments/<network>.json`, so a redeploy needs no

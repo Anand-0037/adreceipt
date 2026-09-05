@@ -80,7 +80,9 @@ export const config = {
    */
   simulatorPrivateKey: process.env.CRE_SIMULATOR_PRIVATE_KEY ?? "",
 
-  port: Number(process.env.PORT ?? 8080),
+  // 8080 is a common default for local Apache/XAMPP installs, and a collision
+  // there produces an EADDRINUSE that looks like our bug and is not.
+  port: Number(process.env.PORT ?? 8787),
 
   /** Prefix for the DNS TXT record an advertiser publishes. */
   dnsRecordPrefix: process.env.DNS_RECORD_PREFIX ?? "_disclosed",

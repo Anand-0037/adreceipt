@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/*
+ * Palette.
+ *
+ * Deliberately restrained. This interface makes claims about trust, and a
+ * design that shouts undermines the claim - the badge should read as a
+ * statement of fact, not a marketing sticker. Verified is a quiet slate, not a
+ * triumphant green, because "verified" here means "provably who they say they
+ * are" and nothing more.
+ */
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --border: #e6e4e0;
+  --border-strong: #d4d1cb;
+  --ink: #191817;
+  --ink-muted: #6b6862;
+  --ink-faint: #97938c;
+  --accent: #2b5ce6;
+
+  --tier-none: #97938c;
+  --tier-minimal: #7a8fa6;
+  --tier-moderate: #b8813f;
+  --tier-major: #a8542f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121211;
+    --surface: #1a1a18;
+    --border: #2c2b28;
+    --border-strong: #3d3b37;
+    --ink: #f0efec;
+    --ink-muted: #a5a29b;
+    --ink-faint: #77746e;
+    --accent: #7fa0ff;
+
+    --tier-none: #77746e;
+    --tier-minimal: #8fa4ba;
+    --tier-moderate: #d3a05f;
+    --tier-major: #d97a52;
+  }
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-variant-ligatures: none;
+}
