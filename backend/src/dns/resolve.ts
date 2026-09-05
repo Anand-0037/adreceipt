@@ -22,6 +22,20 @@ function flatten(chunks: string[][]): string[] {
   return chunks.map((parts) => parts.join(""));
 }
 
+/**
+ * Codes that are a definitive answer rather than a failure to get one.
+ *
+ * ENOTFOUND is NXDOMAIN: the name does not exist. ENODATA: the name exists but
+ * holds no TXT. Both mean "there is no record", which is exactly what we asked.
+ * Everything else - timeout, refused, SERVFAIL - means we did not learn anything.
+ *
+ * The distinction is load-bearing. Folding NXDOMAIN into "unreachable" would
+ * make an advertiser who simply never publishes the record un-attestable
+ * forever, because `isAttestable` refuses to write a verdict we could not
+ * establish. The negative path of the entire verification flow depends on this.
+ */
+const DEFINITIVE_EMPTY = new Set(["ENOTFOUND", "ENODATA"]);
+
 async function queryOne(name: string, server: string): Promise<ResolverResult> {
   const resolver = new Resolver({ timeout: 5000, tries: 2 });
   resolver.setServers([server]);
@@ -29,6 +43,11 @@ async function queryOne(name: string, server: string): Promise<ResolverResult> {
     const records = flatten(await resolver.resolveTxt(name));
     return { resolver: server, records: records.map((r) => r.trim()).sort() };
   } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code ?? "";
+    if (DEFINITIVE_EMPTY.has(code)) {
+      // Answered, and the answer is "nothing here".
+      return { resolver: server, records: [] };
+    }
     return {
       resolver: server,
       records: [],

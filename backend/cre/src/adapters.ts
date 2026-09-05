@@ -12,14 +12,26 @@ import type { DomainDeps, TierDeps } from "./handlers";
  * file changes when it does - that is the point of injecting them.
  */
 
+/** NXDOMAIN and "no TXT here" are answers; anything else means we learned nothing. */
+const DEFINITIVE_EMPTY = new Set(["ENOTFOUND", "ENODATA"]);
+
 async function queryOne(name: string, server: string) {
   const resolver = new Resolver({ timeout: 5000, tries: 2 });
   resolver.setServers([server]);
   try {
     const chunks = await resolver.resolveTxt(name);
-    return { resolver: server, records: chunks.map((parts) => parts.join("").trim()) };
-  } catch {
-    return { resolver: server, records: [] as string[] };
+    return {
+      resolver: server,
+      records: chunks.map((parts) => parts.join("").trim()),
+      answered: true,
+    };
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code ?? "";
+    return {
+      resolver: server,
+      records: [] as string[],
+      answered: DEFINITIVE_EMPTY.has(code),
+    };
   }
 }
 
@@ -45,7 +57,11 @@ export const nodeTierDeps: TierDeps = {
 export function fixtureDomainDeps(records: string[], resolvers = 2): DomainDeps {
   return {
     resolveTxt: async (_name) =>
-      Array.from({ length: resolvers }, (_, i) => ({ resolver: `fixture-${i}`, records })),
+      Array.from({ length: resolvers }, (_, i) => ({
+        resolver: `fixture-${i}`,
+        records,
+        answered: true,
+      })),
     now: () => 1_700_000_000,
   };
 }

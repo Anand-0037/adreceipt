@@ -34,8 +34,15 @@ export interface DomainRequest {
  * third-party response fetched inside the TEE, whose contents never leave it.
  */
 export interface DomainSecret {
-  /** Raw TXT records, per resolver. Never leaves the enclave. */
-  answers: { resolver: string; records: string[] }[];
+  /**
+   * Raw TXT records, per resolver. Never leaves the enclave.
+   *
+   * `answered` distinguishes a resolver that replied "no such record" - a real
+   * answer - from one we could not reach. Without that distinction a network
+   * failure and a genuinely absent record are indistinguishable, and the handler
+   * would emit `verified: false` for both.
+   */
+  answers: { resolver: string; records: string[]; answered: boolean }[];
 }
 
 /** The only thing that crosses back out. */

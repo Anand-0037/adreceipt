@@ -49,7 +49,7 @@ async function simulateDomain() {
     console.log(`\n- ${label}`);
     console.log(`  INSIDE  raw DNS answers from ${secret.answers.length} resolver(s):`);
     for (const a of secret.answers) {
-      console.log(`            ${a.resolver}: ${JSON.stringify(a.records)}`);
+      console.log(`            ${a.resolver}: answered=${a.answered} ${JSON.stringify(a.records)}`);
     }
     console.log(`  OUT     ${JSON.stringify(publicOutput)}`);
     const report = encodeDomainReport(publicOutput);

@@ -20,13 +20,19 @@ import {
 
 export interface DomainDeps {
   /** Resolve a TXT name. Inside the enclave this is the CRE-provided fetcher. */
-  resolveTxt(name: string): Promise<{ resolver: string; records: string[] }[]>;
+  resolveTxt(name: string): Promise<{ resolver: string; records: string[]; answered: boolean }[]>;
   now(): number;
 }
 
 export interface DomainResult {
   /** Crosses the boundary. */
   publicOutput: DomainPublic;
+  /**
+   * Whether the lookup established anything at all. False when too few resolvers
+   * answered. Deliberately NOT part of publicOutput: an inconclusive run must
+   * produce no report, rather than a report saying `false`.
+   */
+  conclusive: boolean;
   /** Stays inside. Returned only so a local run can show what was withheld. */
   secret: DomainSecret;
 }
@@ -50,15 +56,17 @@ export async function domainHandler(
   const answers = await deps.resolveTxt(request.recordName);
   const secret: DomainSecret = { answers };
 
-  const reachable = answers.filter((a) => a.records.length > 0);
+  // A resolver that replied "no such record" has answered. One we could not
+  // reach has not, and must not be counted towards quorum in either direction.
+  const answered = answers.filter((a) => a.answered);
   const agreed =
-    reachable.length === 0
+    answered.length === 0
       ? []
-      : reachable[0].records.filter((r) => reachable.every((a) => a.records.includes(r)));
+      : answered[0].records.filter((r) => answered.every((a) => a.records.includes(r)));
 
+  const conclusive = answered.length >= 2;
   const verified =
-    reachable.length >= 2 &&
-    agreed.some((record) => record.trim() === request.expectedValue.trim());
+    conclusive && agreed.some((record) => record.trim() === request.expectedValue.trim());
 
   const publicOutput = assertNoSecrets<DomainPublic>(
     {
@@ -70,7 +78,7 @@ export async function domainHandler(
     "domainHandler",
   );
 
-  return { publicOutput, secret };
+  return { publicOutput, conclusive, secret };
 }
 
 export interface TierDeps {
