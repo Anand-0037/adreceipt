@@ -20,7 +20,6 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - Receipt
-        - CampaignSummary
       abis:
         - name: PlacementSettlementV1
           file: ./abis/PlacementSettlementV1.json

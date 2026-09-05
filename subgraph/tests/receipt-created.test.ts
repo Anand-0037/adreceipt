@@ -1,7 +1,6 @@
 import {
   afterEach,
   assert,
-  beforeEach,
   clearStore,
   describe,
   newMockEvent,
@@ -68,15 +67,13 @@ function createReceiptEvent(receiptId: string, amount: i64, settledAt: i64): Rec
 }
 
 describe("ReceiptCreated", () => {
-  beforeEach(() => {
-    handleReceiptCreated(createReceiptEvent(RECEIPT_ONE, 2500, 1_788_600_000));
-  });
-
   afterEach(() => {
     clearStore();
   });
 
   test("stores immutable settlement evidence with chain context", () => {
+    handleReceiptCreated(createReceiptEvent(RECEIPT_ONE, 2500, 1_788_600_000));
+
     assert.entityCount("Receipt", 1);
     assert.fieldEquals("Receipt", RECEIPT_ONE, "campaignId", CAMPAIGN);
     assert.fieldEquals("Receipt", RECEIPT_ONE, "subjectHash", SUBJECT);
@@ -91,28 +88,13 @@ describe("ReceiptCreated", () => {
     assert.fieldEquals("Receipt", RECEIPT_ONE, "schemaVersion", "1");
   });
 
-  test("creates the initial campaign summary", () => {
-    assert.entityCount("CampaignSummary", 1);
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "receiptCount", "1");
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "totalPaid", "2500");
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "firstSettledAt", "1788600000");
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "lastSettledAt", "1788600000");
-  });
-});
-
-describe("campaign aggregation", () => {
-  afterEach(() => {
-    clearStore();
-  });
-
-  test("adds receipts from the same campaign without changing the first settlement", () => {
+  test("keeps separately authorized receipts for the same subject", () => {
     handleReceiptCreated(createReceiptEvent(RECEIPT_ONE, 2500, 1_788_600_000));
     handleReceiptCreated(createReceiptEvent(RECEIPT_TWO, 7500, 1_788_600_100));
 
     assert.entityCount("Receipt", 2);
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "receiptCount", "2");
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "totalPaid", "10000");
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "firstSettledAt", "1788600000");
-    assert.fieldEquals("CampaignSummary", CAMPAIGN, "lastSettledAt", "1788600100");
+    assert.fieldEquals("Receipt", RECEIPT_ONE, "subjectHash", SUBJECT);
+    assert.fieldEquals("Receipt", RECEIPT_TWO, "subjectHash", SUBJECT);
+    assert.fieldEquals("Receipt", RECEIPT_TWO, "amount", "7500");
   });
 });
