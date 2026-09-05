@@ -7,5 +7,5 @@ coverage.json
 .env
 .env.*
 !.env.example
-deployments/*.json
-node_modules
+deployments/localhost.json
+deployments/hardhat.json
