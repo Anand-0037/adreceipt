@@ -27,7 +27,15 @@ interface IAdvertiserRegistry {
 
     function isVerified(address advertiser) external view returns (bool);
 
+    /// @notice The DNS challenge currently outstanding for this advertiser. Changes
+    ///         whenever the claim changes, which is what makes a replayed
+    ///         attestation detectable.
+    function challengeOf(address advertiser) external view returns (bytes32);
+
     function getAdvertiser(address advertiser) external view returns (Advertiser memory);
 
     function registeredAt(address advertiser) external view returns (uint64);
+
+    /// @notice Write path reserved for the CRE attestation receiver.
+    function setVerified(address advertiser, bool verified) external;
 }
