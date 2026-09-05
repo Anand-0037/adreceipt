@@ -13,7 +13,8 @@
     "verify:live:dry": "ts-node src/scripts/verify-live.ts --dry-run",
     "cre:simulate": "ts-node cre/src/simulate.ts",
     "fund": "ts-node src/scripts/fund.ts",
-    "fund:dry": "ts-node src/scripts/fund.ts --dry-run"
+    "fund:dry": "ts-node src/scripts/fund.ts --dry-run",
+    "seed:wallets": "ts-node src/scripts/seed-wallets.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
