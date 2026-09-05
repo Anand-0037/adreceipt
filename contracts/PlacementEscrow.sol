@@ -219,6 +219,44 @@ contract PlacementEscrow is AccessControl, ReentrancyGuard, Pausable, IPlacement
         return result;
     }
 
+<<<<<<< Updated upstream
+    function placementsInCategory(
+        string calldata category,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (uint256[] memory) {
+        uint256[] storage ids = _byCategory[Canonical.hash(category)];
+=======
+    function placementsOf(
+        address advertiser,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (uint256[] memory) {
+        uint256[] storage ids = _byAdvertiser[advertiser];
+>>>>>>> Stashed changes
+        uint256 len = ids.length;
+        if (offset >= len) {
+            return new uint256[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > len || end < offset) {
+            end = len;
+        }
+        uint256 size = end - offset;
+        uint256[] memory result = new uint256[](size);
+        for (uint256 i = 0; i < size; i++) {
+            result[i] = ids[offset + i];
+        }
+        return result;
+<<<<<<< Updated upstream
+=======
+    }
+
+    function placementsInCategory(string calldata category) external view returns (uint256[] memory) {
+        return _byCategory[Canonical.hash(category)];
+>>>>>>> Stashed changes
+    }
+
     function placementsInCategory(
         string calldata category,
         uint256 offset,
