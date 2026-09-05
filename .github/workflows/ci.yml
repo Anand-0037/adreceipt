@@ -6,11 +6,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            subgraph/package-lock.json
       - run: npm ci
       - run: npm --prefix backend ci
-      - run: npm run build
-      - run: npm test
+      - run: npm ci --prefix subgraph
+      - run: npm run build:all
+      - run: npm run test:all
       - run: npm run typecheck
       - run: npm --prefix backend run typecheck
       - run: npm --prefix backend test

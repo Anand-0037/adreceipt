@@ -1,0 +1,17 @@
+{
+  "name": "@adreceipt/subgraph",
+  "version": "0.1.0",
+  "description": "The Graph indexer for AdReceipt settlement receipts.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "codegen": "graph codegen --output-dir generated subgraph.yaml",
+    "build": "npm run codegen && graph build subgraph.yaml",
+    "test": "graph test"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "0.98.1",
+    "@graphprotocol/graph-ts": "0.38.2",
+    "matchstick-as": "0.6.0"
+  }
+}

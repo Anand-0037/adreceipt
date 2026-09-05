@@ -17,10 +17,15 @@ manifest until both values are replaced with the real testnet deployment.
 From the repository root:
 
 ```bash
+npm ci --prefix subgraph
 npm run graph:codegen
 npm run graph:build
 npm run graph:test
 ```
+
+Graph dependencies are isolated in this directory. The root `npm ci`, `npm run build`, and
+`npm test` commands remain contract-only; CI installs both dependency trees and runs
+`build:all` plus `test:all`.
 
 Before deploying, verify all of the following:
 
