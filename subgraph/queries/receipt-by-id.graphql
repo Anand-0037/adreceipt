@@ -1,0 +1,27 @@
+query ReceiptById($receiptId: Bytes!) {
+  receipt(id: $receiptId) {
+    id
+    campaignId
+    subjectHash
+    publisher
+    payer
+    recipient
+    asset
+    amount
+    settledAt
+    schemaVersion
+    settlementContract
+    transactionHash
+    logIndex
+    blockNumber
+    blockTimestamp
+  }
+  _meta {
+    block {
+      number
+      hash
+      timestamp
+    }
+    hasIndexingErrors
+  }
+}

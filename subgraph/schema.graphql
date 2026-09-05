@@ -1,0 +1,25 @@
+type Receipt @entity(immutable: true) {
+  id: Bytes!
+  campaignId: Bytes!
+  subjectHash: Bytes!
+  publisher: Bytes!
+  payer: Bytes!
+  recipient: Bytes!
+  asset: Bytes!
+  amount: BigInt!
+  settledAt: BigInt!
+  schemaVersion: Int!
+  settlementContract: Bytes!
+  transactionHash: Bytes!
+  logIndex: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+}
+
+type CampaignSummary @entity(immutable: false) {
+  id: Bytes!
+  receiptCount: BigInt!
+  totalPaid: BigInt!
+  firstSettledAt: BigInt!
+  lastSettledAt: BigInt!
+}
