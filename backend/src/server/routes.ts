@@ -3,6 +3,7 @@ import { ZeroHash } from "ethers";
 import { config, contracts, deployment } from "../config";
 import { getProvider, hasSimulator } from "../chain/provider";
 import { getAdvertiser, getBadge, getChallenge, isFlagged } from "../chain/reads";
+import { badgesInCategory, listBadges, listCategories } from "../chain/listings";
 import { simulatorStatus, submitDomainVerification } from "../chain/writes";
 import { buildRecord } from "../dns/record";
 import { checkDomain, isAttestable } from "../dns/verify";
@@ -168,3 +169,56 @@ routes.get(
 routes.get("/deployment", (_req, res) => {
   res.json(deployment);
 });
+
+// ---------------------------------------------------------------------------
+// Listings - the queries an assistant actually makes
+// ---------------------------------------------------------------------------
+
+const flag = (value: unknown) => value === "true" || value === "1";
+
+/**
+ * Every registered advertiser.
+ *
+ * `?verified=true` narrows to verified advertisers; `?hideSponsored=true` is the
+ * user-facing toggle from the design - what remains is verified advertisers with
+ * no payment on record.
+ */
+routes.get(
+  "/advertisers",
+  asyncRoute(async (req, res) => {
+    const badges = await listBadges({
+      verifiedOnly: flag(req.query.verified),
+      hideSponsored: flag(req.query.hideSponsored),
+    });
+    return res.json({ count: badges.length, advertisers: badges });
+  }),
+);
+
+/** Topics that have received at least one placement. */
+routes.get(
+  "/categories",
+  asyncRoute(async (_req, res) => {
+    const categories = await listCategories();
+    return res.json({ count: categories.length, categories });
+  }),
+);
+
+/**
+ * Advertisers that have paid into a topic, ranked by tier then placement count.
+ *
+ * The ranking is computed here from indexed on-chain facts rather than left to
+ * the language model, so it can be audited.
+ */
+routes.get(
+  "/categories/:category/advertisers",
+  asyncRoute(async (req, res) => {
+    const category = decodeURIComponent(req.params.category);
+    if (!category.trim()) throw badRequest("empty-category", "Category must not be empty");
+
+    const badges = await badgesInCategory(category, {
+      verifiedOnly: flag(req.query.verified),
+      hideSponsored: flag(req.query.hideSponsored),
+    });
+    return res.json({ category, count: badges.length, advertisers: badges });
+  }),
+);

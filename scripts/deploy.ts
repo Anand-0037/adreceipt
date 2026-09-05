@@ -114,6 +114,25 @@ async function main() {
 
   // --- record --------------------------------------------------------------
 
+  // Capture the block each contract landed in. The subgraph needs these as
+  // startBlock values, and without them a backfill scans millions of empty
+  // blocks before reaching anything.
+  const blocks: Record<string, number> = {};
+  for (const [name, contract] of Object.entries({
+    AdvertiserRegistry: registry,
+    PlacementEscrow: escrow,
+    TierAttestation: tiers,
+    CREAttestationReceiver: receiver,
+    PermissionedResolver: resolver,
+    DisclosedSubnameRegistry: subnames,
+    SuspiciousPatternRule: rule,
+  })) {
+    const tx = contract.deploymentTransaction();
+    const receipt = tx ? await tx.wait() : null;
+    blocks[name] = receipt?.blockNumber ?? 0;
+  }
+  blocks.earliest = Math.min(...Object.values(blocks).filter((b) => b > 0));
+
   const record = {
     network: network.name,
     chainId: Number((await ethers.provider.getNetwork()).chainId),
@@ -129,6 +148,7 @@ async function main() {
       maxAccountAgeSeconds: MAX_ACCOUNT_AGE,
       minPlacements: MIN_PLACEMENTS,
     },
+    blocks,
     contracts: {
       AdvertiserRegistry: await registry.getAddress(),
       PlacementEscrow: await escrow.getAddress(),

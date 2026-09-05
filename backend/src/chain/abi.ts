@@ -58,6 +58,18 @@ export const PLACEMENT_ESCROW_ABI = [
   "function placementCount(address advertiser) view returns (uint256)",
   "function escrowedBalance(address advertiser) view returns (uint256)",
   "function categoryLifetime(string category) view returns (uint256)",
+  "function categoryHashOf(string category) pure returns (bytes32)",
+  "function getPlacement(uint256 id) view returns (tuple(address advertiser, uint96 amount, bytes32 categoryHash, uint64 createdAt, uint64 unlockAt, bool withdrawn))",
+  // Single-argument form only.
+  //
+  // PR #9 added paginated overloads, but the PlacementEscrow currently deployed
+  // to Sepolia predates that merge and does not have them - calling the
+  // three-argument version against it reverts with no data. Switch to the
+  // paginated overload when the escrow is redeployed; until then this is what
+  // the live contract actually exposes. Declaring only one form also avoids
+  // ethers overload ambiguity.
+  "function placementsInCategory(string category) view returns (uint256[])",
+  "event PlacementCreated(uint256 indexed id, address indexed advertiser, bytes32 indexed categoryHash, string category, uint256 amount, uint64 createdAt, uint64 unlockAt)",
 ] as const;
 
 export const TIER_ATTESTATION_ABI = [

@@ -25,5 +25,15 @@
   "roles": {
     "creForwarder": null,
     "creSimulator": "0xB3c02afB535210A5675B363c9165d610924a4ac0"
+  },
+  "blocks": {
+    "AdvertiserRegistry": 11640382,
+    "PlacementEscrow": 11640383,
+    "TierAttestation": 11640384,
+    "CREAttestationReceiver": 11640385,
+    "PermissionedResolver": 11640386,
+    "DisclosedSubnameRegistry": 11640388,
+    "SuspiciousPatternRule": 11640389,
+    "earliest": 11640382
   }
 }

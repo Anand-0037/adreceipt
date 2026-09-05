@@ -27,6 +27,8 @@ export interface Deployment {
     maxAccountAgeSeconds: number;
     minPlacements: number;
   };
+  /** Block each contract was deployed in. Used as a log-scan lower bound. */
+  blocks?: Record<string, number>;
   contracts: {
     AdvertiserRegistry: string;
     PlacementEscrow: string;
