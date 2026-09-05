@@ -10,7 +10,8 @@
     "start": "ts-node src/server/index.ts",
     "typecheck": "tsc --noEmit",
     "verify:live": "ts-node src/scripts/verify-live.ts",
-    "verify:live:dry": "ts-node src/scripts/verify-live.ts --dry-run"
+    "verify:live:dry": "ts-node src/scripts/verify-live.ts --dry-run",
+    "cre:simulate": "ts-node cre/src/simulate.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
