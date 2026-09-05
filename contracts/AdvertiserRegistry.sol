@@ -14,10 +14,36 @@ import {Canonical} from "./libraries/Canonical.sol";
 ///      leaves the enclave. Brand-name and domain uniqueness are enforced at
 ///      verification time, not at registration time: anyone may claim anything, but
 ///      only one address may ever hold a verified claim on a given name.
+///
+///      That uniqueness check compares `Canonical.hash` keys, and those compare
+///      bytes. So the claim itself has to be restricted to a byte range a reader
+///      cannot be fooled by: names and domains are printable ASCII only, and a
+///      domain must be a well-formed LDH host name. Without that gate a claim
+///      carrying a Cyrillic U+0435 renders as "deployco" and hashes as something
+///      else entirely, and two addresses end up verified on one brand. The rule is
+///      deliberately narrow - it does not pretend to solve visual confusion inside
+///      ASCII ("rn" against "m", "0" against "O"); it removes the whole-alphabet
+///      homoglyph space and leaves the residue to the DNS proof and the UI.
 contract AdvertiserRegistry is AccessControl, IAdvertiserRegistry {
     /// @notice Held by the CRE attestation receiver. The only role that can flip
     ///         verification state.
     bytes32 public constant ATTESTOR_ROLE = keccak256("ATTESTOR_ROLE");
+
+    /// @notice Longest brand name a claim may carry. Published so a front-end can
+    ///         apply the same rule before it spends the caller's gas.
+    uint256 public constant MAX_NAME_LENGTH = 64;
+
+    /// @notice Longest domain a claim may carry - the DNS limit, since anything
+    ///         beyond it could never resolve the TXT challenge anyway.
+    uint256 public constant MAX_DOMAIN_LENGTH = 253;
+
+    /// @notice Longest single dot-separated label inside a domain.
+    uint256 public constant MAX_LABEL_LENGTH = 63;
+
+    uint8 private constant _SPACE = 0x20;
+    uint8 private constant _HYPHEN = 0x2D;
+    uint8 private constant _DOT = 0x2E;
+    uint8 private constant _TILDE = 0x7E;
 
     mapping(address => Advertiser) private _advertisers;
 
@@ -58,6 +84,15 @@ contract AdvertiserRegistry is AccessControl, IAdvertiserRegistry {
     error NotRegistered();
     error EmptyName();
     error EmptyDomain();
+    error NameTooLong(uint256 length, uint256 maximum);
+    error DomainTooLong(uint256 length, uint256 maximum);
+    /// @dev Raised for any byte outside printable ASCII - which is every homoglyph.
+    error InvalidNameCharacter(uint256 index, bytes1 character);
+    error InvalidDomainCharacter(uint256 index, bytes1 character);
+    /// @dev Printable, but spelled so it can be read as another claim: padded or
+    ///      double-spaced names, empty or hyphen-edged domain labels.
+    error MalformedName();
+    error MalformedDomain();
     error NameClaimedByAnother(address holder);
     error DomainClaimedByAnother(address holder);
 
@@ -78,7 +113,8 @@ contract AdvertiserRegistry is AccessControl, IAdvertiserRegistry {
     /// @return challenge The value to publish as a DNS TXT record on `domain`.
     function register(string calldata name, string calldata domain) external returns (bytes32 challenge) {
         if (_advertisers[msg.sender].status != Status.None) revert AlreadyRegistered();
-        _requireNonEmpty(name, domain);
+        _requireValidName(name);
+        _requireValidDomain(domain);
 
         challenge = _issueChallenge(msg.sender, domain);
 
@@ -102,7 +138,8 @@ contract AdvertiserRegistry is AccessControl, IAdvertiserRegistry {
     function updateClaim(string calldata name, string calldata domain) external returns (bytes32 challenge) {
         Advertiser storage a = _advertisers[msg.sender];
         if (a.status == Status.None) revert NotRegistered();
-        _requireNonEmpty(name, domain);
+        _requireValidName(name);
+        _requireValidDomain(domain);
 
         _releaseClaims(msg.sender, a.name, a.domain);
 
@@ -223,9 +260,77 @@ contract AdvertiserRegistry is AccessControl, IAdvertiserRegistry {
         if (domainOwner[domainHash] == advertiser) delete domainOwner[domainHash];
     }
 
-    function _requireNonEmpty(string calldata name, string calldata domain) private pure {
-        if (bytes(name).length == 0) revert EmptyName();
-        if (bytes(domain).length == 0) revert EmptyDomain();
+    /// @dev A brand name is printable ASCII, 0x20 through 0x7E, with no padding and
+    ///      no doubled space. Everything above 0x7E is a byte of a multi-byte UTF-8
+    ///      sequence, and that is exactly where the lookalike alphabets live, so the
+    ///      whole range goes. Interior single spaces stay - "DeployCo Cloud" is a
+    ///      real brand name - but " DeployCo" and "Deploy  Co" do not, because they
+    ///      render as an existing claim while hashing past it.
+    function _requireValidName(string calldata name) private pure {
+        bytes calldata b = bytes(name);
+        if (b.length == 0) revert EmptyName();
+        if (b.length > MAX_NAME_LENGTH) revert NameTooLong(b.length, MAX_NAME_LENGTH);
+        if (uint8(b[0]) == _SPACE || uint8(b[b.length - 1]) == _SPACE) revert MalformedName();
+
+        for (uint256 i = 0; i < b.length; ++i) {
+            uint8 c = uint8(b[i]);
+            if (c < _SPACE || c > _TILDE) revert InvalidNameCharacter(i, b[i]);
+            // b[0] is known not to be a space, so i is never 0 on this branch.
+            if (c == _SPACE && uint8(b[i - 1]) == _SPACE) revert MalformedName();
+        }
+    }
+
+    /// @dev A domain is an LDH host name: letters, digits and hyphen, in labels
+    ///      separated by dots. Case is folded by `Canonical.hash`, so only the shape
+    ///      is checked here. The structural rules exist for the same reason the
+    ///      character rule does - "deployco.com." and "deployco..com" name the host
+    ///      that "deployco.com" names, and each would otherwise hash to a key of its
+    ///      own and sit beside the real claim.
+    ///
+    ///      A punycode domain ("xn--dployco-8cf.com") is valid ASCII and is
+    ///      accepted. It has to be: it is a real, separately registrable domain
+    ///      whose owner can honestly answer the DNS challenge for it. What its
+    ///      claimant cannot do is take the brand name it decodes to, because that
+    ///      name is not ASCII and so never enters the registry.
+    function _requireValidDomain(string calldata domain) private pure {
+        bytes calldata b = bytes(domain);
+        if (b.length == 0) revert EmptyDomain();
+        if (b.length > MAX_DOMAIN_LENGTH) revert DomainTooLong(b.length, MAX_DOMAIN_LENGTH);
+
+        uint256 labelLength = 0;
+        uint256 dots = 0;
+
+        for (uint256 i = 0; i < b.length; ++i) {
+            uint8 c = uint8(b[i]);
+
+            if (c == _DOT) {
+                // An empty label is a leading dot, a trailing dot or "..", each of
+                // which names the host some shorter spelling already names.
+                if (labelLength == 0) revert MalformedDomain();
+                if (uint8(b[i - 1]) == _HYPHEN) revert MalformedDomain();
+                labelLength = 0;
+                unchecked {
+                    ++dots;
+                }
+                continue;
+            }
+
+            bool alphanumeric =
+                (c >= 0x61 && c <= 0x7A) || (c >= 0x41 && c <= 0x5A) || (c >= 0x30 && c <= 0x39);
+            if (!alphanumeric && c != _HYPHEN) revert InvalidDomainCharacter(i, b[i]);
+            if (c == _HYPHEN && labelLength == 0) revert MalformedDomain();
+
+            unchecked {
+                ++labelLength;
+            }
+            if (labelLength > MAX_LABEL_LENGTH) revert MalformedDomain();
+        }
+
+        // A bare label holds no TXT record the workflow could resolve, and a
+        // trailing dot or hyphen would leave a second spelling of the same host.
+        if (dots == 0) revert MalformedDomain();
+        if (labelLength == 0) revert MalformedDomain();
+        if (uint8(b[b.length - 1]) == _HYPHEN) revert MalformedDomain();
     }
 
     function _hash(string calldata value) private pure returns (bytes32) {
