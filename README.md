@@ -1,97 +1,164 @@
 # AdReceipt
 
-AdReceipt helps people verify the commercial payment attached to an AI recommendation.
+Verifiable sponsorship disclosure for AI recommendations.
 
-An ordinary sponsored label asks the user to trust the platform that displayed it. AdReceipt is
-designed to bind a visible recommendation to a public settlement receipt containing the payer,
-recipient, asset, amount, campaign, content commitment, and transaction reference.
+When an assistant recommends a product, you cannot tell whether that recommendation was paid
+for, or whether the brand behind it is even real. AdReceipt is a registry that makes both
+checkable: an advertiser must cryptographically prove it controls the brand it claims before it
+can pay for a placement, its payment flows through an on-chain escrow, and every recommendation
+carries a badge showing verification status, a coarse spend tier, and history.
 
-It proves that a payment was attached to the recommendation. It does not prove that the payment
-caused the model's answer, that the recommendation is good, or that no off-platform arrangement
-exists.
+It answers two questions: **is this advertiser provably who they claim to be**, and **roughly how
+much did they pay**. It deliberately does not answer whether the product is any good — a verified
+badge means "provably who they say they are", nothing more.
 
-## V1 flow
+## Live on Sepolia
 
-1. A publisher prepares the final recommendation and signs an expiring placement quote.
-2. An authorized advertiser wallet settles the exact quoted payment through
-   `PlacementSettlementV1`.
-3. Successful settlement emits one immutable `ReceiptCreated` event.
-4. A Subgraph indexes the receipt and its transaction context.
-5. Server-side verification checks the expected contract, chain, content commitment, payment
-   fields, indexer freshness, and finality.
-6. The product displays a neutral disclosure only when those checks pass.
+| Contract | Address | Deployed at block |
+| --- | --- | --- |
+| `AdvertiserRegistry` | [`0xcE99a9ee7DD1af77e47036fe679fd1aDfFf2F8ac`](https://sepolia.etherscan.io/address/0xcE99a9ee7DD1af77e47036fe679fd1aDfFf2F8ac) | 11640382 |
+| `PlacementEscrow` | [`0xdC0Ec3b71eb9228059A98afa52768308406e72C7`](https://sepolia.etherscan.io/address/0xdC0Ec3b71eb9228059A98afa52768308406e72C7) | 11640383 |
+| `TierAttestation` | [`0x26769eCfF7207a551744632B5eEc71b0056a2816`](https://sepolia.etherscan.io/address/0x26769eCfF7207a551744632B5eEc71b0056a2816) | 11640384 |
+| `CREAttestationReceiver` | [`0x5D31343761b7d2f68cFdd014dA1767D86FA26d97`](https://sepolia.etherscan.io/address/0x5D31343761b7d2f68cFdd014dA1767D86FA26d97) | 11640385 |
+| `PermissionedResolver` | [`0x4FcC23A8528E26fba51BD9a2B4F417Af8C0ca89e`](https://sepolia.etherscan.io/address/0x4FcC23A8528E26fba51BD9a2B4F417Af8C0ca89e) | 11640386 |
+| `DisclosedSubnameRegistry` | [`0x97aAfb7F0776E763280369489dAa5E6ACF4abca6`](https://sepolia.etherscan.io/address/0x97aAfb7F0776E763280369489dAa5E6ACF4abca6) | 11640388 |
+| `SuspiciousPatternRule` | [`0x28f5Df28FC951762bC400b819a872eBe2cb11470`](https://sepolia.etherscan.io/address/0x28f5Df28FC951762bC400b819a872eBe2cb11470) | 11640389 |
+
+Full record, including deployment parameters and role assignments:
+[`deployments/sepolia.json`](deployments/sepolia.json).
+
+## How it works
 
 ```mermaid
 flowchart LR
-    A["Advertiser wallet"] -->|"authorized payment"| S["PlacementSettlementV1"]
-    P["Publisher-signed quote"] --> S
-    S -->|"ReceiptCreated"| C["EVM chain"]
-    C --> G["The Graph"]
-    G --> V["Deterministic verifier"]
-    V --> U["Recommendation disclosure and receipt"]
+    A["Advertiser"] -->|"register(name, domain)"| R["AdvertiserRegistry"]
+    R -->|"DNS challenge"| A
+    A -->|"publishes TXT record"| D["DNS"]
+    D -.->|"read inside TEE"| W["CRE Confidential Workflow"]
+    W -->|"verified: bool only"| X["CREAttestationReceiver"]
+    X --> R
+    R -->|"verified"| N["ENSv2 subname + resolver records"]
+    A -->|"createPlacement()"| E["PlacementEscrow"]
+    E -.->|"exact spend, read inside TEE"| W2["CRE Confidential Workflow"]
+    W2 -->|"tier only"| X
+    X --> T["TierAttestation"]
+    R & E & T & N --> G["Subgraph"]
+    G --> U["Assistant renders disclosure badge"]
 ```
 
-## Current state
+1. **Register.** An advertiser claims a brand name and a domain. The claim is unverified — anyone
+   can type anything — and the registry issues a per-claim DNS challenge.
+2. **Prove.** The advertiser publishes the challenge as a TXT record. A Chainlink CRE Confidential
+   Workflow resolves it inside a TEE and only the boolean verdict leaves the enclave.
+3. **Name.** A verified advertiser receives an ENSv2 subname under a parent name, with its status
+   written as text records the advertiser itself cannot forge.
+4. **Pay.** Placements are funded through a non-custodial escrow. There is no admin path to those
+   funds.
+5. **Tier.** A second confidential workflow buckets cumulative spend into Minimal / Moderate /
+   Major inside the enclave. The exact figure is never published.
+6. **Read.** The assistant queries indexed events and renders a badge per recommendation.
 
-The repository is being moved from an earlier refundable placement-escrow prototype to the direct
-settlement receipt described above.
+Three properties are enforced in code rather than promised:
 
-| Area | Current boundary |
+- **Identity gates payment.** `createPlacement` reverts unless the registry says verified. Prove
+  first, then pay — never the reverse.
+- **The escrow is non-custodial.** No function moves escrowed value to anyone but the depositor.
+  A test asserts this against the compiled ABI.
+- **Owning a name does not let you make claims about yourself.** Text records under the
+  `disclosed.` prefix are registry assertions, writable only by a narrowly delegated account and
+  never by the name's owner.
+
+## Status
+
+| Area | State |
 | --- | --- |
-| Existing contracts | Compile and pass 139 tests, but represent the earlier escrow/identity prototype |
-| Receipt settlement | Event and quote interface are under review in [issue #7](https://github.com/Anand-0037/adreceipt/issues/7) |
-| Subgraph | Candidate schema, mapping, queries, and tests are in [draft PR #8](https://github.com/Anand-0037/adreceipt/pull/8) |
-| Testnet deployment | Not deployed yet |
-| Live Graph verification | Not available yet |
-| Web application | Not implemented yet |
+| Contracts | **Deployed to Sepolia.** 146 tests passing, 35/35 live wiring checks |
+| Backend API | **Built.** Challenge issuance, DNS verification, attestation submission, badge reads |
+| Confidential handler logic | **Built** and simulated, with the enclave boundary expressed as types |
+| CRE workflow registration | **Not done.** The SDK registration is the remaining gap — see [`backend/cre/README.md`](backend/cre/README.md) |
+| End-to-end run on Sepolia | **Not yet.** The registry is empty; no advertiser has been verified on-chain |
+| ENS subname issuance | **Not exercised.** Contracts deployed, zero subnames issued |
+| Subgraph | **Not indexing the live contracts** |
+| Web application | Not started |
 
-No local fixture or passing unit test should be interpreted as a live payment, deployed contract,
-or provider-backed receipt.
+Nothing here should be read as more than it is: a passing test is not a deployed contract, and a
+deployed contract is not a verified advertiser.
 
-## Verification states
+## Sponsor tracks
 
-The application will use explicit states rather than letting an LLM decide whether evidence is
-valid:
-
-- `PAID_VERIFIED`: a matching finalized receipt from the expected deployment
-- `PENDING`: the settlement is not yet final or indexed far enough
-- `NOT_FOUND_AT_BLOCK`: a fresh query found no matching receipt as of a stated block
-- `INVALID`: a receipt exists but a required field or content commitment does not match
-- `UNAVAILABLE`: Graph, RPC, or required evidence cannot be checked
-
-`NOT_FOUND_AT_BLOCK` does not mean that a recommendation is organic, unbiased, or trustworthy.
+- **Chainlink — Best Confidential Workflow.** Two confidential handlers: the DNS challenge is
+  fetched and compared inside the enclave and only a boolean leaves it; cumulative spend is
+  bucketed inside the enclave and only the band leaves it. The tier handler combines the public
+  on-chain figure with a private off-chain one, so the total cannot be reconstructed from chain
+  state.
+- **The Graph — Best AI Tooling.** Every value on a disclosure badge is indexed on-chain data:
+  verification status, spend tier, advertiser age, placement count.
+- **ENS — Best Use of ENSv2.** A subname registry with per-name Permissioned Resolvers and
+  record-level Enhanced Access Control, so the verification oracle can write exactly one text
+  record and nothing else, revocable in one transaction.
 
 ## Repository layout
 
 ```text
-contracts/   Solidity contracts and interfaces
-scripts/     deployment scripts
-test/        Hardhat contract tests
-subgraph/    receipt indexing code (in draft PR #8)
-apps/web/    planned recommendation and receipt application
+contracts/        Solidity contracts, interfaces and libraries
+scripts/          deployment
+test/             146 Hardhat tests
+deployments/      live contract addresses per network
+backend/src/      API, chain client, DNS verification, tier computation
+backend/cre/      confidential workflow handlers and enclave boundary
+subgraph/         indexing (in draft PR #8)
 ```
 
-## Local contract setup
+## Quickstart
 
 Requirements: Node.js 22 and npm.
 
 ```bash
 git clone https://github.com/Anand-0037/adreceipt.git
 cd adreceipt
+cp .env.example .env      # fill in SEPOLIA_RPC_URL at minimum
 npm ci
 npm run build
 npm test
-npm run typecheck
 ```
 
-Graph commands and deployment boundaries are documented inside `subgraph/` once that package is
-merged.
+Backend:
+
+```bash
+npm --prefix backend ci
+npm --prefix backend run dev              # API on :8080
+npm --prefix backend run cre:simulate     # confidential handler simulation
+npm --prefix backend run verify:live:dry  # full pipeline against Sepolia, writes nothing
+```
+
+The backend reads contract addresses from `deployments/<network>.json`, so a redeploy needs no
+code change.
+
+## Under review: direct settlement receipts
+
+[Issue #7](https://github.com/Anand-0037/adreceipt/issues/7) proposes replacing the refundable
+escrow with a direct settlement receipt — a publisher-signed quote, exact payer-to-recipient
+settlement, and one immutable `ReceiptCreated` event per placement.
+
+The critique behind it is sound: `PlacementCreated` records a deposit the advertiser can withdraw,
+which is evidence of committed spend but not proof that a publisher was paid. The receipt model
+would close that gap.
+
+It is not implemented. The event ABI, quote fields and replay protection are still being decided,
+and the deployed contracts above implement the escrow model. A candidate subgraph for the proposed
+event is in [draft PR #8](https://github.com/Anand-0037/adreceipt/pull/8).
+
+## Demo disclaimer
+
+All brand names and figures used in the demo — DeployCo, RenderStack, HostFast — are fictional,
+and all data is illustrative. The demo runs against our own assistant; there is no public API for
+injecting into a commercial assistant's ad system, and intercepting one would be both fragile and
+legally reckless.
 
 ## Contributing
 
-Start with an issue and keep each branch tied to one outcome. See [CONTRIBUTING.md](CONTRIBUTING.md)
-for the branch, test, and review workflow.
+Start with an issue and keep each branch tied to one outcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-AdReceipt is available under the [MIT License](LICENSE).
+MIT — see [LICENSE](LICENSE).
