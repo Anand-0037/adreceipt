@@ -6,6 +6,7 @@ typechain-types/
 generated/
 subgraph/generated/
 subgraph/build/
+subgraph/package-lock.json
 subgraph/tests/.bin/
 subgraph/tests/.latest.json
 coverage/

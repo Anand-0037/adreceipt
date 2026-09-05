@@ -9,12 +9,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            subgraph/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm --prefix backend ci
-      - run: npm ci --prefix subgraph
+      - run: npm install --prefix subgraph --no-audit --no-fund
       - run: npm run build:all
       - run: npm run test:all
       - run: npm run typecheck
