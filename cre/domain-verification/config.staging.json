@@ -1,0 +1,12 @@
+{
+  "schedule": "0 */1 * * * *",
+  "advertiser": "0x4BFc7E92A50cc44A1259Ccf95B609eac2DC7D2a2",
+  "domain": "smoketest.example",
+  "challenge": "0x2b1fd531d4d0961f2e8db933b08572a2b61f070aa3653bd25019465f15faad6e",
+  "recordPrefix": "_disclosed",
+  "recordKey": "disclosed-verification",
+  "resolvers": [
+    "https://cloudflare-dns.com/dns-query",
+    "https://dns.google/resolve"
+  ]
+}
