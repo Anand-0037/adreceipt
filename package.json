@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "npm run contracts:build",
+    "build": "node api.js && npm run contracts:build",
     "build:all": "npm run contracts:build && npm run graph:build",
     "contracts:build": "hardhat compile",
     "test": "npm run test:contracts",

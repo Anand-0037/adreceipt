@@ -6,6 +6,8 @@ typechain-types/
 generated/
 subgraph/generated/
 subgraph/build/
+subgraph/package-lock.json
+temp_auto_push.bat
 subgraph/tests/.bin/
 subgraph/tests/.latest.json
 coverage/
@@ -15,3 +17,5 @@ coverage.json
 !.env.example
 deployments/localhost.json
 deployments/hardhat.json
+.gitignore
+branch_structure.json
