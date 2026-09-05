@@ -5,26 +5,25 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "npm run contracts:build && npm run graph:build",
+    "build": "npm run contracts:build",
+    "build:all": "npm run contracts:build && npm run graph:build",
     "contracts:build": "hardhat compile",
-    "test": "npm run test:contracts && npm run graph:test",
+    "test": "npm run test:contracts",
+    "test:all": "npm run test:contracts && npm run graph:test",
     "test:contracts": "hardhat test",
     "typecheck": "tsc --noEmit",
     "clean": "hardhat clean",
     "coverage": "hardhat coverage",
-    "graph:codegen": "graph codegen --output-dir subgraph/generated subgraph/subgraph.yaml",
-    "graph:build": "npm run graph:codegen && graph build subgraph/subgraph.yaml",
-    "graph:test": "graph test"
+    "graph:codegen": "npm --prefix subgraph run codegen",
+    "graph:build": "npm --prefix subgraph run build",
+    "graph:test": "npm --prefix subgraph test"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "0.98.1",
-    "@graphprotocol/graph-ts": "0.38.2",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.4.1",
     "hardhat": "^2.22.17",
-    "matchstick-as": "0.6.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9"
   },
