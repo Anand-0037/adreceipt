@@ -90,7 +90,7 @@ describe("PlacementEscrow", function () {
       await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("2") });
 
       expect(await escrow.categoryLifetime("BACKEND HOSTING")).to.equal(ethers.parseEther("3"));
-      expect(await escrow.placementsInCategory("backend hosting")).to.deep.equal([0n, 1n]);
+      expect(await escrow["placementsInCategory(string)"]("backend hosting")).to.deep.equal([0n, 1n]);
     });
 
     it("rejects an advertiser that has registered but is not yet verified", async function () {
@@ -271,6 +271,101 @@ describe("PlacementEscrow", function () {
 
       expect(await escrow.depositedSince(outsider.address, 0)).to.equal(0n);
       expect(await escrow.lifetimeDeposited(outsider.address)).to.equal(0n);
+    });
+  });
+
+  describe("paginated enumeration views", function () {
+    it("the original unpaged signatures still work unchanged", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+      await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+
+      expect(await escrow["placementsOf(address)"](deployco.address)).to.deep.equal([0n, 1n]);
+      expect(await escrow["placementsInCategory(string)"]("backend hosting")).to.deep.equal([0n, 1n]);
+    });
+
+    it("supports normal pagination in slices", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+      }
+
+      const getPaged = (off: number, lim: number) =>
+        escrow["placementsOf(address,uint256,uint256)"](deployco.address, off, lim);
+
+      expect(await getPaged(0, 2)).to.deep.equal([0n, 1n]);
+      expect(await getPaged(2, 2)).to.deep.equal([2n, 3n]);
+      expect(await getPaged(4, 2)).to.deep.equal([4n]);
+    });
+
+    it("clamps when a limit overruns the remaining length", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+      }
+
+      const result = await escrow["placementsOf(address,uint256,uint256)"](deployco.address, 3, 10);
+      expect(result).to.deep.equal([3n, 4n]);
+    });
+
+    it("returns an empty array when offset is at or past the end", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+      }
+
+      const atEnd = await escrow["placementsOf(address,uint256,uint256)"](deployco.address, 5, 2);
+      const pastEnd = await escrow["placementsOf(address,uint256,uint256)"](deployco.address, 10, 2);
+
+      expect(atEnd).to.deep.equal([]);
+      expect(pastEnd).to.deep.equal([]);
+    });
+
+    it("does not revert when given a huge limit near type(uint256).max", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+      }
+
+      const huge = await escrow["placementsOf(address,uint256,uint256)"](deployco.address, 0, ethers.MaxUint256);
+      expect(huge).to.deep.equal([0n, 1n, 2n, 3n, 4n]);
+
+      const hugeWithOffset = await escrow["placementsOf(address,uint256,uint256)"](
+        deployco.address,
+        2,
+        ethers.MaxUint256,
+      );
+      expect(hugeWithOffset).to.deep.equal([2n, 3n, 4n]);
+    });
+
+    it("pages placementsInCategory the same way", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("1") });
+      }
+
+      const getPagedCat = (cat: string, off: number, lim: number) =>
+        escrow["placementsInCategory(string,uint256,uint256)"](cat, off, lim);
+
+      expect(await getPagedCat("backend hosting", 0, 2)).to.deep.equal([0n, 1n]);
+      expect(await getPagedCat("backend hosting", 2, 5)).to.deep.equal([2n, 3n, 4n]);
+      expect(await getPagedCat("backend hosting", 5, 10)).to.deep.equal([]);
+    });
+
+    it("returns an empty array for an advertiser or category with zero placements", async function () {
+      const { escrow, outsider } = await loadFixture(deployFixture);
+
+      const emptyAdv = await escrow["placementsOf(address,uint256,uint256)"](outsider.address, 0, 10);
+      const emptyCat = await escrow["placementsInCategory(string,uint256,uint256)"]("nonexistent", 0, 10);
+
+      expect(emptyAdv).to.deep.equal([]);
+      expect(emptyCat).to.deep.equal([]);
     });
   });
 
