@@ -1,0 +1,29 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployedAt": "2026-09-05T12:37:37.007Z",
+  "deployer": "0x455a064eB69b064124bcE89f677Ce89d50B92911",
+  "admin": "0x455a064eB69b064124bcE89f677Ce89d50B92911",
+  "parameters": {
+    "parentName": "disclosed.eth",
+    "parentNode": "0xb52ce7ae946392292041fe6841279d1b60f8400dfad64cdd9504cab6ee49ec53",
+    "placementLockSeconds": 604800,
+    "minPlacementWei": "1000000000000000",
+    "tierValiditySeconds": 2592000,
+    "maxAccountAgeSeconds": 604800,
+    "minPlacements": 10
+  },
+  "contracts": {
+    "AdvertiserRegistry": "0xcE99a9ee7DD1af77e47036fe679fd1aDfFf2F8ac",
+    "PlacementEscrow": "0xdC0Ec3b71eb9228059A98afa52768308406e72C7",
+    "TierAttestation": "0x26769eCfF7207a551744632B5eEc71b0056a2816",
+    "CREAttestationReceiver": "0x5D31343761b7d2f68cFdd014dA1767D86FA26d97",
+    "PermissionedResolver": "0x4FcC23A8528E26fba51BD9a2B4F417Af8C0ca89e",
+    "DisclosedSubnameRegistry": "0x97aAfb7F0776E763280369489dAa5E6ACF4abca6",
+    "SuspiciousPatternRule": "0x28f5Df28FC951762bC400b819a872eBe2cb11470"
+  },
+  "roles": {
+    "creForwarder": null,
+    "creSimulator": "0xB3c02afB535210A5675B363c9165d610924a4ac0"
+  }
+}
