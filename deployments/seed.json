@@ -1,0 +1,76 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "seededAt": "2026-09-05T18:01:15.170Z",
+  "note": "All brands are fictional and all figures illustrative. Domain verdicts for the verified advertisers are seeded, not DNS-proven; HostFast's rejection is real.",
+  "bands": {
+    "moderateFrom": "500000000000000",
+    "majorFrom": "2000000000000000"
+  },
+  "cast": [
+    {
+      "key": "deployco",
+      "demonstrates": "Verified, paying, moderate spend - the ordinary good case.",
+      "address": "0xC9d1c81Dbd8021CBe76c2B964DEd36095ae22559",
+      "inRegistry": true,
+      "verified": true,
+      "status": "verified",
+      "name": "DeployCo",
+      "domain": "deployco.com",
+      "ensName": "deployco.disclosed.eth",
+      "tier": 2,
+      "tierLabel": "moderate",
+      "placements": 6,
+      "registeredAt": 1788630468,
+      "accountAgeDays": 0
+    },
+    {
+      "key": "renderstack",
+      "demonstrates": "Verified but has never paid. Proves the badge is not a pay-to-play trophy, and gives the 'no payment on record' state that stops 'unsponsored' reading as a merit badge.",
+      "address": "0x9d4563E8058524303478B28f7B9e05499B4AAEF7",
+      "inRegistry": true,
+      "verified": true,
+      "status": "verified",
+      "name": "RenderStack",
+      "domain": "renderstack.com",
+      "ensName": "renderstack.disclosed.eth",
+      "tier": 0,
+      "tierLabel": "none",
+      "placements": 0,
+      "registeredAt": 1788630480,
+      "accountAgeDays": 0
+    },
+    {
+      "key": "quickdeploy",
+      "demonstrates": "New account placing aggressively at the top tier - trips the suspicious-pattern rule.",
+      "address": "0x7efC4822c840Dc1BA1280149f067A8561B2aEdC7",
+      "inRegistry": true,
+      "verified": true,
+      "status": "verified",
+      "name": "QuickDeploy",
+      "domain": "quickdeploy.io",
+      "ensName": "quickdeploy.disclosed.eth",
+      "tier": 3,
+      "tierLabel": "major",
+      "placements": 11,
+      "registeredAt": 1788630492,
+      "accountAgeDays": 0
+    },
+    {
+      "key": "hostfast",
+      "demonstrates": "Claims a brand it does not own. The DNS check fails, so it can never be verified, never fund a placement, and never receive a name.",
+      "address": "0x1dB8e61f2f8F8d89b8B97D85f3BA140d2E986b1C",
+      "inRegistry": true,
+      "verified": false,
+      "status": "revoked",
+      "name": "DeployCo",
+      "domain": "hostfast.io",
+      "ensName": "",
+      "tier": 0,
+      "tierLabel": "none",
+      "placements": 0,
+      "registeredAt": 1788630504,
+      "accountAgeDays": 0
+    }
+  ]
+}

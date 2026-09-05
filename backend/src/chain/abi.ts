@@ -42,6 +42,17 @@ export const ADVERTISER_REGISTRY_ABI = [
 ] as const;
 
 export const PLACEMENT_ESCROW_ABI = [
+  // Writes. createPlacement is called by the advertiser's own wallet; the two
+  // setters need OPERATOR_ROLE and are used to scale the demo down to what a
+  // Sepolia faucet provides.
+  "function createPlacement(string category) payable returns (uint256)",
+  "function withdrawPlacement(uint256 id)",
+  "function setLockDuration(uint64 newLockDuration)",
+  "function setMinPlacement(uint256 newMinPlacement)",
+  "function lockDuration() view returns (uint64)",
+  "function minPlacement() view returns (uint256)",
+  "function totalPlacements() view returns (uint256)",
+  // Reads.
   "function lifetimeDeposited(address advertiser) view returns (uint256)",
   "function depositedSince(address advertiser, uint64 since) view returns (uint256)",
   "function placementCount(address advertiser) view returns (uint256)",
