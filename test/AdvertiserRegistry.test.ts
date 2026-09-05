@@ -1,16 +1,20 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
+import { expect } from "chai";
+import { ethers } from "hardhat";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 
-const STATUS = { None: 0n, Pending: 1n, Verified: 2n, Revoked: 3n };
+enum Status {
+  None,
+  Pending,
+  Verified,
+  Revoked,
+}
 
 describe("AdvertiserRegistry", function () {
   async function deployFixture() {
     const [admin, attestor, deployco, impostor, outsider] = await ethers.getSigners();
 
-    const Registry = await ethers.getContractFactory("AdvertiserRegistry");
-    const registry = await Registry.deploy(admin.address, attestor.address);
+    const registry = await ethers.deployContract("AdvertiserRegistry", [admin.address, attestor.address]);
     await registry.waitForDeployment();
 
     return { registry, admin, attestor, deployco, impostor, outsider };
@@ -40,7 +44,7 @@ describe("AdvertiserRegistry", function () {
       const a = await registry.getAdvertiser(deployco.address);
       expect(a.name).to.equal("DeployCo");
       expect(a.domain).to.equal("deployco.com");
-      expect(a.status).to.equal(STATUS.Pending);
+      expect(a.status).to.equal(BigInt(Status.Pending));
       expect(a.verifiedAt).to.equal(0n);
       expect(a.challenge).to.not.equal(ethers.ZeroHash);
       expect(await registry.isVerified(deployco.address)).to.equal(false);
@@ -64,7 +68,7 @@ describe("AdvertiserRegistry", function () {
       await registry.connect(impostor).register("DeployCo", "deployco.com");
 
       expect(await registry.challengeOf(deployco.address)).to.not.equal(
-        await registry.challengeOf(impostor.address)
+        await registry.challengeOf(impostor.address),
       );
     });
 
@@ -73,7 +77,7 @@ describe("AdvertiserRegistry", function () {
 
       await registry.connect(deployco).register("DeployCo", "deployco.com");
       await expect(
-        registry.connect(deployco).register("DeployCo", "deployco.com")
+        registry.connect(deployco).register("DeployCo", "deployco.com"),
       ).to.be.revertedWithCustomError(registry, "AlreadyRegistered");
     });
 
@@ -82,11 +86,11 @@ describe("AdvertiserRegistry", function () {
 
       await expect(registry.connect(deployco).register("", "deployco.com")).to.be.revertedWithCustomError(
         registry,
-        "EmptyName"
+        "EmptyName",
       );
       await expect(registry.connect(deployco).register("DeployCo", "")).to.be.revertedWithCustomError(
         registry,
-        "EmptyDomain"
+        "EmptyDomain",
       );
     });
   });
@@ -104,11 +108,11 @@ describe("AdvertiserRegistry", function () {
           true,
           await registry.canonicalHash("deployco"),
           await registry.canonicalHash("deployco.com"),
-          anyValue
+          anyValue,
         );
 
       expect(await registry.isVerified(deployco.address)).to.equal(true);
-      expect(await registry.statusOf(deployco.address)).to.equal(STATUS.Verified);
+      expect(await registry.statusOf(deployco.address)).to.equal(BigInt(Status.Verified));
       expect(await registry.verifiedOwnerOfName("DeployCo")).to.equal(deployco.address);
       expect(await registry.verifiedOwnerOfDomain("deployco.com")).to.equal(deployco.address);
     });
@@ -119,12 +123,12 @@ describe("AdvertiserRegistry", function () {
       await registry.connect(deployco).register("DeployCo", "deployco.com");
 
       await expect(
-        registry.connect(outsider).setVerified(deployco.address, true)
+        registry.connect(outsider).setVerified(deployco.address, true),
       ).to.be.revertedWithCustomError(registry, "AccessControlUnauthorizedAccount");
 
       // Even the admin cannot attest without holding the role.
       await expect(
-        registry.connect(admin).setVerified(deployco.address, true)
+        registry.connect(admin).setVerified(deployco.address, true),
       ).to.be.revertedWithCustomError(registry, "AccessControlUnauthorizedAccount");
     });
 
@@ -132,7 +136,7 @@ describe("AdvertiserRegistry", function () {
       const { registry, attestor, outsider } = await loadFixture(deployFixture);
 
       await expect(
-        registry.connect(attestor).setVerified(outsider.address, true)
+        registry.connect(attestor).setVerified(outsider.address, true),
       ).to.be.revertedWithCustomError(registry, "NotRegistered");
     });
 
@@ -181,7 +185,7 @@ describe("AdvertiserRegistry", function () {
       await registry.connect(attestor).setVerified(impostor.address, true);
 
       await registry.connect(attestor).setVerified(impostor.address, false);
-      expect(await registry.statusOf(impostor.address)).to.equal(STATUS.Revoked);
+      expect(await registry.statusOf(impostor.address)).to.equal(BigInt(Status.Revoked));
       expect(await registry.verifiedOwnerOfName("DeployCo")).to.equal(ethers.ZeroAddress);
 
       await registry.connect(deployco).register("DeployCo", "deployco.com");
@@ -200,11 +204,11 @@ describe("AdvertiserRegistry", function () {
 
       await expect(registry.connect(deployco).updateClaim("DeployCo", "deployco.io")).to.emit(
         registry,
-        "ClaimUpdated"
+        "ClaimUpdated",
       );
 
       expect(await registry.isVerified(deployco.address)).to.equal(false);
-      expect(await registry.statusOf(deployco.address)).to.equal(STATUS.Pending);
+      expect(await registry.statusOf(deployco.address)).to.equal(BigInt(Status.Pending));
       expect(await registry.challengeOf(deployco.address)).to.not.equal(oldChallenge);
       expect(await registry.verifiedOwnerOfName("DeployCo")).to.equal(ethers.ZeroAddress);
       expect(await registry.verifiedOwnerOfDomain("deployco.com")).to.equal(ethers.ZeroAddress);
@@ -214,7 +218,7 @@ describe("AdvertiserRegistry", function () {
       const { registry, outsider } = await loadFixture(deployFixture);
 
       await expect(
-        registry.connect(outsider).updateClaim("Whatever", "whatever.com")
+        registry.connect(outsider).updateClaim("Whatever", "whatever.com"),
       ).to.be.revertedWithCustomError(registry, "NotRegistered");
     });
   });
@@ -225,9 +229,11 @@ describe("AdvertiserRegistry", function () {
 
       expect(await registry.canonicalHash("DeployCo")).to.equal(await registry.canonicalHash("deployco"));
       expect(await registry.canonicalHash("DEPLOYCO.COM")).to.equal(
-        await registry.canonicalHash("deployco.com")
+        await registry.canonicalHash("deployco.com"),
       );
-      expect(await registry.canonicalHash("DeployCo")).to.not.equal(await registry.canonicalHash("HostFast"));
+      expect(await registry.canonicalHash("DeployCo")).to.not.equal(
+        await registry.canonicalHash("HostFast"),
+      );
     });
   });
 

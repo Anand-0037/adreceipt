@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IAdvertiserRegistry} from "./interfaces/IAdvertiserRegistry.sol";
+import {Canonical} from "./libraries/Canonical.sol";
 
 /// @title AdvertiserRegistry
 /// @notice Identity layer of Disclosed. An advertiser claims a brand name and a
@@ -228,19 +229,10 @@ contract AdvertiserRegistry is AccessControl, IAdvertiserRegistry {
     }
 
     function _hash(string calldata value) private pure returns (bytes32) {
-        return _hashMemory(value);
+        return Canonical.hash(value);
     }
 
-    /// @dev ASCII-lowercases before hashing so "DeployCo" and "deployco" are the
-    ///      same claim. Non-ASCII bytes pass through untouched.
     function _hashMemory(string memory value) private pure returns (bytes32) {
-        bytes memory b = bytes(value);
-        for (uint256 i = 0; i < b.length; ++i) {
-            uint8 c = uint8(b[i]);
-            if (c >= 0x41 && c <= 0x5A) {
-                b[i] = bytes1(c + 32);
-            }
-        }
-        return keccak256(b);
+        return Canonical.hash(value);
     }
 }
