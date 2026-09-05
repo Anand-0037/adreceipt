@@ -1,0 +1,30 @@
+specVersion: 1.3.0
+description: Payment receipts attached to sponsored AI recommendations.
+repository: https://github.com/Anand-0037/adreceipt
+schema:
+  file: ./schema.graphql
+indexerHints:
+  prune: auto
+dataSources:
+  - kind: ethereum
+    name: PlacementSettlementV1
+    network: sepolia
+    source:
+      # Build-only sentinel. Replace with the deployed contract and its start block before deployment.
+      address: "0x0000000000000000000000000000000000000000"
+      abi: PlacementSettlementV1
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Receipt
+        - CampaignSummary
+      abis:
+        - name: PlacementSettlementV1
+          file: ./abis/PlacementSettlementV1.json
+      eventHandlers:
+        - event: ReceiptCreated(indexed bytes32,indexed bytes32,indexed bytes32,address,address,address,address,uint256,uint64,uint16)
+          handler: handleReceiptCreated
+      file: ./src/mapping.ts
