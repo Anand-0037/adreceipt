@@ -1,0 +1,19 @@
+{
+  "name": "disclosed-contracts",
+  "version": "0.1.0",
+  "description": "Disclosed - verifiable sponsorship disclosure registry. Smart contracts.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "clean": "hardhat clean"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.17"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0"
+  }
+}
