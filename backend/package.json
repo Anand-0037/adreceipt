@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "verify:live": "ts-node src/scripts/verify-live.ts",
     "verify:live:dry": "ts-node src/scripts/verify-live.ts --dry-run",
-    "cre:simulate": "ts-node cre/src/simulate.ts"
+    "cre:simulate": "ts-node cre/src/simulate.ts",
+    "fund": "ts-node src/scripts/fund.ts",
+    "fund:dry": "ts-node src/scripts/fund.ts --dry-run"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
