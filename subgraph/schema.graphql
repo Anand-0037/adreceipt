@@ -15,11 +15,3 @@ type Receipt @entity(immutable: true) {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
 }
-
-type CampaignSummary @entity(immutable: false) {
-  id: Bytes!
-  receiptCount: BigInt!
-  totalPaid: BigInt!
-  firstSettledAt: BigInt!
-  lastSettledAt: BigInt!
-}

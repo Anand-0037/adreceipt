@@ -1,8 +1,5 @@
-import { BigInt } from "@graphprotocol/graph-ts";
 import { ReceiptCreated } from "../generated/PlacementSettlementV1/PlacementSettlementV1";
-import { CampaignSummary, Receipt } from "../generated/schema";
-
-const ONE = BigInt.fromI32(1);
+import { Receipt } from "../generated/schema";
 
 export function handleReceiptCreated(event: ReceiptCreated): void {
   const receipt = new Receipt(event.params.receiptId);
@@ -21,17 +18,4 @@ export function handleReceiptCreated(event: ReceiptCreated): void {
   receipt.blockNumber = event.block.number;
   receipt.blockTimestamp = event.block.timestamp;
   receipt.save();
-
-  let campaign = CampaignSummary.load(event.params.campaignId);
-  if (campaign == null) {
-    campaign = new CampaignSummary(event.params.campaignId);
-    campaign.receiptCount = BigInt.zero();
-    campaign.totalPaid = BigInt.zero();
-    campaign.firstSettledAt = event.params.settledAt;
-  }
-
-  campaign.receiptCount = campaign.receiptCount.plus(ONE);
-  campaign.totalPaid = campaign.totalPaid.plus(event.params.amount);
-  campaign.lastSettledAt = event.params.settledAt;
-  campaign.save();
 }

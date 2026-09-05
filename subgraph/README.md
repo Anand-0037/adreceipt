@@ -4,6 +4,9 @@ This Subgraph indexes payments that the settlement contract has successfully att
 sponsored recommendation. It does not infer sponsorship from deposits, advertiser claims, or
 application-provided flags.
 
+The initial schema intentionally stores receipts only. It does not aggregate campaign spend across
+assets because totals with mixed denominations are not meaningful.
+
 ## Current boundary
 
 The schema and mapping compile against the proposed `ReceiptCreated` event. The ABI is a candidate

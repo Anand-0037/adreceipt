@@ -1,5 +1,11 @@
-query ReceiptsBySubject($subjectHash: Bytes!) {
-  receipts(first: 2, where: { subjectHash: $subjectHash }, orderBy: blockNumber, orderDirection: desc) {
+query ReceiptsBySubject($subjectHash: Bytes!, $first: Int = 20, $skip: Int = 0) {
+  receipts(
+    first: $first
+    skip: $skip
+    where: { subjectHash: $subjectHash }
+    orderBy: blockNumber
+    orderDirection: desc
+  ) {
     id
     campaignId
     subjectHash
