@@ -9,3 +9,8 @@ coverage.json
 !.env.example
 deployments/localhost.json
 deployments/hardhat.json
+
+# backend
+backend/node_modules/
+backend/dist/
+backend/.data/
