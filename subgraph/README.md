@@ -20,15 +20,16 @@ manifest until both values are replaced with the real testnet deployment.
 From the repository root:
 
 ```bash
-npm ci --prefix subgraph
+npm install --prefix subgraph
 npm run graph:codegen
 npm run graph:build
 npm run graph:test
 ```
 
 Graph dependencies are isolated in this directory. The root `npm ci`, `npm run build`, and
-`npm test` commands remain contract-only; CI installs both dependency trees and runs
-`build:all` plus `test:all`.
+`npm test` commands remain contract-only; CI installs both dependency trees and runs `build:all`
+plus `test:all`. The Subgraph dependency tree uses exact direct versions but does not commit its
+generated npm lockfile. The package-local `.npmrc` prevents npm from recreating it.
 
 Before deploying, verify all of the following:
 
