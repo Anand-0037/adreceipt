@@ -5,7 +5,7 @@ them without needing a private explanation.
 
 ## Workflow
 
-1. Start from an issue with one owner and a testable outcome.
+1. Start feature work from an issue with one owner and a testable outcome.
 2. Create a short branch from the latest `main`, such as `feat/settlement-receipts`,
    `fix/quote-replay`, or `docs/receipt-model`.
 3. Change only the files needed for that issue.
@@ -14,8 +14,10 @@ them without needing a private explanation.
    and what remains blocked.
 6. Get one teammate review and green CI before squash-merging.
 
-Do not push directly to `main`. Do not combine unrelated cleanup, product work, and dependency
-changes in one pull request.
+Feature implementation must not be pushed directly to `main`. Repository maintainers may land a
+small documentation or configuration correction directly when it is independently reviewable,
+verified, and does not change application behavior or dependencies. Do not combine unrelated
+cleanup, product work, and dependency changes in one pull request.
 
 ## Local checks
 
