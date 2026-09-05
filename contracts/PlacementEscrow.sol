@@ -197,12 +197,48 @@ contract PlacementEscrow is AccessControl, ReentrancyGuard, Pausable, IPlacement
         return _placements[id];
     }
 
-    function placementsOf(address advertiser) external view returns (uint256[] memory) {
-        return _byAdvertiser[advertiser];
+    function placementsOf(
+        address advertiser,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (uint256[] memory) {
+        uint256[] storage ids = _byAdvertiser[advertiser];
+        uint256 len = ids.length;
+        if (offset >= len) {
+            return new uint256[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > len || end < offset) {
+            end = len;
+        }
+        uint256 size = end - offset;
+        uint256[] memory result = new uint256[](size);
+        for (uint256 i = 0; i < size; i++) {
+            result[i] = ids[offset + i];
+        }
+        return result;
     }
 
-    function placementsInCategory(string calldata category) external view returns (uint256[] memory) {
-        return _byCategory[Canonical.hash(category)];
+    function placementsInCategory(
+        string calldata category,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (uint256[] memory) {
+        uint256[] storage ids = _byCategory[Canonical.hash(category)];
+        uint256 len = ids.length;
+        if (offset >= len) {
+            return new uint256[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > len || end < offset) {
+            end = len;
+        }
+        uint256 size = end - offset;
+        uint256[] memory result = new uint256[](size);
+        for (uint256 i = 0; i < size; i++) {
+            result[i] = ids[offset + i];
+        }
+        return result;
     }
 
     function categoryLifetime(string calldata category) external view returns (uint256) {

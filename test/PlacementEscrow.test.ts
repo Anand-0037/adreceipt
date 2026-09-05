@@ -90,7 +90,7 @@ describe("PlacementEscrow", function () {
       await escrow.connect(deployco).createPlacement("backend hosting", { value: ethers.parseEther("2") });
 
       expect(await escrow.categoryLifetime("BACKEND HOSTING")).to.equal(ethers.parseEther("3"));
-      expect(await escrow.placementsInCategory("backend hosting")).to.deep.equal([0n, 1n]);
+      expect(await escrow.placementsInCategory("backend hosting", 0, 10)).to.deep.equal([0n, 1n]);
     });
 
     it("rejects an advertiser that has registered but is not yet verified", async function () {
@@ -271,6 +271,86 @@ describe("PlacementEscrow", function () {
 
       expect(await escrow.depositedSince(outsider.address, 0)).to.equal(0n);
       expect(await escrow.lifetimeDeposited(outsider.address)).to.equal(0n);
+    });
+  });
+
+  describe("paginated enumeration views", function () {
+    it("supports normal pagination", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", {
+          value: ethers.parseEther("1"),
+        });
+      }
+
+      // placementsOf paginated
+      const page1 = await escrow.placementsOf(deployco.address, 0, 2);
+      expect(page1).to.deep.equal([0n, 1n]);
+
+      const page2 = await escrow.placementsOf(deployco.address, 2, 2);
+      expect(page2).to.deep.equal([2n, 3n]);
+
+      // placementsInCategory paginated
+      const catPage1 = await escrow.placementsInCategory("backend hosting", 0, 2);
+      expect(catPage1).to.deep.equal([0n, 1n]);
+
+      const catPage2 = await escrow.placementsInCategory("backend hosting", 2, 2);
+      expect(catPage2).to.deep.equal([2n, 3n]);
+    });
+
+    it("clamps limit larger than remaining items", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", {
+          value: ethers.parseEther("1"),
+        });
+      }
+
+      const resOf = await escrow.placementsOf(deployco.address, 3, 10);
+      expect(resOf).to.deep.equal([3n, 4n]);
+
+      const resCat = await escrow.placementsInCategory("backend hosting", 3, 10);
+      expect(resCat).to.deep.equal([3n, 4n]);
+    });
+
+    it("clamps offset near end without reverting", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", {
+          value: ethers.parseEther("1"),
+        });
+      }
+
+      const resOf = await escrow.placementsOf(deployco.address, 4, 5);
+      expect(resOf).to.deep.equal([4n]);
+
+      const resCat = await escrow.placementsInCategory("backend hosting", 4, 5);
+      expect(resCat).to.deep.equal([4n]);
+    });
+
+    it("returns empty array when offset >= length", async function () {
+      const { escrow, deployco } = await loadFixture(deployFixture);
+
+      for (let i = 0; i < 5; i++) {
+        await escrow.connect(deployco).createPlacement("backend hosting", {
+          value: ethers.parseEther("1"),
+        });
+      }
+
+      const resOfExact = await escrow.placementsOf(deployco.address, 5, 2);
+      expect(resOfExact).to.deep.equal([]);
+
+      const resOfBeyond = await escrow.placementsOf(deployco.address, 10, 2);
+      expect(resOfBeyond).to.deep.equal([]);
+
+      const resCatExact = await escrow.placementsInCategory("backend hosting", 5, 2);
+      expect(resCatExact).to.deep.equal([]);
+
+      const resCatBeyond = await escrow.placementsInCategory("backend hosting", 10, 2);
+      expect(resCatBeyond).to.deep.equal([]);
     });
   });
 
