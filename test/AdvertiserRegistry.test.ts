@@ -223,6 +223,188 @@ describe("AdvertiserRegistry", function () {
     });
   });
 
+  // Issue #1: `Canonical.hash` folds ASCII case and nothing else, so two strings a
+  // human reads as one brand hash to two keys and the uniqueness check in
+  // `setVerified` never fires. The claim surface is gated instead.
+  describe("claim validation", function () {
+    // U+0435 CYRILLIC SMALL LETTER IE. Renders as a Latin "e"; encodes as 0xd0 0xb5.
+    const CYRILLIC_IE = "е";
+    const HOMOGLYPH_NAME = `D${CYRILLIC_IE}ployCo`;
+    const HOMOGLYPH_DOMAIN = `d${CYRILLIC_IE}ployco.com`;
+
+    it("refuses a brand name carrying a homoglyph", async function () {
+      const { registry, impostor } = await loadFixture(deployFixture);
+
+      // Index 1 is the first byte of the two-byte UTF-8 sequence.
+      await expect(registry.connect(impostor).register(HOMOGLYPH_NAME, "deploy-co.net"))
+        .to.be.revertedWithCustomError(registry, "InvalidNameCharacter")
+        .withArgs(1, "0xd0");
+    });
+
+    it("refuses a domain carrying a homoglyph", async function () {
+      const { registry, impostor } = await loadFixture(deployFixture);
+
+      await expect(registry.connect(impostor).register("Impostor", HOMOGLYPH_DOMAIN))
+        .to.be.revertedWithCustomError(registry, "InvalidDomainCharacter")
+        .withArgs(1, "0xd0");
+    });
+
+    it("closes the issue #1 path: no second verified claim on one rendered brand", async function () {
+      const { registry, attestor, deployco, impostor } = await loadFixture(deployFixture);
+
+      await registry.connect(deployco).register("DeployCo", "deployco.com");
+      await registry.connect(attestor).setVerified(deployco.address, true);
+
+      // The homoglyph spelling cannot be claimed at all.
+      await expect(
+        registry.connect(impostor).register(HOMOGLYPH_NAME, "xn--dployco-8cf.com"),
+      ).to.be.revertedWithCustomError(registry, "InvalidNameCharacter");
+
+      // Spelled in ASCII it is the same brand, so the uniqueness check does fire.
+      await registry.connect(impostor).register("deployco", "xn--dployco-8cf.com");
+      await expect(registry.connect(attestor).setVerified(impostor.address, true))
+        .to.be.revertedWithCustomError(registry, "NameClaimedByAnother")
+        .withArgs(deployco.address);
+
+      expect(await registry.isVerified(impostor.address)).to.equal(false);
+      expect(await registry.verifiedOwnerOfName("DeployCo")).to.equal(deployco.address);
+    });
+
+    it("gates updateClaim on the same rules", async function () {
+      const { registry, deployco } = await loadFixture(deployFixture);
+
+      await registry.connect(deployco).register("DeployCo", "deployco.com");
+
+      await expect(
+        registry.connect(deployco).updateClaim(HOMOGLYPH_NAME, "deployco.com"),
+      ).to.be.revertedWithCustomError(registry, "InvalidNameCharacter");
+      await expect(
+        registry.connect(deployco).updateClaim("DeployCo", HOMOGLYPH_DOMAIN),
+      ).to.be.revertedWithCustomError(registry, "InvalidDomainCharacter");
+
+      // The claim it already held is untouched by the rejected amendments.
+      const a = await registry.getAdvertiser(deployco.address);
+      expect(a.name).to.equal("DeployCo");
+      expect(a.domain).to.equal("deployco.com");
+    });
+
+    it("accepts a punycode domain - it is real, and its brand name still is not", async function () {
+      const { registry, attestor, impostor } = await loadFixture(deployFixture);
+
+      // Whoever owns xn--dployco-8cf.com can answer its DNS challenge honestly, so
+      // the domain is theirs. The brand it decodes to is not on offer.
+      await registry.connect(impostor).register("Impostor Cloud", "xn--dployco-8cf.com");
+      await registry.connect(attestor).setVerified(impostor.address, true);
+
+      expect(await registry.verifiedOwnerOfDomain("xn--dployco-8cf.com")).to.equal(impostor.address);
+      expect(await registry.verifiedOwnerOfName("DeployCo")).to.equal(ethers.ZeroAddress);
+    });
+
+    describe("names", function () {
+      it("takes printable ASCII, including an interior space", async function () {
+        const { registry, deployco, impostor } = await loadFixture(deployFixture);
+
+        await expect(registry.connect(deployco).register("DeployCo Cloud", "deployco.com")).to.not.be
+          .reverted;
+        await expect(registry.connect(impostor).register("A&B (Ltd.) #1 - 50% off!", "a-b.co.uk")).to.not
+          .be.reverted;
+      });
+
+      it("rejects control characters", async function () {
+        const { registry, deployco } = await loadFixture(deployFixture);
+
+        await expect(registry.connect(deployco).register("Deploy\u0000Co", "deployco.com"))
+          .to.be.revertedWithCustomError(registry, "InvalidNameCharacter")
+          .withArgs(6, "0x00");
+        await expect(
+          registry.connect(deployco).register("Deploy\tCo", "deployco.com"),
+        ).to.be.revertedWithCustomError(registry, "InvalidNameCharacter");
+        await expect(
+          registry.connect(deployco).register("Deploy\u007fCo", "deployco.com"),
+        ).to.be.revertedWithCustomError(registry, "InvalidNameCharacter");
+      });
+
+      it("rejects padding and doubled spaces, which read as another claim", async function () {
+        const { registry, deployco } = await loadFixture(deployFixture);
+
+        for (const name of [" DeployCo", "DeployCo ", "Deploy  Co", " "]) {
+          await expect(
+            registry.connect(deployco).register(name, "deployco.com"),
+          ).to.be.revertedWithCustomError(registry, "MalformedName");
+        }
+      });
+
+      it("caps the length", async function () {
+        const { registry, deployco, impostor } = await loadFixture(deployFixture);
+
+        const max = Number(await registry.MAX_NAME_LENGTH());
+        await expect(registry.connect(deployco).register("D".repeat(max), "deployco.com")).to.not.be
+          .reverted;
+        await expect(registry.connect(impostor).register("D".repeat(max + 1), "impostor.com"))
+          .to.be.revertedWithCustomError(registry, "NameTooLong")
+          .withArgs(max + 1, max);
+      });
+    });
+
+    describe("domains", function () {
+      it("takes letters, digits, hyphens and dots", async function () {
+        const { registry, deployco, impostor } = await loadFixture(deployFixture);
+
+        await expect(registry.connect(deployco).register("DeployCo", "deploy-co2.eu.example.com")).to.not
+          .be.reverted;
+        await expect(registry.connect(impostor).register("Impostor", "DeployCo.COM")).to.not.be.reverted;
+      });
+
+      it("rejects characters that are not letter, digit, hyphen or dot", async function () {
+        const { registry, deployco } = await loadFixture(deployFixture);
+
+        await expect(registry.connect(deployco).register("DeployCo", "deploy_co.com"))
+          .to.be.revertedWithCustomError(registry, "InvalidDomainCharacter")
+          .withArgs(6, "0x5f");
+        for (const domain of ["deployco.com/path", "deployco com", "https://deployco.com"]) {
+          await expect(
+            registry.connect(deployco).register("DeployCo", domain),
+          ).to.be.revertedWithCustomError(registry, "InvalidDomainCharacter");
+        }
+      });
+
+      it("rejects spellings that name a host another spelling already names", async function () {
+        const { registry, deployco } = await loadFixture(deployFixture);
+
+        const malformed = [
+          "deployco.com.", // trailing dot
+          ".deployco.com", // leading dot
+          "deployco..com", // empty label
+          "deployco", // no dot at all - nothing to resolve a TXT record against
+          "-deployco.com", // label opens on a hyphen
+          "deployco-.com", // label closes on one
+          "deployco.com-",
+          `${"a".repeat(64)}.com`, // label past 63
+        ];
+
+        for (const domain of malformed) {
+          await expect(
+            registry.connect(deployco).register("DeployCo", domain),
+          ).to.be.revertedWithCustomError(registry, "MalformedDomain");
+        }
+      });
+
+      it("caps the length at the DNS limit", async function () {
+        const { registry, deployco, impostor } = await loadFixture(deployFixture);
+
+        const max = Number(await registry.MAX_DOMAIN_LENGTH());
+        const label = "a".repeat(Number(await registry.MAX_LABEL_LENGTH()));
+        const exact = [label, label, label, "b".repeat(61)].join(".");
+        expect(exact.length).to.equal(max);
+
+        await expect(registry.connect(deployco).register("DeployCo", exact)).to.not.be.reverted;
+        await expect(registry.connect(impostor).register("Impostor", [exact, "com"].join(".")))
+          .to.be.revertedWithCustomError(registry, "DomainTooLong")
+          .withArgs(max + 4, max);
+      });
+    });
+  });
+
   describe("canonicalHash", function () {
     it("is case-insensitive for ASCII", async function () {
       const { registry } = await loadFixture(deployFixture);
