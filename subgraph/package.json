@@ -7,7 +7,7 @@
   "scripts": {
     "codegen": "graph codegen --output-dir generated subgraph.yaml",
     "build": "npm run codegen && graph build subgraph.yaml",
-    "test": "graph test && node --test scripts/*.test.mjs",
+    "test": "npm run codegen && graph test && node --test scripts/*.test.mjs",
     "configure": "node scripts/configure-deployment.mjs",
     "deploy:check": "node scripts/validate-deployment.mjs",
     "deploy:studio": "npm run deploy:check && graph deploy \"${SUBGRAPH_SLUG:-adreceipt}\" subgraph.yaml --version-label \"${SUBGRAPH_VERSION:-0.0.1}\""

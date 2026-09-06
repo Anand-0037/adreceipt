@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "hardhat clean",
     "coverage": "hardhat coverage",
+    "deploy:settlement": "hardhat run scripts/deploy-settlement.ts --network sepolia",
     "graph:codegen": "npm --prefix subgraph run codegen",
     "graph:build": "npm --prefix subgraph run build",
     "graph:test": "npm --prefix subgraph test"

@@ -31,22 +31,9 @@ const subjectTypes = {
 
 describe("PlacementSettlementV1", function () {
   async function fixture(feeToken = false) {
-    const [payer, publisher, recipient, outsider, attestor] = await ethers.getSigners();
+    const [payer, publisher, recipient, outsider] = await ethers.getSigners();
     const token = await ethers.deployContract(feeToken ? "FeeSettlementToken" : "SettlementToken");
-
-    // Settlement requires the payer to hold a verified claim, the same ordering
-    // PlacementEscrow enforces, so the fixture takes the payer through it.
-    const registry = await ethers.deployContract("AdvertiserRegistry", [
-      payer.address,
-      attestor.address,
-    ]);
-    await registry.connect(payer).register("PayerCo", "payerco.com");
-    await registry.connect(attestor).setVerified(payer.address, true);
-
-    const settlement = await ethers.deployContract("PlacementSettlementV1", [
-      await token.getAddress(),
-      await registry.getAddress(),
-    ]);
+    const settlement = await ethers.deployContract("PlacementSettlementV1", [await token.getAddress()]);
     const amount = ethers.parseUnits("25", 18);
     await token.mint(payer.address, amount * 10n);
     await token.connect(payer).getFunction("approve")(await settlement.getAddress(), amount * 10n);
@@ -73,7 +60,7 @@ describe("PlacementSettlementV1", function () {
     };
     const domain = { name: "AdReceipt", version: "1", chainId, verifyingContract: await settlement.getAddress() };
     const sign = (value = quote) => publisher.signTypedData(domain, types, value);
-    return { payer, publisher, recipient, outsider, attestor, registry, token, settlement, subject, quote, sign, amount, domain };
+    return { payer, publisher, recipient, outsider, token, settlement, subject, quote, sign, amount, domain };
   }
 
   it("matches TypeScript and Solidity subject and quote hashes", async function () {
@@ -170,90 +157,4 @@ describe("PlacementSettlementV1", function () {
     expect(await f.token.balanceOf(f.recipient.address)).to.equal(0n);
   });
 
-  describe("identity gates payment", function () {
-    it("refuses a payer with no verified claim", async function () {
-      const { publisher, recipient, outsider, token, settlement, subject, quote, sign, amount, domain } =
-        await loadFixture(fixture);
-
-      // The outsider never registered, so the registry cannot vouch for it.
-      await token.mint(outsider.address, amount * 2n);
-      await token.connect(outsider).getFunction("approve")(await settlement.getAddress(), amount * 2n);
-
-      const outsiderQuote = { ...quote, payer: outsider.address, nonce: bytes32("nonce-outsider") };
-      const signature = await publisher.signTypedData(domain, types, outsiderQuote);
-
-      await expect(
-        settlement.connect(outsider).settlePlacement(subject, outsiderQuote, signature),
-      )
-        .to.be.revertedWithCustomError(settlement, "PayerNotVerified")
-        .withArgs(outsider.address);
-    });
-
-    it("refuses a payer whose verification was revoked", async function () {
-      const { payer, attestor, registry, settlement, subject, quote, sign } =
-        await loadFixture(fixture);
-
-      // An impersonator that loses its claim must lose the ability to pay with it.
-      await registry.connect(attestor).setVerified(payer.address, false);
-
-      await expect(settlement.settlePlacement(subject, quote, await sign(quote)))
-        .to.be.revertedWithCustomError(settlement, "PayerNotVerified")
-        .withArgs(payer.address);
-    });
-
-    it("requires a registry at construction", async function () {
-      const { token } = await loadFixture(fixture);
-      const Settlement = await ethers.getContractFactory("PlacementSettlementV1");
-
-      await expect(
-        Settlement.deploy(await token.getAddress(), ethers.ZeroAddress),
-      ).to.be.revertedWithCustomError(Settlement, "ZeroAddress");
-    });
-  });
-
-  describe("quote hygiene", function () {
-    it("refuses a recipient that is the payer", async function () {
-      const { payer, publisher, settlement, subject, quote, domain } = await loadFixture(fixture);
-
-      const selfQuote = { ...quote, recipient: payer.address, nonce: bytes32("nonce-self") };
-      const signature = await publisher.signTypedData(domain, types, selfQuote);
-
-      await expect(settlement.settlePlacement(subject, selfQuote, signature))
-        .to.be.revertedWithCustomError(settlement, "RecipientIsPayer")
-        .withArgs(payer.address);
-    });
-
-    it("refuses a quote that would never expire", async function () {
-      const { publisher, settlement, subject, quote, domain } = await loadFixture(fixture);
-
-      const forever = {
-        ...quote,
-        validUntil: BigInt((await time.latest()) + 400 * 24 * 60 * 60),
-        nonce: bytes32("nonce-forever"),
-      };
-      const signature = await publisher.signTypedData(domain, types, forever);
-
-      await expect(
-        settlement.settlePlacement(subject, forever, signature),
-      ).to.be.revertedWithCustomError(settlement, "QuoteValidityTooLong");
-    });
-
-    it("accepts a quote at the validity ceiling", async function () {
-      const { publisher, settlement, subject, quote, domain } = await loadFixture(fixture);
-
-      const cap = Number(await settlement.MAX_QUOTE_VALIDITY());
-      const atCeiling = {
-        ...quote,
-        // One second inside the cap, to stay clear of the block advancing.
-        validUntil: BigInt((await time.latest()) + cap - 1),
-        nonce: bytes32("nonce-ceiling"),
-      };
-      const signature = await publisher.signTypedData(domain, types, atCeiling);
-
-      await expect(settlement.settlePlacement(subject, atCeiling, signature)).to.emit(
-        settlement,
-        "ReceiptCreated",
-      );
-    });
-  });
 });

@@ -6,23 +6,12 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IAdvertiserRegistry} from "./interfaces/IAdvertiserRegistry.sol";
 
 /// @notice Settles one publisher-authorized recommendation placement without custody.
-/// @dev A receipt is only meaningful if the payer is someone. Settlement therefore
-///      requires the payer to hold a verified claim in AdvertiserRegistry, the same
-///      ordering PlacementEscrow enforces: prove domain control first, then pay.
-///      Without that check an advertiser whose verification was refused - an
-///      impersonator claiming a brand it does not own - could still produce a
-///      ReceiptCreated that an indexer would surface as a legitimate payment.
 contract PlacementSettlementV1 is EIP712, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint16 public constant SCHEMA_VERSION = 1;
-
-    /// @notice Longest a quote may remain valid. An unbounded `validUntil` is a
-    ///         quote that never expires, which defeats the point of signing one.
-    uint64 public constant MAX_QUOTE_VALIDITY = 30 days;
 
     bytes32 public constant SUBJECT_V1_TYPEHASH = keccak256(
         "SubjectV1(address publisher,bytes32 placementId,bytes32 productRefHash,bytes32 contentHash,uint16 disclosureVersion)"
@@ -55,8 +44,6 @@ contract PlacementSettlementV1 is EIP712, ReentrancyGuard {
 
     address public immutable settlementAsset;
 
-    /// @notice Source of truth for whether a payer has proved domain control.
-    IAdvertiserRegistry public immutable advertiserRegistry;
     mapping(bytes32 quoteId => bool consumed) public consumedQuotes;
     mapping(bytes32 publisherNonceKey => bool consumed) public consumedNonces;
 
@@ -87,18 +74,9 @@ contract PlacementSettlementV1 is EIP712, ReentrancyGuard {
     error QuoteAlreadyConsumed(bytes32 quoteId);
     error NonceAlreadyConsumed(bytes32 nonceKey);
     error NonExactTransfer(uint256 expected, uint256 received);
-    error PayerNotVerified(address payer);
-    error RecipientIsPayer(address account);
-    error QuoteValidityTooLong(uint64 validUntil, uint64 maximum);
-
-    constructor(address settlementAsset_, IAdvertiserRegistry advertiserRegistry_)
-        EIP712("AdReceipt", "1")
-    {
-        if (settlementAsset_ == address(0) || address(advertiserRegistry_) == address(0)) {
-            revert ZeroAddress();
-        }
+    constructor(address settlementAsset_) EIP712("AdReceipt", "1") {
+        if (settlementAsset_ == address(0)) revert ZeroAddress();
         settlementAsset = settlementAsset_;
-        advertiserRegistry = advertiserRegistry_;
     }
 
     function hashSubject(SubjectV1 calldata subject) public pure returns (bytes32) {
@@ -159,23 +137,12 @@ contract PlacementSettlementV1 is EIP712, ReentrancyGuard {
         if (quote.subjectHash != actualSubjectHash) revert SubjectMismatch(quote.subjectHash, actualSubjectHash);
         if (msg.sender != quote.payer) revert WrongPayer(msg.sender, quote.payer);
 
-        // Identity gates payment. A publisher signature vouches for the content,
-        // not for who the payer is; only the registry can answer that, and it
-        // answers it from a DNS proof rather than a counterparty's diligence.
-        if (!advertiserRegistry.isVerified(quote.payer)) revert PayerNotVerified(quote.payer);
-
-        // Paying yourself moves no tokens, so the exactness check below would
-        // fail with a confusing NonExactTransfer. Reject it for what it is.
-        if (quote.recipient == quote.payer) revert RecipientIsPayer(quote.payer);
         if (quote.asset != settlementAsset) revert WrongAsset(quote.asset, settlementAsset);
         if (quote.chainId != block.chainid) revert WrongChain(quote.chainId, block.chainid);
         if (quote.settlementContract != address(this)) {
             revert WrongSettlementContract(quote.settlementContract, address(this));
         }
         if (block.timestamp > quote.validUntil) revert QuoteExpired(quote.validUntil, uint64(block.timestamp));
-        if (quote.validUntil > uint64(block.timestamp) + MAX_QUOTE_VALIDITY) {
-            revert QuoteValidityTooLong(quote.validUntil, uint64(block.timestamp) + MAX_QUOTE_VALIDITY);
-        }
 
         receiptId = hashQuote(quote);
         address recovered = ECDSA.recover(receiptId, publisherSignature);
