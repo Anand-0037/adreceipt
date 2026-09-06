@@ -1,15 +1,22 @@
 {
-  "name": "disclosed-contracts",
+  "name": "adreceipt",
   "version": "0.1.0",
-  "description": "Disclosed - verifiable sponsorship disclosure registry. Smart contracts.",
+  "description": "Verifiable payment receipts for sponsored AI recommendations.",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "hardhat compile",
-    "test": "hardhat test",
+    "build": "npm run contracts:build",
+    "build:all": "npm run contracts:build && npm run graph:build",
+    "contracts:build": "hardhat compile",
+    "test": "npm run test:contracts",
+    "test:all": "npm run test:contracts && npm run graph:test",
+    "test:contracts": "hardhat test",
     "typecheck": "tsc --noEmit",
     "clean": "hardhat clean",
-    "coverage": "hardhat coverage"
+    "coverage": "hardhat coverage",
+    "graph:codegen": "npm --prefix subgraph run codegen",
+    "graph:build": "npm --prefix subgraph run build",
+    "graph:test": "npm --prefix subgraph test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
