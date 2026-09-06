@@ -22,7 +22,8 @@ const receiptCreated = {
 };
 
 test("accepts a real contract address and positive start block", () => {
-  assert.deepEqual(validateManifest(`address: "${address}"\nstartBlock: 12345\n`), {
+  assert.deepEqual(validateManifest(`network: sepolia\naddress: "${address}"\nstartBlock: 12345\n`), {
+    network: "sepolia",
     address,
     startBlock: 12345,
   });
@@ -32,18 +33,31 @@ test("rejects the zero-address build sentinel", () => {
   assert.throws(
     () =>
       validateManifest(
-        'address: "0x0000000000000000000000000000000000000000"\nstartBlock: 12345\n',
+        'network: sepolia\naddress: "0x0000000000000000000000000000000000000000"\nstartBlock: 12345\n',
       ),
     /zero-address/,
   );
 });
 
 test("rejects a genesis start block", () => {
-  assert.throws(() => validateManifest(`address: "${address}"\nstartBlock: 0\n`), /deployment block/);
+  assert.throws(
+    () => validateManifest(`network: sepolia\naddress: "${address}"\nstartBlock: 0\n`),
+    /deployment block/,
+  );
 });
 
 test("rejects a malformed contract address", () => {
-  assert.throws(() => validateManifest("address: nope\nstartBlock: 12345\n"), /valid settlement/);
+  assert.throws(
+    () => validateManifest("network: sepolia\naddress: nope\nstartBlock: 12345\n"),
+    /valid settlement/,
+  );
+});
+
+test("rejects a different network", () => {
+  assert.throws(
+    () => validateManifest(`network: mainnet\naddress: "${address}"\nstartBlock: 12345\n`),
+    /network must be "sepolia"/,
+  );
 });
 
 test("accepts the frozen ReceiptCreated ABI", () => {
