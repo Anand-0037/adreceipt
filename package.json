@@ -1,7 +1,7 @@
 {
-  "name": "adreceipt",
+  "name": "disclosed-contracts",
   "version": "0.1.0",
-  "description": "Verifiable payment receipts for sponsored AI recommendations.",
+  "description": "Disclosed - verifiable sponsorship disclosure registry. Smart contracts.",
   "license": "MIT",
   "private": true,
   "scripts": {

@@ -82,9 +82,12 @@ describe("ReceiptCreated", () => {
     assert.fieldEquals("Receipt", RECEIPT_ONE, "recipient", RECIPIENT);
     assert.fieldEquals("Receipt", RECEIPT_ONE, "asset", ASSET);
     assert.fieldEquals("Receipt", RECEIPT_ONE, "amount", "2500");
+    assert.fieldEquals("Receipt", RECEIPT_ONE, "settledAt", "1788600000");
     assert.fieldEquals("Receipt", RECEIPT_ONE, "settlementContract", SETTLEMENT);
     assert.fieldEquals("Receipt", RECEIPT_ONE, "transactionHash", TRANSACTION);
+    assert.fieldEquals("Receipt", RECEIPT_ONE, "logIndex", "0");
     assert.fieldEquals("Receipt", RECEIPT_ONE, "blockNumber", "100");
+    assert.fieldEquals("Receipt", RECEIPT_ONE, "blockTimestamp", "1788600000");
     assert.fieldEquals("Receipt", RECEIPT_ONE, "schemaVersion", "1");
   });
 
