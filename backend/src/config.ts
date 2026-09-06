@@ -98,6 +98,8 @@ export const config = {
   privyAppSecret: process.env.PRIVY_APP_SECRET ?? "",
   privyWalletId: process.env.PRIVY_WALLET_ID ?? "",
   privyPolicyId: process.env.PRIVY_POLICY_ID ?? "",
+  privyAuthorizationPrivateKey:
+    process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY ?? process.env.PRIVATE_KEY_PRIVY ?? "",
 };
 
 export function requireSimulatorKey(): string {

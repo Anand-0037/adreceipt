@@ -20,9 +20,13 @@
     "seed:spend": "ts-node src/scripts/seed-spend.ts"
   },
   "dependencies": {
+    "@privy-io/node": "0.34.0",
     "dotenv": "^17.4.2",
     "ethers": "^6.13.5",
     "express": "^4.21.2"
+  },
+  "overrides": {
+    "qs": "6.16.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
