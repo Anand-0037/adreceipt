@@ -8,6 +8,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - run: npm --prefix backend ci
       - run: npm run build
       - run: npm test
       - run: npm run typecheck
+      - run: npm --prefix backend run typecheck
+      - run: npm --prefix backend test

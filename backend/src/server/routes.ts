@@ -8,6 +8,8 @@ import { simulatorStatus, submitDomainVerification } from "../chain/writes";
 import { buildRecord } from "../dns/record";
 import { checkDomain, isAttestable } from "../dns/verify";
 import { asyncRoute, badRequest, notFound, parseAddress } from "./errors";
+import { verifyReceipt } from "../receipts/service";
+import { privyReadiness } from "../privy/client";
 
 export const routes = Router();
 
@@ -169,6 +171,16 @@ routes.get(
 routes.get("/deployment", (_req, res) => {
   res.json(deployment);
 });
+
+routes.get("/health/privy", (_req, res) => res.json(privyReadiness()));
+
+routes.get("/receipts/:receiptId", asyncRoute(async (req, res) => {
+  const atBlockRaw = req.query.atBlock;
+  const atBlock = typeof atBlockRaw === "string" ? Number(atBlockRaw) : undefined;
+  if (atBlock !== undefined && (!Number.isSafeInteger(atBlock) || atBlock <= 0)) throw badRequest("invalid-block", "atBlock must be a positive integer");
+  const result = await verifyReceipt(req.params.receiptId, atBlock);
+  return res.status(result.status === "UNAVAILABLE" ? 503 : 200).json(result);
+}));
 
 // ---------------------------------------------------------------------------
 // Listings - the queries an assistant actually makes

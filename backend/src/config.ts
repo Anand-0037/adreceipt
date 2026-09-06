@@ -90,6 +90,13 @@ export const config = {
 
   /** Resolvers queried for the challenge lookup. Agreement is required. */
   dnsResolvers: (process.env.DNS_RESOLVERS ?? "1.1.1.1,8.8.8.8").split(",").map((s) => s.trim()),
+  graphQueryUrl: process.env.GRAPH_QUERY_URL ?? "",
+  graphApiKey: process.env.GRAPH_API_KEY ?? "",
+  graphMaxLag: Number(process.env.GRAPH_MAX_BLOCK_LAG ?? 20),
+  settlementAddress: process.env.PLACEMENT_SETTLEMENT_ADDRESS ?? "",
+  privyAppId: process.env.PRIVY_APP_ID ?? "",
+  privyAppSecret: process.env.PRIVY_APP_SECRET ?? "",
+  privyWalletId: process.env.PRIVY_WALLET_ID ?? "",
 };
 
 export function requireSimulatorKey(): string {

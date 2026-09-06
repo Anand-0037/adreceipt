@@ -9,6 +9,7 @@
     "dev": "ts-node src/server/index.ts",
     "start": "ts-node src/server/index.ts",
     "typecheck": "tsc --noEmit",
+    "test": "node --test -r ts-node/register src/receipts/*.test.ts src/privy/*.test.ts",
     "verify:live": "ts-node src/scripts/verify-live.ts",
     "verify:live:dry": "ts-node src/scripts/verify-live.ts --dry-run",
     "cre:simulate": "ts-node cre/src/simulate.ts",
