@@ -10,7 +10,7 @@ dataSources:
     name: PlacementSettlementV1
     network: sepolia
     source:
-      # Build-only sentinel. Replace with the deployed contract and its start block before deployment.
+      # Live PlacementSettlementV1 deployment indexed by Studio version 0.0.1.
       address: "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576"
       abi: PlacementSettlementV1
       startBlock: 11648834
