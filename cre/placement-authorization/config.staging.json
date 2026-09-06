@@ -1,0 +1,23 @@
+{
+  "schedule": "0 */1 * * * *",
+  "schemaVersion": 1,
+  "quoteId": "0xa786b6216799ecd6d871f3313cde11413d8c3173ff2a8ccdac4bc134ea81173e",
+  "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+  "subjectHash": "0x6696182b952e1854487402ac581aa8bcc709f90eaaf4a09c90c16e4a9428143c",
+  "payer": "0x84B5711b5Ff458478A2E55bb4797F5b254517a57",
+  "recipient": "0x5555555555555555555555555555555555555555",
+  "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  "amount": "1000000",
+  "chainId": "11155111",
+  "settlementContract": "0x6666666666666666666666666666666666666666",
+  "validUntil": "1800000000",
+  "nonce": "0x7777777777777777777777777777777777777777777777777777777777777777",
+  "policySecretId": "CAMPAIGN_POLICY",
+  "subject": {
+    "publisher": "0x9999999999999999999999999999999999999999",
+    "placementId": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "productRefHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+    "contentHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "disclosureVersion": 1
+  }
+}
