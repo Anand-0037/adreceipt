@@ -45,8 +45,9 @@ Before deploying, verify all of the following:
 - one real `ReceiptCreated` transaction exists;
 - the hosted query returns that receipt and healthy `_meta` data.
 
-`deploy:check` intentionally fails while the build-only address and block sentinels remain. Run it
-before `graph deploy` so a zero-address or genesis scan cannot be deployed accidentally.
+`deploy:check` intentionally fails while the build-only address and block sentinels remain. It also
+requires the contract ABI to contain the exact frozen V1 `ReceiptCreated` event. Run it before
+`graph deploy` so invalid coordinates or an incompatible contract handoff cannot be deployed.
 
 The API key used to query the hosted Subgraph belongs in server-side environment configuration. It
 must not be committed or exposed through browser-prefixed environment variables.
