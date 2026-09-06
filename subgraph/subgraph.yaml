@@ -11,9 +11,9 @@ dataSources:
     network: sepolia
     source:
       # Build-only sentinel. Replace with the deployed contract and its start block before deployment.
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576"
       abi: PlacementSettlementV1
-      startBlock: 0
+      startBlock: 11648834
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9

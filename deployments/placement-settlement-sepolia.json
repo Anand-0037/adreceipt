@@ -1,0 +1,21 @@
+{
+  "mode": "deployed",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contract": "PlacementSettlementV1",
+  "constructor": {
+    "settlementAsset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+  },
+  "deployer": "0x455a064eB69b064124bcE89f677Ce89d50B92911",
+  "deployerNonce": 24,
+  "predictedAddress": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576",
+  "gasEstimate": "1273049",
+  "maxFeePerGas": "2059490288",
+  "maximumCostWei": "2621832051648112",
+  "deployerBalanceWei": "10803592966214447",
+  "address": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576",
+  "deploymentBlock": 11648834,
+  "deploymentTransaction": "0xf2dbcfa9c1ede10519c37cedce0e69f59b1f0e8fc5b761edb69742cd5852c584",
+  "runtimeCodeHash": "0x69edf7f55d478cf1a6efcb8072c9ad23787e87ad0f2a7f25c38be5180827f4de",
+  "deployedAt": "2026-09-06T17:58:36.121Z"
+}
