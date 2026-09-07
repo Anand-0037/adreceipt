@@ -1200,3 +1200,85 @@ details input {
 .flow-body input + label {
   margin-top: 8px;
 }
+
+/* --- public ledger ----------------------------------------------------- */
+.ledger {
+  display: grid;
+  gap: 40px;
+}
+.ledger h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.ledger-summary {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--ink);
+  background: var(--line);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+@media (min-width: 620px) {
+  .ledger-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.ledger-summary > div {
+  display: grid;
+  gap: 3px;
+  padding: 16px 18px;
+  background: var(--surface);
+}
+.ledger-summary dt {
+  color: var(--faint);
+  font: 700 10px/1.4 Arial;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.ledger-summary dd {
+  margin: 0;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+/* Wide tables scroll inside their own container so the page never moves. */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.ledger-table th {
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 11px 14px;
+  background: #ebe5d9;
+  color: var(--faint);
+  font: 700 10px/1.4 Arial;
+  letter-spacing: 0.09em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ledger-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 11px 14px;
+  white-space: nowrap;
+}
+.ledger-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.ledger-table td.num {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.ledger-table a {
+  color: var(--accent-dark);
+}

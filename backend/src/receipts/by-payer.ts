@@ -65,3 +65,55 @@ export async function queryReceiptsByPayer(
   if (!response.ok) throw new Error(`Graph returned HTTP ${response.status}`);
   return parseGraphSubjectResponse(await response.json());
 }
+
+/**
+ * Every receipt, newest first.
+ *
+ * This is the public ledger the project exists to produce: who paid whom, how
+ * much, for which recommendation. Per-receipt verification answers "is this one
+ * real"; only the full list answers "how much sponsorship is happening here at
+ * all", which is the question a user or a regulator actually has.
+ */
+const ALL_QUERY = `
+query AllReceipts($first: Int = 100) {
+  receipts(first: $first, orderBy: blockNumber, orderDirection: desc) {
+    id
+    campaignId
+    subjectHash
+    publisher
+    payer
+    recipient
+    asset
+    amount
+    settledAt
+    schemaVersion
+    settlementContract
+    transactionHash
+    logIndex
+    blockNumber
+    blockTimestamp
+  }
+  _meta {
+    block { number hash timestamp }
+    hasIndexingErrors
+  }
+}
+`;
+
+export async function queryAllReceipts(
+  endpoint: string,
+  apiKey: string,
+  first = 100,
+): Promise<GraphSubjectEvidence> {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({ query: ALL_QUERY, variables: { first } }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error(`Graph returned HTTP ${response.status}`);
+  return parseGraphSubjectResponse(await response.json());
+}

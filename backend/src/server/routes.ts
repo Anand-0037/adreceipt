@@ -7,7 +7,7 @@ import { getAdvertiser, getChallenge } from "../chain/reads";
 import { submitDomainVerification } from "../chain/writes";
 import { buildRecord } from "../dns/record";
 import { checkDomain, isAttestable } from "../dns/verify";
-import { queryReceiptsByPayer } from "../receipts/by-payer";
+import { queryAllReceipts, queryReceiptsByPayer } from "../receipts/by-payer";
 import { verifyReceipt, verifySubject } from "../receipts/service";
 import { privyReadiness } from "../privy/client";
 
@@ -173,6 +173,55 @@ routes.get(
       address,
       count: evidence.receipts.length,
       receipts: evidence.receipts,
+      indexedBlock: evidence.blockNumber,
+      hasIndexingErrors: evidence.hasIndexingErrors,
+    });
+  }),
+);
+
+/**
+ * The public ledger: every settled sponsorship, with per-payer totals.
+ *
+ * Totals are computed here rather than in the browser so the ranking a client
+ * shows is reproducible from one documented source, and so a client cannot
+ * present a different total than the one the API would.
+ */
+routes.get(
+  "/receipts",
+  asyncRoute(async (_req, res) => {
+    if (!config.graphQueryUrl) {
+      throw badRequest("graph-not-configured", "GRAPH_QUERY_URL is not set.");
+    }
+
+    const evidence = await queryAllReceipts(config.graphQueryUrl, config.graphApiKey ?? "");
+
+    const byPayer = new Map<string, { paid: bigint; placements: number }>();
+    const byPublisher = new Map<string, { earned: bigint; placements: number }>();
+    let total = BigInt(0);
+
+    for (const r of evidence.receipts) {
+      const amount = BigInt(r.amount);
+      total += amount;
+
+      const payer = r.payer.toLowerCase();
+      const p = byPayer.get(payer) ?? { paid: BigInt(0), placements: 0 };
+      byPayer.set(payer, { paid: p.paid + amount, placements: p.placements + 1 });
+
+      const publisher = r.publisher.toLowerCase();
+      const q = byPublisher.get(publisher) ?? { earned: BigInt(0), placements: 0 };
+      byPublisher.set(publisher, { earned: q.earned + amount, placements: q.placements + 1 });
+    }
+
+    return res.json({
+      count: evidence.receipts.length,
+      totalAmount: total.toString(),
+      receipts: evidence.receipts,
+      sponsors: [...byPayer.entries()]
+        .map(([address, v]) => ({ address, paid: v.paid.toString(), placements: v.placements }))
+        .sort((a, b) => Number(BigInt(b.paid) - BigInt(a.paid))),
+      publishers: [...byPublisher.entries()]
+        .map(([address, v]) => ({ address, earned: v.earned.toString(), placements: v.placements }))
+        .sort((a, b) => Number(BigInt(b.earned) - BigInt(a.earned))),
       indexedBlock: evidence.blockNumber,
       hasIndexingErrors: evidence.hasIndexingErrors,
     });
