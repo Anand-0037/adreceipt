@@ -27,7 +27,13 @@ test("builds default-deny rules for bounded approval and settlement", () => {
   assert.equal(policy.rules[0].conditions[4].value, "1000");
   assert.deepEqual(
     policy.rules[1].conditions.map((condition) => condition.field),
-    ["to", "chain_id", "function_name", "settlePlacement.quote.recipient", "settlePlacement.quote.amount"],
+    [
+      "to",
+      "chain_id",
+      "function_name",
+      "settlePlacement.quote.recipient",
+      "settlePlacement.quote.amount",
+    ],
   );
   assert.equal(policy.rules[1].conditions[1].value, "11155111");
   assert.deepEqual(policy.rules[1].conditions[2].abi, [
@@ -37,14 +43,15 @@ test("builds default-deny rules for bounded approval and settlement", () => {
 
 test("rejects an ABI without settlePlacement", () => {
   assert.throws(
-    () => buildSettlementPolicy({
-      settlement: "0x1111111111111111111111111111111111111111",
-      asset: "0x3333333333333333333333333333333333333333",
-      chainId: 11155111,
-      recipient: "0x2222222222222222222222222222222222222222",
-      maxAmount: "1000",
-      abi: [{ type: "error", name: "InvalidQuote", inputs: [] }],
-    }),
+    () =>
+      buildSettlementPolicy({
+        settlement: "0x1111111111111111111111111111111111111111",
+        asset: "0x3333333333333333333333333333333333333333",
+        chainId: 11155111,
+        recipient: "0x2222222222222222222222222222222222222222",
+        maxAmount: "1000",
+        abi: [{ type: "error", name: "InvalidQuote", inputs: [] }],
+      }),
     /exactly one settlePlacement/,
   );
 });

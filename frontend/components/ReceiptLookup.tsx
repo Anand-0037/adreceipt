@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { api, type VerificationResult } from "@/lib/api";
 import { ReceiptResult } from "./ReceiptResult";
 
@@ -36,9 +36,7 @@ export function ReceiptLookup({
     try {
       setResult(await api.verifyReceipt(receiptId.trim(), block));
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "The verifier request failed.",
-      );
+      setError(cause instanceof Error ? cause.message : "The verifier request failed.");
     } finally {
       setLoading(false);
     }
@@ -85,6 +83,7 @@ export function ReceiptLookup({
       {loading && (
         <div
           className="result-skeleton"
+          role="status"
           aria-label="Verifying through The Graph and RPC"
           aria-busy="true"
         />

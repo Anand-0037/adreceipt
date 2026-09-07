@@ -20,7 +20,9 @@ const values = {
 const abi = new Interface([
   "event ReceiptCreated(bytes32 indexed receiptId,bytes32 indexed campaignId,bytes32 indexed subjectHash,address publisher,address payer,address recipient,address asset,uint256 amount,uint64 settledAt,uint16 schemaVersion)",
 ]);
-const encoded = abi.encodeEventLog(abi.getEvent("ReceiptCreated")!, Object.values(values));
+const receiptEvent = abi.getEvent("ReceiptCreated");
+if (!receiptEvent) throw new Error("ReceiptCreated ABI is missing");
+const encoded = abi.encodeEventLog(receiptEvent, Object.values(values));
 
 function provider(address = contract, status = 1): JsonRpcProvider {
   return {
@@ -45,6 +47,12 @@ test("decodes canonical ReceiptCreated evidence from RPC", async () => {
 });
 
 test("rejects failed transactions and logs from another contract", async () => {
-  await assert.rejects(readRpcReceipt(provider(contract, 0), transactionHash, 2, contract), /missing or unsuccessful/);
-  await assert.rejects(readRpcReceipt(provider(`0x${"aa".repeat(20)}`), transactionHash, 2, contract), /expected settlement log/);
+  await assert.rejects(
+    readRpcReceipt(provider(contract, 0), transactionHash, 2, contract),
+    /missing or unsuccessful/,
+  );
+  await assert.rejects(
+    readRpcReceipt(provider(`0x${"aa".repeat(20)}`), transactionHash, 2, contract),
+    /expected settlement log/,
+  );
 });

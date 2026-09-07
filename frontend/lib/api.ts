@@ -1,6 +1,4 @@
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ??
-  "http://localhost:8787";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "/api";
 
 export type ReceiptStatus =
   | "PAID_VERIFIED"
@@ -78,16 +76,8 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function parseVerification(value: unknown): VerificationResult {
-  if (
-    !isObject(value) ||
-    typeof value.status !== "string" ||
-    typeof value.reason !== "string"
-  ) {
-    throw new ApiError(
-      502,
-      "invalid-response",
-      "The verifier returned an invalid response.",
-    );
+  if (!isObject(value) || typeof value.status !== "string" || typeof value.reason !== "string") {
+    throw new ApiError(502, "invalid-response", "The verifier returned an invalid response.");
   }
   const statuses: ReceiptStatus[] = [
     "PAID_VERIFIED",
@@ -97,11 +87,7 @@ function parseVerification(value: unknown): VerificationResult {
     "UNAVAILABLE",
   ];
   if (!statuses.includes(value.status as ReceiptStatus)) {
-    throw new ApiError(
-      502,
-      "invalid-response",
-      "The verifier returned an unknown status.",
-    );
+    throw new ApiError(502, "invalid-response", "The verifier returned an unknown status.");
   }
   return value as unknown as VerificationResult;
 }
@@ -124,20 +110,14 @@ export const api = {
   health: async () => (await get("/health")) as Health,
   verifyReceipt: async (receiptId: string, atBlock?: number) => {
     const query = atBlock ? `?atBlock=${atBlock}` : "";
-    return parseVerification(
-      await get(`/receipts/${encodeURIComponent(receiptId)}${query}`),
-    );
+    return parseVerification(await get(`/receipts/${encodeURIComponent(receiptId)}${query}`));
   },
   verifySubject: async (subjectHash: string) =>
-    parseVerification(
-      await get(`/subjects/${encodeURIComponent(subjectHash)}`),
-    ),
+    parseVerification(await get(`/subjects/${encodeURIComponent(subjectHash)}`)),
 };
 
 export const explorer = {
-  address: (address: string) =>
-    `https://sepolia.etherscan.io/address/${address}`,
+  address: (address: string) => `https://sepolia.etherscan.io/address/${address}`,
   tx: (hash: string) => `https://sepolia.etherscan.io/tx/${hash}`,
-  block: (block: string | number) =>
-    `https://sepolia.etherscan.io/block/${block}`,
+  block: (block: string | number) => `https://sepolia.etherscan.io/block/${block}`,
 };

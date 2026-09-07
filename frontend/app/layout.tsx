@@ -4,12 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AdReceipt — verify paid AI recommendations",
-  description:
-    "Verify a recommendation-bound payment against The Graph and Ethereum Sepolia.",
+  description: "Verify a recommendation-bound payment against The Graph and Ethereum Sepolia.",
 };
 
 const NAV = [
-  { href: "/ask", label: "Check a receipt" },
+  { href: "/ask", label: "Verify recommendation" },
   { href: "/campaign", label: "Prepare campaign" },
   {
     href: "/receipts/0xa63f1ce97fc2c2d97bb31f51e2f0989560d89937900d93fe36f303122d70f9cd",
@@ -17,11 +16,7 @@ const NAV = [
   },
 ];
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen">
@@ -48,15 +43,10 @@ export default function RootLayout({
         <footer className="site-footer">
           <div>
             <p>
-              <strong>Payment transparency, not product quality.</strong>{" "}
-              AdReceipt verifies one direct testnet payment and its signed
-              context.
+              <strong>Payment transparency, not product quality.</strong> AdReceipt verifies one
+              direct testnet payment and its signed context.
             </p>
-            <a
-              href="https://github.com/Anand-0037/adreceipt"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href="https://github.com/Anand-0037/adreceipt" target="_blank" rel="noreferrer">
               Source ↗
             </a>
           </div>

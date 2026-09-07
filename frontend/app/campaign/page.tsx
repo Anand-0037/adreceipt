@@ -10,8 +10,8 @@ export default function CampaignPage() {
         <p className="eyebrow">For advertisers and publishers</p>
         <h1>Bind payment to the exact recommendation.</h1>
         <p>
-          Prepare the public commitment first. The publisher then signs the full
-          quote; the Privy payer can settle only within its Sepolia policy.
+          Prepare the public commitment first. The publisher then signs the full quote; the Privy
+          payer can settle only within its Sepolia policy.
         </p>
       </section>
       <CampaignBuilder />
@@ -20,9 +20,9 @@ export default function CampaignPage() {
           <p className="eyebrow">Privy policy</p>
           <h2 id="policy-title">Default deny, two bounded actions</h2>
           <p>
-            Wallet <span className="mono">0x84B5…a57</span> can approve this
-            settlement contract for at most 1 test USDC, then call its exact
-            settlement function for the configured recipient.
+            Wallet <span className="mono">0x84B5…a57</span> can approve this settlement contract for
+            at most 1 test USDC, then call its exact settlement function for the configured
+            recipient.
           </p>
         </div>
         <dl>
@@ -71,11 +71,7 @@ export default function CampaignPage() {
         </div>
         <div>
           <span>Contract</span>
-          <a
-            href={explorer.address(SETTLEMENT)}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={explorer.address(SETTLEMENT)} target="_blank" rel="noreferrer">
             0x2fB6…3576
           </a>
         </div>

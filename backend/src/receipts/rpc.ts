@@ -15,7 +15,7 @@ export async function readRpcReceipt(
     provider.getNetwork(),
     provider.getTransactionReceipt(transactionHash),
   ]);
-  if (!transactionReceipt || transactionReceipt.status !== 1) {
+  if (transactionReceipt?.status !== 1) {
     throw new Error("RPC transaction receipt is missing or unsuccessful");
   }
 
@@ -24,7 +24,7 @@ export async function readRpcReceipt(
     throw new Error("RPC receipt does not contain the expected settlement log");
   }
   const parsed = RECEIPT_INTERFACE.parseLog(log);
-  if (!parsed || parsed.name !== "ReceiptCreated") {
+  if (parsed?.name !== "ReceiptCreated") {
     throw new Error("RPC log is not ReceiptCreated");
   }
   const block = await provider.getBlock(transactionReceipt.blockNumber);

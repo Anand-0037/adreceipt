@@ -32,10 +32,7 @@ test("reports Privy ready only when a policy is configured", async () => {
     providerVerified: false,
   });
 
-  assert.equal(
-    privyReadiness({ ...complete, privyAuthorizationPrivateKey: "" }).configured,
-    false,
-  );
+  assert.equal(privyReadiness({ ...complete, privyAuthorizationPrivateKey: "" }).configured, false);
 });
 
 test("builds an owner-authorized idempotent transaction request", async () => {

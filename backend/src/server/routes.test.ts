@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-process.env.SEPOLIA_RPC_URL =
-  process.env.SEPOLIA_RPC_URL ?? "http://127.0.0.1:1";
+process.env.SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL ?? "http://127.0.0.1:1";
 
 test("serves the V1 deployment and does not expose legacy advertiser writes", async () => {
   const { createServer } = await import("./index");

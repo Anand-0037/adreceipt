@@ -7,16 +7,18 @@ export interface PolicyInput {
   abi: unknown[];
 }
 
-const APPROVE_ABI = [{
-  inputs: [
-    { internalType: "address", name: "spender", type: "address" },
-    { internalType: "uint256", name: "amount", type: "uint256" },
-  ],
-  name: "approve",
-  outputs: [{ internalType: "bool", name: "", type: "bool" }],
-  stateMutability: "nonpayable",
-  type: "function",
-}];
+const APPROVE_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "spender", type: "address" },
+      { internalType: "uint256", name: "amount", type: "uint256" },
+    ],
+    name: "approve",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+];
 
 export function buildSettlementPolicy(i: PolicyInput) {
   const settlementAbi = i.abi.filter((entry) => {
@@ -61,8 +63,20 @@ export function buildSettlementPolicy(i: PolicyInput) {
           condition("ethereum_transaction", "to", "eq", i.settlement),
           condition("ethereum_transaction", "chain_id", "eq", String(i.chainId)),
           condition("ethereum_calldata", "function_name", "eq", "settlePlacement", settlementAbi),
-          condition("ethereum_calldata", "settlePlacement.quote.recipient", "eq", i.recipient, settlementAbi),
-          condition("ethereum_calldata", "settlePlacement.quote.amount", "lte", i.maxAmount, settlementAbi),
+          condition(
+            "ethereum_calldata",
+            "settlePlacement.quote.recipient",
+            "eq",
+            i.recipient,
+            settlementAbi,
+          ),
+          condition(
+            "ethereum_calldata",
+            "settlePlacement.quote.amount",
+            "lte",
+            i.maxAmount,
+            settlementAbi,
+          ),
         ],
       },
     ],

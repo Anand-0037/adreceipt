@@ -17,34 +17,17 @@ function parseReceipt(value: unknown): ReceiptEvidence | null {
   if (!receipt) throw new Error("Graph receipt is not an object");
 
   const bytes32 = ["id", "campaignId", "subjectHash", "transactionHash"];
-  const addresses = [
-    "publisher",
-    "payer",
-    "recipient",
-    "asset",
-    "settlementContract",
-  ];
-  const decimals = [
-    "amount",
-    "settledAt",
-    "logIndex",
-    "blockNumber",
-    "blockTimestamp",
-  ];
+  const addresses = ["publisher", "payer", "recipient", "asset", "settlementContract"];
+  const decimals = ["amount", "settledAt", "logIndex", "blockNumber", "blockTimestamp"];
   if (
     !bytes32.every(
-      (key) =>
-        typeof receipt[key] === "string" &&
-        isHexString(receipt[key] as string, 32),
+      (key) => typeof receipt[key] === "string" && isHexString(receipt[key] as string, 32),
     ) ||
     !addresses.every(
-      (key) =>
-        typeof receipt[key] === "string" && isAddress(receipt[key] as string),
+      (key) => typeof receipt[key] === "string" && isAddress(receipt[key] as string),
     ) ||
     !decimals.every(
-      (key) =>
-        typeof receipt[key] === "string" &&
-        DECIMAL.test(receipt[key] as string),
+      (key) => typeof receipt[key] === "string" && DECIMAL.test(receipt[key] as string),
     ) ||
     !["logIndex", "blockNumber", "blockTimestamp"].every((key) =>
       Number.isSafeInteger(Number(receipt[key])),
@@ -61,8 +44,7 @@ export function parseGraphResponse(value: unknown): GraphEvidence {
   const body = object(value);
   if (!body) throw new Error("Graph response is not an object");
   const errors = body.errors;
-  if (Array.isArray(errors) && errors.length > 0)
-    throw new Error("Graph returned query errors");
+  if (Array.isArray(errors) && errors.length > 0) throw new Error("Graph returned query errors");
 
   const data = object(body.data);
   const meta = object(data?._meta);
@@ -71,8 +53,7 @@ export function parseGraphResponse(value: unknown): GraphEvidence {
   if (
     !Number.isSafeInteger(blockNumber) ||
     Number(blockNumber) < 0 ||
-    (meta?.hasIndexingErrors !== undefined &&
-      typeof meta.hasIndexingErrors !== "boolean")
+    (meta?.hasIndexingErrors !== undefined && typeof meta.hasIndexingErrors !== "boolean")
   ) {
     throw new Error("Graph response is missing valid metadata");
   }
@@ -89,9 +70,7 @@ export interface GraphSubjectEvidence {
   hasIndexingErrors: boolean;
 }
 
-export function parseGraphSubjectResponse(
-  value: unknown,
-): GraphSubjectEvidence {
+export function parseGraphSubjectResponse(value: unknown): GraphSubjectEvidence {
   const body = object(value);
   if (!body) throw new Error("Graph response is not an object");
   if (Array.isArray(body.errors) && body.errors.length > 0)
@@ -103,8 +82,7 @@ export function parseGraphSubjectResponse(
   if (
     !Number.isSafeInteger(blockNumber) ||
     Number(blockNumber) < 0 ||
-    (meta?.hasIndexingErrors !== undefined &&
-      typeof meta.hasIndexingErrors !== "boolean") ||
+    (meta?.hasIndexingErrors !== undefined && typeof meta.hasIndexingErrors !== "boolean") ||
     !Array.isArray(data?.receipts)
   ) {
     throw new Error("Graph response is missing valid subject metadata");

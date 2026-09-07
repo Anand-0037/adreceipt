@@ -41,6 +41,10 @@ The publisher and recipient used for the first test are team-controlled. This tr
 the testnet integration, not third-party adoption. Exact deployment data is stored in
 [`deployments/placement-settlement-sepolia.json`](deployments/placement-settlement-sepolia.json).
 
+Detailed evidence and proof boundaries are documented for [Privy](docs/evidence/privy.md),
+[Chainlink CRE](docs/evidence/chainlink.md), and [The Graph](docs/evidence/the-graph.md). The team’s
+use of coding assistants is described in [AI_ASSISTANCE.md](AI_ASSISTANCE.md).
+
 ## Frozen receipt event
 
 ```solidity

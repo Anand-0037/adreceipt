@@ -11,6 +11,9 @@
     "test": "npm run test:contracts",
     "test:all": "npm run test:contracts && npm run graph:test && npm --prefix backend test && npm run cre:test",
     "test:contracts": "hardhat test",
+    "format:check": "biome format backend/src/privy backend/src/receipts backend/src/server frontend/app frontend/components frontend/lib frontend/next.config.ts scripts/deploy-settlement.ts test/PlacementSettlementV1.test.ts",
+    "lint:v1": "biome lint backend/src/privy backend/src/receipts backend/src/server frontend/app frontend/components frontend/lib frontend/next.config.ts scripts/deploy-settlement.ts",
+    "quality:v1": "npm run format:check && npm run lint:v1",
     "typecheck": "tsc --noEmit",
     "typecheck:all": "npm run typecheck && npm --prefix backend run typecheck && npm run cre:typecheck",
     "verify:all": "npm run build:all && npm run test:all && npm run typecheck:all",
@@ -28,6 +31,7 @@
     "graph:test": "npm --prefix subgraph test"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.12",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",

@@ -39,7 +39,8 @@ async function main() {
   const feePerGas = feeData.maxFeePerGas ?? feeData.gasPrice;
   if (!feePerGas) throw new Error("RPC did not return a usable gas price");
   const maximumCost = gasEstimate * feePerGas;
-  if (balance < maximumCost) throw new Error("Deployer balance is below the estimated maximum cost");
+  if (balance < maximumCost)
+    throw new Error("Deployer balance is below the estimated maximum cost");
 
   const predictedAddress = ethers.getCreateAddress({ from: deployer.address, nonce });
   const preflight = {
@@ -59,7 +60,9 @@ async function main() {
   console.log(JSON.stringify(preflight, null, 2));
 
   if (process.env.BROADCAST_SETTLEMENT !== BROADCAST_CONFIRMATION) {
-    console.log(`Preflight only. Set BROADCAST_SETTLEMENT=${BROADCAST_CONFIRMATION} after approval.`);
+    console.log(
+      `Preflight only. Set BROADCAST_SETTLEMENT=${BROADCAST_CONFIRMATION} after approval.`,
+    );
     return;
   }
 
@@ -67,11 +70,11 @@ async function main() {
   const transaction = settlement.deploymentTransaction();
   if (!transaction) throw new Error("Settlement deployment transaction is unavailable");
   const receipt = await transaction.wait();
-  if (!receipt || receipt.status !== 1) throw new Error("Settlement deployment failed");
+  if (receipt?.status !== 1) throw new Error("Settlement deployment failed");
 
   const address = await settlement.getAddress();
   const runtimeCode = await ethers.provider.getCode(address);
-  if (runtimeCode === "0x" || await settlement.settlementAsset() !== asset) {
+  if (runtimeCode === "0x" || (await settlement.settlementAsset()) !== asset) {
     throw new Error("Deployed settlement contract failed read-back verification");
   }
   const record = {

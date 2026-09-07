@@ -42,12 +42,8 @@ routes.get(
   "/receipts/:receiptId",
   asyncRoute(async (req, res) => {
     const atBlockRaw = req.query.atBlock;
-    const atBlock =
-      typeof atBlockRaw === "string" ? Number(atBlockRaw) : undefined;
-    if (
-      atBlock !== undefined &&
-      (!Number.isSafeInteger(atBlock) || atBlock <= 0)
-    )
+    const atBlock = typeof atBlockRaw === "string" ? Number(atBlockRaw) : undefined;
+    if (atBlock !== undefined && (!Number.isSafeInteger(atBlock) || atBlock <= 0))
       throw badRequest("invalid-block", "atBlock must be a positive integer");
     const result = await verifyReceipt(req.params.receiptId, atBlock);
     return res.status(result.status === "UNAVAILABLE" ? 503 : 200).json(result);

@@ -21,4 +21,5 @@ jobs:
       - run: npm --prefix frontend ci
       - run: npm install --prefix subgraph --no-audit --no-fund
       - run: npm run cre:install
+      - run: npm run quality:v1
       - run: npm run verify:all

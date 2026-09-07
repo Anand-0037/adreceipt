@@ -66,10 +66,7 @@ test("rejects malformed receipt fields instead of casting them", () => {
 });
 
 test("rejects Graph errors and malformed metadata", () => {
-  assert.throws(
-    () => parseGraphResponse({ errors: [{ message: "failed" }] }),
-    /query errors/,
-  );
+  assert.throws(() => parseGraphResponse({ errors: [{ message: "failed" }] }), /query errors/);
   assert.throws(
     () =>
       parseGraphResponse({

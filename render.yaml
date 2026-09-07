@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: adreceipt-api
+    runtime: node
+    plan: free
+    region: singapore
+    repo: https://github.com/Anand-0037/adreceipt
+    branch: main
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NETWORK
+        value: sepolia
+      - key: SEPOLIA_RPC_URL
+        sync: false
+      - key: GRAPH_QUERY_URL
+        value: https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1
+      - key: GRAPH_MAX_BLOCK_LAG
+        value: "20"
+      - key: PLACEMENT_SETTLEMENT_ADDRESS
+        value: 0x2fB6889Cc142C622a0479aF56b75B98beAeD3576
+
+  - type: web
+    name: adreceipt-web
+    runtime: node
+    plan: free
+    region: singapore
+    repo: https://github.com/Anand-0037/adreceipt
+    branch: main
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /ask
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ADRECEIPT_API_HOSTPORT
+        fromService:
+          type: web
+          name: adreceipt-api
+          property: hostport

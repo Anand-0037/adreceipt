@@ -67,11 +67,7 @@ export async function verifySubject(subjectHash: string) {
   try {
     const provider = getProvider();
     const [subject, rpcHead] = await Promise.all([
-      queryReceiptsBySubject(
-        config.graphQueryUrl,
-        config.graphApiKey,
-        subjectHash,
-      ),
+      queryReceiptsBySubject(config.graphQueryUrl, config.graphApiKey, subjectHash),
       provider.getBlockNumber(),
     ]);
     const baseGraph = {
@@ -87,12 +83,10 @@ export async function verifySubject(subjectHash: string) {
       expectedChainId: config.chainId,
       maxLag: config.graphMaxLag,
     });
-    if (base.status !== "NOT_FOUND_AT_BLOCK" || subject.receipts.length === 0)
-      return base;
+    if (base.status !== "NOT_FOUND_AT_BLOCK" || subject.receipts.length === 0) return base;
     if (
       subject.receipts.some(
-        (receipt) =>
-          receipt.subjectHash.toLowerCase() !== subjectHash.toLowerCase(),
+        (receipt) => receipt.subjectHash.toLowerCase() !== subjectHash.toLowerCase(),
       )
     ) {
       return {
@@ -120,9 +114,7 @@ export async function verifySubject(subjectHash: string) {
         });
       }),
     );
-    const rejected = decisions.find(
-      (decision) => decision.status !== "PAID_VERIFIED",
-    );
+    const rejected = decisions.find((decision) => decision.status !== "PAID_VERIFIED");
     return rejected ?? decisions[0];
   } catch {
     return classifyReceipt({
