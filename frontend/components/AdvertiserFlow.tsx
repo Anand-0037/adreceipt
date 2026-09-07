@@ -10,6 +10,12 @@ import {
   type VerifyOutcome,
 } from "@/lib/api";
 import {
+  describeSettlementError,
+  parseSignedQuote,
+  settle,
+  type SettleProgress,
+} from "@/lib/settle";
+import {
   balances,
   connect,
   currentAccount,
@@ -22,9 +28,10 @@ import {
 /**
  * The advertiser's journey, as five steps that each actually do something.
  *
- * The order is not presentational. Settlement reverts for an unverified payer,
- * so identity genuinely precedes payment, and a locked step shows that rule
- * rather than describing it.
+ * Note what this build does NOT enforce: `PlacementSettlementV1` has no
+ * registry check, so an unverified payer can still settle. Verification is
+ * recorded independently and a publisher can require it, but the ordering is
+ * not enforced on-chain in V1 - so the interface must not claim it is.
  */
 
 type StepState = "locked" | "active" | "done";
@@ -97,6 +104,11 @@ export function AdvertiserFlow() {
 
   const [funds, setFunds] = useState<Balances | null>(null);
   const [receipts, setReceipts] = useState<ReceiptEvidence[]>([]);
+
+  const [quoteBlob, setQuoteBlob] = useState("");
+  const [settling, setSettling] = useState(false);
+  const [progress, setProgress] = useState<SettleProgress | null>(null);
+  const [settleError, setSettleError] = useState<string | null>(null);
 
   const refresh = useCallback(async (who: string) => {
     try {
@@ -371,20 +383,79 @@ export function AdvertiserFlow() {
       </Step>
 
       {/* 5 ─────────────────────────────────────────────────────────────── */}
-      <Step index={5} title="Place and settle" state={verified ? "active" : "locked"}>
-        {!verified ? (
+      <Step index={5} title="Settle a placement" state={!account ? "locked" : receipts.length ? "done" : "active"}>
+        <p className="result-summary">
+          Paste the signed quote your publisher gave you. You approve exactly its amount — never an
+          unlimited allowance — and the payment goes straight to the publisher. This contract never
+          holds your funds.
+        </p>
+
+        <label htmlFor="quote-blob">Signed quote from the publisher</label>
+        <textarea
+          id="quote-blob"
+          rows={6}
+          className="mono"
+          value={quoteBlob}
+          onChange={(e) => setQuoteBlob(e.target.value)}
+          placeholder='{ "subject": { … }, "quote": { … }, "signature": "0x…" }'
+        />
+
+        <div className="lookup-line" style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            disabled={settling || !quoteBlob.trim() || !account}
+            onClick={async () => {
+              setSettling(true);
+              setSettleError(null);
+              setProgress(null);
+              try {
+                const result = await settle(parseSignedQuote(quoteBlob), setProgress);
+                setProgress(result);
+                if (account) await refresh(account);
+              } catch (error) {
+                setSettleError(describeSettlementError(error));
+              } finally {
+                setSettling(false);
+              }
+            }}
+          >
+            {settling ? "Confirm in wallet…" : "Approve and settle"}
+          </button>
+          <Link href="/publisher" className="text-link">
+            No quote yet? →
+          </Link>
+        </div>
+
+        {!verified && (
           <p className="field-help">
-            Locked until the domain is proved. Settlement reverts for an unverified payer, so this
-            is enforced on-chain rather than in the interface.
-          </p>
-        ) : (
-          <p className="result-summary">
-            Build the recommendation commitment and price, have the publisher sign it, then settle.{" "}
-            <Link href="/campaign" className="text-link">
-              Open the campaign builder →
-            </Link>
+            Your domain is not proved yet. This build does not gate settlement on verification, but
+            a publisher checking who they are paid by will look for it.
           </p>
         )}
+
+        {progress && (
+          <div className={`verdict verdict-${progress.step === "done" ? "ok" : "no"}`}>
+            <strong>{progress.step === "done" ? "Settled" : "In progress"}</strong>
+            <span>{progress.message}</span>
+            {progress.approvalTx && (
+              <a href={explorer.tx(progress.approvalTx)} target="_blank" rel="noreferrer" className="text-link">
+                Approval transaction ↗
+              </a>
+            )}
+            {progress.settlementTx && (
+              <a href={explorer.tx(progress.settlementTx)} target="_blank" rel="noreferrer" className="text-link">
+                Settlement transaction ↗
+              </a>
+            )}
+            {progress.receiptId && (
+              <Link href={`/receipts/${progress.receiptId}`} className="text-link">
+                Open the receipt →
+              </Link>
+            )}
+          </div>
+        )}
+
+        {settleError && <p className="form-error">{settleError}</p>}
 
         <h3 className="receipts-title">Receipts you have paid for</h3>
         {!account && <p className="field-help">Connect a wallet to see your history.</p>}
