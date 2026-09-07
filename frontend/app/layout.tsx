@@ -1,55 +1,48 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Inter, Space_Grotesk } from "next/font/google";
+import { MotionProvider } from "@/components/MotionProvider";
+import { SiteChrome } from "@/components/SiteChrome";
 import "./globals.css";
+
+/**
+ * Two faces, mapped onto the --display / --body tokens in globals.css.
+ * Space Grotesk carries the oversized headline treatment from the reference;
+ * Inter keeps the receipt and evidence copy readable at small sizes.
+ */
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const body = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "AdReceipt — verify paid AI recommendations",
   description: "Verify a recommendation-bound payment against The Graph and Ethereum Sepolia.",
 };
 
-const NAV = [
-  { href: "/ask", label: "Verify" },
-  { href: "/advertiser", label: "Payer onboarding" },
-  { href: "/publisher", label: "Publisher onboarding" },
-  { href: "/ledger", label: "Ledger" },
-  { href: "/campaign", label: "Campaign" },
-];
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
+      <head>
+        {/*
+          Reveal animations are server-rendered at opacity 0 and cleared by JS.
+          Without this, a reader with scripting disabled would get a blank page.
+        */}
+        <noscript>
+          <style>{`[style*="opacity:0"],[style*="opacity: 0"]{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
+      </head>
       <body className="min-h-screen">
-        <header className="site-header">
-          <div className="header-inner">
-            <Link href="/ask" className="wordmark">
-              <span aria-hidden>AR</span>AdReceipt
-            </Link>
-            <nav aria-label="Primary navigation">
-              {NAV.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <span className="network-pill">
-              <i aria-hidden /> Sepolia
-            </span>
-          </div>
-        </header>
-
-        <main className="site-main">{children}</main>
-
-        <footer className="site-footer">
-          <div>
-            <p>
-              <strong>Payment transparency, not product quality.</strong> AdReceipt verifies one
-              direct testnet payment and its signed context.
-            </p>
-            <a href="https://github.com/Anand-0037/adreceipt" target="_blank" rel="noreferrer">
-              Source ↗
-            </a>
-          </div>
-        </footer>
+        <MotionProvider>
+          <SiteChrome>{children}</SiteChrome>
+        </MotionProvider>
       </body>
     </html>
   );

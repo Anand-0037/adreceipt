@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { FlowDone } from "@/components/FlowDone";
 import { explorer, ledgerApi, type ReceiptEvidence } from "@/lib/api";
 import { DomainControl } from "./DomainControl";
 import {
@@ -65,7 +66,13 @@ export function AdvertiserFlow() {
     setReceipts(history.status === "fulfilled" ? history.value.receipts : []);
   }, []);
 
+  // Resolved after mount. Calling hasWallet() during render reads
+  // window.ethereum, which the server cannot see, so the button rendered
+  // disabled on the server and enabled on the client - a hydration mismatch.
+  const [walletReady, setWalletReady] = useState(false);
+
   useEffect(() => {
+    setWalletReady(hasWallet());
     currentAccount().then((address) => {
       if (address) {
         setAccount(address);
@@ -116,10 +123,10 @@ export function AdvertiserFlow() {
               The quote names the only wallet allowed to pay. Your wallet still confirms each
               transaction.
             </p>
-            <button type="button" onClick={onConnect} disabled={busy || !hasWallet()}>
+            <button type="button" onClick={onConnect} disabled={busy || !walletReady}>
               {busy ? "Waiting for wallet…" : "Connect wallet"}
             </button>
-            {!hasWallet() && <p className="field-help">No injected wallet detected.</p>}
+            {!walletReady && <p className="field-help">No injected wallet detected.</p>}
           </>
         )}
       </Step>
@@ -154,8 +161,19 @@ export function AdvertiserFlow() {
       <Step index={3} title="Establish domain control" locked={!account}>
         <DomainControl account={account} />
       </Step>
+      {/* "Create campaign" sits between proving the domain and funding, but it
+          lives on its own page - so the journey has to point at it from here. */}
+      <Step index={4} title="Create the campaign commitment" locked={!account}>
+        <p className="result-summary">
+          Name the product, the exact copy and the price. The builder hashes them in your browser so
+          the publisher can sign the same commitment.
+        </p>
+        <Link href="/campaign" className="text-link">
+          Open the campaign builder →
+        </Link>
+      </Step>
       <Step
-        index={4}
+        index={5}
         title="Validate and settle the publisher quote"
         locked={!account}
         done={progress?.step === "done"}
@@ -221,6 +239,15 @@ export function AdvertiserFlow() {
           ))}
         </div>
       </section>
+      {progress?.receiptId && (
+        <FlowDone
+          title="Settled. That is the payer side finished"
+          next={{ href: `/receipts/${progress.receiptId}`, label: "Verify this receipt" }}
+        >
+          The payment is on-chain and the receipt is indexed. Anyone can now re-check it against The
+          Graph and Sepolia.
+        </FlowDone>
+      )}
       {error && <p className="form-error">{error}</p>}
     </div>
   );

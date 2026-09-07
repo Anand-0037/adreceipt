@@ -39,8 +39,10 @@ export function Ledger() {
   if (error) {
     return (
       <p className="form-error">
-        Could not read the ledger: {error}. The indexer or the backend may be unreachable — nothing
-        is inferred when evidence is missing.
+        {/* The message already ends in a full stop, so trim it before joining
+            the two sentences - otherwise the reader sees ".." mid-sentence. */}
+        Could not read the ledger: {error.replace(/\.\s*$/, "")}. The indexer or the backend may be
+        unreachable — nothing is inferred when evidence is missing.
       </p>
     );
   }

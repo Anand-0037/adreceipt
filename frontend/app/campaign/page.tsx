@@ -1,4 +1,5 @@
 import { CampaignBuilder } from "@/components/CampaignBuilder";
+import { FlowDone } from "@/components/FlowDone";
 import { explorer } from "@/lib/api";
 import { protocol } from "@/lib/protocol";
 
@@ -84,6 +85,16 @@ export default function CampaignPage() {
           <strong>Graph plus RPC agreement</strong>
         </div>
       </aside>
+
+      {/* The builder used to end here. Funding is the next step of the payer
+          journey, so say so rather than leaving the page a dead end. */}
+      <FlowDone
+        title="Commitment prepared. Next: fund and settle"
+        next={{ href: "/advertiser", label: "Back to payer tools" }}
+      >
+        Hand these hashes to the publisher so they sign the same commitment. Once they return a
+        signed quote, approve the bounded amount and settle it from the payer tools.
+      </FlowDone>
     </div>
   );
 }
