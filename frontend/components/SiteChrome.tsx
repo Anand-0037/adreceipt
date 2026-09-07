@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+/* "Get started" is not here on purpose: the landing page already offers it in
+   the hero and the closing CTA, so repeating it in the nav on every page was
+   redundant. Sign-up lives on the page that sells it. */
 const NAV = [
   { href: "/ask", label: "Verify" },
   { href: "/ledger", label: "Ledger" },
   { href: "/campaign", label: "Campaign" },
-  { href: "/register", label: "Get started" },
 ];
 
 const FOOTER = [

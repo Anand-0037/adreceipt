@@ -3685,7 +3685,10 @@ label {
   margin-bottom: 7px;
 }
 
-/* Cards */
+/* Cards.
+   .ledger is deliberately not here: it is a layout grid whose children
+   (.ledger-summary, .table-scroll) are already cards, so making it one too
+   nested a card inside a card with no padding. */
 .flow-step,
 .lookup-form,
 .recommendation-demo,
@@ -3693,7 +3696,6 @@ label {
 .draft-output,
 .campaign-form,
 .record-block,
-.ledger,
 .result-skeleton {
   border: var(--edge);
   border-radius: var(--radius);
@@ -3848,4 +3850,74 @@ label {
    field now, so the aside needs no overlay of its own. */
 .auth-aside::before {
   content: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Ledger on the current theme.
+   The table header still carried the old warm-tan (#ebe5d9) and Arial from the
+   previous design, and the summary tiles used a 1px/6px shadow rather than the
+   hairline + small offset used everywhere else.
+   --------------------------------------------------------------------------- */
+.ledger {
+  gap: 28px;
+}
+.ledger h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.03em;
+  margin: 0 0 14px;
+}
+
+.ledger-summary {
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  overflow: hidden;
+}
+.ledger-summary > div {
+  padding: 18px 20px;
+}
+.ledger-summary dt {
+  font: 700 10.5px / 1.4 var(--body);
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.ledger-summary dd {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+.ledger-table th {
+  background: var(--paper);
+  color: var(--muted);
+  font: 700 10.5px / 1.4 var(--body);
+  letter-spacing: 0.12em;
+  border-bottom: var(--edge);
+}
+.ledger-table td {
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.ledger-table a {
+  color: var(--accent);
+  font-weight: 600;
+}
+.ledger-table a:hover {
+  color: var(--accent-dark);
+}
+
+/* The provenance line reads as a caption, not body copy. */
+.index-note {
+  font-size: 12px;
+  color: var(--faint);
+}
+/* The ledger shares the centred column with the heading above it; it was the
+   one content block left out of that rule, so its tables sat off to the left. */
+.ledger {
+  max-width: 900px;
+  margin-inline: auto;
+  width: 100%;
 }
