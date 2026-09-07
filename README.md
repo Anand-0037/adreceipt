@@ -28,17 +28,17 @@ hash, schema version, and replay nonce before transferring the exact amount.
 
 ## Live Sepolia evidence
 
-| Component | Verified state |
-| --- | --- |
-| Settlement | [`0x2fB6889Cc142C622a0479aF56b75B98beAeD3576`](https://sepolia.etherscan.io/address/0x2fB6889Cc142C622a0479aF56b75B98beAeD3576), deployed at block `11648834` in [transaction `0xf2db…c584`](https://sepolia.etherscan.io/tx/0xf2dbcfa9c1ede10519c37cedce0e69f59b1f0e8fc5b761edb69742cd5852c584) |
-| Asset | Circle test USDC, [`0x1c7D…7238`](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) |
-| Subgraph | Studio version `0.0.1`, deployment `QmXQmu8ce7JEATADtGXK65NceaKsF79Jz8whT9S6Tx3N8E`; [query endpoint](https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1) |
-| Privy | Wallet and default-deny policy configured for bounded USDC approval and settlement |
-| Chainlink CRE | `CRE_SIMULATED`: eligible and over-bid paths pass locally; no confidential workflow is deployed |
-| Paid receipts | `0` as of September 6, 2026; the first Privy settlement has not been broadcast |
+| Component     | Verified state                                                                                                                                                                                                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Settlement    | [`0x2fB6889Cc142C622a0479aF56b75B98beAeD3576`](https://sepolia.etherscan.io/address/0x2fB6889Cc142C622a0479aF56b75B98beAeD3576), deployed at block `11648834` in [transaction `0xf2db…c584`](https://sepolia.etherscan.io/tx/0xf2dbcfa9c1ede10519c37cedce0e69f59b1f0e8fc5b761edb69742cd5852c584) |
+| Asset         | Circle test USDC, [`0x1c7D…7238`](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238)                                                                                                                                                                               |
+| Subgraph      | Studio version `0.0.1`, deployment `QmXQmu8ce7JEATADtGXK65NceaKsF79Jz8whT9S6Tx3N8E`; [query endpoint](https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1)                                                                                                                             |
+| Privy         | Default-deny policy rejected a disallowed signing request and allowed the bounded approval plus settlement                                                                                                                                                                                       |
+| Chainlink CRE | `CRE_SIMULATED`: eligible and over-bid paths pass locally; no confidential workflow is deployed                                                                                                                                                                                                  |
+| Paid receipts | [`0xa63f…f9cd`](https://sepolia.etherscan.io/tx/0x29d0f2cb187f8c33d06329dd90f59dcd82b346c62c701cce53f37253cb69db28), settled through the bounded Privy policy in block `11652460`                                                                                                                |
 
-The publisher and recipient used for the first test are team-controlled. A successful transaction
-will prove the testnet integration, not third-party adoption. Exact deployment data is stored in
+The publisher and recipient used for the first test are team-controlled. This transaction proves
+the testnet integration, not third-party adoption. Exact deployment data is stored in
 [`deployments/placement-settlement-sepolia.json`](deployments/placement-settlement-sepolia.json).
 
 ## Frozen receipt event
@@ -131,8 +131,6 @@ DNS attestation.
 
 ## Remaining external work
 
-- Review and broadcast the bounded `approve` and `settlePlacement` transactions.
-- Confirm one `ReceiptCreated` event through RPC, The Graph, and the receipt API.
 - Deploy the web app and API to stable public URLs, then run a cold demo.
 - Deploy the CRE workflow only if Confidential Workflows access becomes available.
 

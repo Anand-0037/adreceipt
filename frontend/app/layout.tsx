@@ -11,6 +11,10 @@ export const metadata: Metadata = {
 const NAV = [
   { href: "/ask", label: "Check a receipt" },
   { href: "/campaign", label: "Prepare campaign" },
+  {
+    href: "/receipts/0xa63f1ce97fc2c2d97bb31f51e2f0989560d89937900d93fe36f303122d70f9cd",
+    label: "Live receipt",
+  },
 ];
 
 export default function RootLayout({

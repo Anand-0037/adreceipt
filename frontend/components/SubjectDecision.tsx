@@ -6,6 +6,8 @@ import { api, type VerificationResult } from "@/lib/api";
 import { ReceiptResult } from "./ReceiptResult";
 
 const BYTES32 = /^0x[0-9a-fA-F]{64}$/;
+const LIVE_SUBJECT =
+  "0x70c623cda09d526c20642a0f59b344eafbbe578a9e7a59dab8dcb41982be9512";
 
 export function SubjectDecision() {
   const [subjectHash, setSubjectHash] = useState("");
@@ -55,6 +57,13 @@ export function SubjectDecision() {
           The Graph finds receipts for this exact recommendation. RPC then
           confirms every candidate.
         </p>
+        <button
+          type="button"
+          className="example-button"
+          onClick={() => setSubjectHash(LIVE_SUBJECT)}
+        >
+          Use the live Sepolia subject
+        </button>
         {error && (
           <p className="form-error" role="alert">
             {error}

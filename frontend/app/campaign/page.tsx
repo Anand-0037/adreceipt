@@ -14,19 +14,35 @@ export default function CampaignPage() {
           quote; the Privy payer can settle only within its Sepolia policy.
         </p>
       </section>
-    <CampaignBuilder />
-    <section className="policy-proof" aria-labelledby="policy-title">
-      <div>
-        <p className="eyebrow">Privy policy</p>
-        <h2 id="policy-title">Default deny, two bounded actions</h2>
-        <p>Wallet <span className="mono">0x84B5…a57</span> can approve this settlement contract for at most 1 test USDC, then call its exact settlement function for the configured recipient.</p>
-      </div>
-      <dl>
-        <div><dt>Disallowed signing request</dt><dd><strong>Rejected by provider</strong><span>Live policy evidence captured</span></dd></div>
-        <div><dt>Bounded 0.1 USDC settlement</dt><dd><strong>Prepared, not broadcast</strong><span>Allowed provider result still required</span></dd></div>
-      </dl>
-    </section>
-    <section className="rail" aria-label="Settlement path">
+      <CampaignBuilder />
+      <section className="policy-proof" aria-labelledby="policy-title">
+        <div>
+          <p className="eyebrow">Privy policy</p>
+          <h2 id="policy-title">Default deny, two bounded actions</h2>
+          <p>
+            Wallet <span className="mono">0x84B5…a57</span> can approve this
+            settlement contract for at most 1 test USDC, then call its exact
+            settlement function for the configured recipient.
+          </p>
+        </div>
+        <dl>
+          <div>
+            <dt>Disallowed signing request</dt>
+            <dd>
+              <strong>Rejected by provider</strong>
+              <span>Live policy evidence captured</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Bounded 0.1 USDC settlement</dt>
+            <dd>
+              <strong>Allowed and settled</strong>
+              <span>Receipt 0xa63f…f9cd · block 11652460</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+      <section className="rail" aria-label="Settlement path">
         <div>
           <span>1</span>
           <strong>Prepare</strong>
@@ -71,7 +87,7 @@ export default function CampaignPage() {
         </div>
         <div>
           <span>Receipt decision</span>
-          <strong>Graph + RPC must match</strong>
+          <strong>PAID_VERIFIED live</strong>
         </div>
       </aside>
     </div>

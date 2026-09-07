@@ -231,6 +231,21 @@ button:disabled {
   opacity: 0.6;
   cursor: wait;
 }
+.example-button {
+  min-height: auto;
+  margin-top: 2px;
+  border: 0;
+  padding: 0;
+  color: var(--accent-dark);
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.example-button:hover {
+  color: var(--ink);
+  background: transparent;
+}
 .field-help,
 .index-note {
   color: var(--faint);
