@@ -21,3 +21,18 @@ deployments/hardhat.json
 backend/node_modules/
 backend/dist/
 backend/.data/
+
+# Next.js build output.
+# next.config.ts sets the turbopack root to the repository root, so Next writes
+# a root-level .next/ as well as frontend/.next/ - frontend/.gitignore only
+# covers the latter.
+.next/
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+
+# Editor and OS noise
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db
