@@ -1,7 +1,6 @@
 import { CampaignBuilder } from "@/components/CampaignBuilder";
 import { explorer } from "@/lib/api";
-const SETTLEMENT = "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576";
-const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+import { protocol } from "@/lib/protocol";
 
 export default function CampaignPage() {
   return (
@@ -20,24 +19,23 @@ export default function CampaignPage() {
           <p className="eyebrow">Privy policy</p>
           <h2 id="policy-title">Default deny, two bounded actions</h2>
           <p>
-            Wallet <span className="mono">0x84B5…a57</span> can approve this settlement contract for
-            at most 1 test USDC, then call its exact settlement function for the configured
-            recipient.
+            A configured server wallet can approve only the bounded amount and call the exact
+            settlement function allowed by its provider policy.
           </p>
         </div>
         <dl>
           <div>
             <dt>Disallowed signing request</dt>
             <dd>
-              <strong>Rejected by provider</strong>
-              <span>Live policy evidence captured</span>
+              <strong>Denied by default</strong>
+              <span>Requests must match the configured policy</span>
             </dd>
           </div>
           <div>
             <dt>Bounded 0.1 USDC settlement</dt>
             <dd>
-              <strong>Allowed and settled</strong>
-              <span>Receipt 0xa63f…f9cd · block 11652460</span>
+              <strong>Amount and recipient bounded</strong>
+              <span>Verified settlements appear in the live ledger</span>
             </dd>
           </div>
         </dl>
@@ -71,19 +69,19 @@ export default function CampaignPage() {
         </div>
         <div>
           <span>Contract</span>
-          <a href={explorer.address(SETTLEMENT)} target="_blank" rel="noreferrer">
-            0x2fB6…3576
+          <a href={explorer.address(protocol.settlement)} target="_blank" rel="noreferrer">
+            {protocol.settlement.slice(0, 8)}…{protocol.settlement.slice(-4)}
           </a>
         </div>
         <div>
           <span>Asset</span>
-          <a href={explorer.address(USDC)} target="_blank" rel="noreferrer">
+          <a href={explorer.address(protocol.asset)} target="_blank" rel="noreferrer">
             Circle test USDC
           </a>
         </div>
         <div>
           <span>Receipt decision</span>
-          <strong>PAID_VERIFIED live</strong>
+          <strong>Graph plus RPC agreement</strong>
         </div>
       </aside>
     </div>

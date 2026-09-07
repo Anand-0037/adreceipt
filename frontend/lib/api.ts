@@ -122,78 +122,49 @@ export const explorer = {
   block: (block: string | number) => `https://sepolia.etherscan.io/block/${block}`,
 };
 
-// ---------------------------------------------------------------------------
-// Advertiser identity and history
-// ---------------------------------------------------------------------------
-
-export type AdvertiserStatus =
-  | "not-in-registry"
-  | "pending"
-  | "verified"
-  | "revoked";
-
-export interface ChallengeRecord {
-  name: string;
-  type: "TXT";
-  value: string;
-  instructions: string[];
+export interface LedgerData {
+  count: number;
+  totalAmount: string;
+  receipts: ReceiptEvidence[];
+  sponsors: { address: string; paid: string; placements: number }[];
+  publishers: { address: string; earned: string; placements: number }[];
+  indexedBlock: number;
+  rpcHead: number;
+  hasIndexingErrors: false;
+  verification: "PAID_VERIFIED";
+  limit: number;
+  hasMore: boolean;
 }
 
-export interface AdvertiserChallenge {
-  address: string;
-  name: string;
-  domain: string;
-  status: AdvertiserStatus;
-  verified: boolean;
-  challenge: string;
-  record: ChallengeRecord;
-}
-
-export interface VerifyOutcome {
-  advertiser: string;
-  outcome:
-    | "verified"
-    | "record-missing"
-    | "record-mismatch"
-    | "not-registered"
-    | "no-resolvers";
-  verified: boolean;
-  attested: boolean;
-  transaction?: { hash: string; blockNumber: number };
-  message?: string;
-}
-
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      (body as { error?: string }).error ?? "unknown",
-      (body as { message?: string }).message ?? response.statusText,
-    );
+function parseLedger(value: unknown): LedgerData {
+  if (
+    !isObject(value) ||
+    !Array.isArray(value.receipts) ||
+    !Array.isArray(value.sponsors) ||
+    !Array.isArray(value.publishers) ||
+    value.verification !== "PAID_VERIFIED" ||
+    value.hasIndexingErrors !== false ||
+    typeof value.indexedBlock !== "number" ||
+    typeof value.rpcHead !== "number"
+  ) {
+    throw new ApiError(502, "invalid-response", "The ledger returned invalid evidence.");
   }
-  return body as T;
+  return value as unknown as LedgerData;
 }
 
-export const advertiserApi = {
-  /** Read live every time: the challenge changes whenever the claim does. */
-  challenge: (address: string) =>
-    call<AdvertiserChallenge>(`/advertisers/${address}/challenge`),
-
-  /** `dryRun` checks DNS without spending gas or writing a verdict. */
-  verify: (address: string, dryRun = false) =>
-    call<VerifyOutcome>(
-      `/advertisers/${address}/verify${dryRun ? "?dryRun=true" : ""}`,
-      { method: "POST" },
-    ),
-
-  receipts: (address: string) =>
-    call<{
+export const ledgerApi = {
+  all: async () => parseLedger(await get("/receipts")),
+  byPayer: async (address: string) => {
+    const value = await get(`/payers/${encodeURIComponent(address)}/receipts`);
+    if (
+      !isObject(value) ||
+      typeof value.address !== "string" ||
+      value.address.toLowerCase() !== address.toLowerCase()
+    ) {
+      throw new ApiError(502, "invalid-response", "The payer ledger returned invalid evidence.");
+    }
+    return value as unknown as Omit<LedgerData, "totalAmount" | "sponsors" | "publishers"> & {
       address: string;
-      count: number;
-      receipts: ReceiptEvidence[];
-      indexedBlock: number;
-      hasIndexingErrors: boolean;
-    }>(`/advertisers/${address}/receipts`),
+    };
+  },
 };

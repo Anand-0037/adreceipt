@@ -834,12 +834,16 @@ details input {
   width: 26px;
   height: 26px;
   border: 1px solid var(--ink);
-  font: 700 12px/1 Arial;
+  font:
+    700 12px / 1 Arial,
+    sans-serif;
 }
 .flow-state {
   margin-left: auto;
   color: var(--faint);
-  font: 700 10px/1 Arial;
+  font:
+    700 10px / 1 Arial,
+    sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -887,7 +891,9 @@ details input {
 }
 .copy-row dt {
   color: var(--faint);
-  font: 700 10px/1.4 Arial;
+  font:
+    700 10px / 1.4 Arial,
+    sans-serif;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -958,7 +964,9 @@ details input {
 }
 .demo-role {
   color: var(--faint);
-  font: 700 10px/1 Arial;
+  font:
+    700 10px / 1 Arial,
+    sans-serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1047,7 +1055,9 @@ details input {
 }
 .demo-evidence dt {
   color: var(--faint);
-  font: 700 10px/1.4 Arial;
+  font:
+    700 10px / 1.4 Arial,
+    sans-serif;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -1180,7 +1190,9 @@ details input {
 }
 .balance-grid dt {
   color: var(--faint);
-  font: 700 10px/1.4 Arial;
+  font:
+    700 10px / 1.4 Arial,
+    sans-serif;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -1232,7 +1244,9 @@ details input {
 }
 .ledger-summary dt {
   color: var(--faint);
-  font: 700 10px/1.4 Arial;
+  font:
+    700 10px / 1.4 Arial,
+    sans-serif;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -1260,7 +1274,9 @@ details input {
   padding: 11px 14px;
   background: #ebe5d9;
   color: var(--faint);
-  font: 700 10px/1.4 Arial;
+  font:
+    700 10px / 1.4 Arial,
+    sans-serif;
   letter-spacing: 0.09em;
   text-align: left;
   text-transform: uppercase;

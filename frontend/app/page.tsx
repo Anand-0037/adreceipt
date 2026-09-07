@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DisclosureDemo } from "@/components/DisclosureDemo";
 
 export default function Home() {
   return (
@@ -8,30 +7,48 @@ export default function Home() {
         <p className="eyebrow">Verifiable disclosure for paid AI recommendations</p>
         <h1>A &ldquo;sponsored&rdquo; label is just the platform&rsquo;s word.</h1>
         <p>
-          The same company takes the advertiser&rsquo;s money, writes the recommendation, and decides
-          whether to call it sponsored. AdReceipt replaces that with something you can check
+          The same company takes the advertiser&rsquo;s money, writes the recommendation, and
+          decides whether to call it sponsored. AdReceipt replaces that with something you can check
           yourself: a payment receipt bound to the exact recommendation, indexed publicly and
           re-verified against Ethereum.
         </p>
       </section>
 
-      <DisclosureDemo />
+      <section className="recommendation-demo">
+        <p className="eyebrow">Start with your own data</p>
+        <h2>Verify a recommendation or create a signed placement</h2>
+        <p>
+          AdReceipt computes commitments from user supplied content. It does not attach a sample
+          receipt to a different recommendation.
+        </p>
+        <div className="lookup-line">
+          <Link href="/ask" className="text-link">
+            Verify recommendation →
+          </Link>
+          <Link href="/publisher" className="text-link">
+            Onboard a publisher →
+          </Link>
+          <Link href="/advertiser" className="text-link">
+            Settle as a payer →
+          </Link>
+        </div>
+      </section>
 
       <section className="how" aria-labelledby="how-title">
         <h2 id="how-title">How a badge earns its place</h2>
         <ol className="how-steps">
           <li>
-            <h3>The advertiser proves it is real</h3>
+            <h3>The parties connect their wallets</h3>
             <p>
-              It publishes a challenge in its domain&rsquo;s DNS. The check runs inside a hardware
-              enclave, so nobody &mdash; including us &mdash; has to be trusted with the answer.
+              The quote binds the publisher signer, allowed payer, recipient, asset, price, network,
+              and settlement contract.
             </p>
           </li>
           <li>
             <h3>The publisher signs the exact recommendation</h3>
             <p>
-              Not &ldquo;an ad slot&rdquo; &mdash; the specific wording, product and price, committed
-              in a signature before any money moves.
+              Not &ldquo;an ad slot&rdquo; &mdash; the specific wording, product and price,
+              committed in a signature before any money moves.
             </p>
           </li>
           <li>
@@ -57,8 +74,8 @@ export default function Home() {
           <article>
             <h3>AI publishers and agents</h3>
             <p>
-              Monetise recommendations without asking users to take your word for it &mdash; and know
-              whose money you are accepting before you take it.
+              Monetise recommendations without asking users to take your word for it &mdash; and
+              know whose money you are accepting before you take it.
             </p>
             <Link href="/campaign" className="text-link">
               Prepare a placement →
@@ -67,11 +84,11 @@ export default function Home() {
           <article>
             <h3>Advertisers</h3>
             <p>
-              Prove you control the brand you are bidding as, and get auditable evidence that the
-              placement you paid for was the placement that ran.
+              Validate the publisher&rsquo;s full authorization before approving funds, then get
+              auditable evidence for the exact placement you paid for.
             </p>
             <Link href="/advertiser" className="text-link">
-              Prove your domain →
+              Onboard as a payer →
             </Link>
           </article>
           <article>

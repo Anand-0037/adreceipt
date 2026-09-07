@@ -9,7 +9,8 @@ const apiOrigin =
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: path.resolve(__dirname),
+    // Client protocol configuration imports the repository deployment record.
+    root: path.resolve(__dirname, ".."),
   },
   async rewrites() {
     return [

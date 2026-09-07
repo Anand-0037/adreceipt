@@ -13,8 +13,8 @@ export default function PublisherPage() {
         <h1>Sign what you recommend, then get paid for it.</h1>
         <p>
           You commit to the exact wording and the price before any money moves. That signature is
-          what lets a reader check the recommendation in front of them against the payment behind
-          it — and it lets you prove whose money you took.
+          what lets a reader check the recommendation in front of them against the payment behind it
+          — and it lets you prove whose money you took.
         </p>
       </section>
       <PublisherFlow />

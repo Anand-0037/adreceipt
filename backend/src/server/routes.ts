@@ -1,15 +1,12 @@
 import { Router } from "express";
-import { ZeroHash } from "ethers";
 import { config, settlementDeployment } from "../config";
 import { getProvider } from "../chain/provider";
-import { asyncRoute, badRequest, notFound, parseAddress } from "./errors";
-import { getAdvertiser, getChallenge } from "../chain/reads";
-import { submitDomainVerification } from "../chain/writes";
-import { buildRecord } from "../dns/record";
-import { checkDomain, isAttestable } from "../dns/verify";
 import { queryAllReceipts, queryReceiptsByPayer } from "../receipts/by-payer";
+import type { GraphSubjectEvidence } from "../receipts/graph";
+import { verifyReceiptCollection } from "../receipts/ledger";
 import { verifyReceipt, verifySubject } from "../receipts/service";
 import { privyReadiness } from "../privy/client";
+import { asyncRoute, badRequest, parseAddress } from "./errors";
 
 export const routes = Router();
 
@@ -64,166 +61,87 @@ routes.get(
   }),
 );
 
-// ---------------------------------------------------------------------------
-// Advertiser identity
-//
-// The domain proof is what makes a payer someone rather than an address. The
-// logic lives in ../dns and ../chain and predates the V1 settlement path; these
-// routes re-expose it so the advertiser dashboard can drive it, without
-// duplicating any of it.
-// ---------------------------------------------------------------------------
+async function loadVerifiedCollection(load: () => Promise<GraphSubjectEvidence>) {
+  if (!config.graphQueryUrl || !config.settlementAddress) {
+    throw new Error("Receipt ledger providers are not configured");
+  }
+  return verifyReceiptCollection(await load());
+}
 
-/** The DNS record an advertiser must publish, read live from the chain. */
+/** Latest verified receipts paid by one address. This endpoint never writes. */
 routes.get(
-  "/advertisers/:address/challenge",
+  "/payers/:address/receipts",
   asyncRoute(async (req, res) => {
     const address = parseAddress(req.params.address);
-    const advertiser = await getAdvertiser(address);
-
-    if (advertiser.challenge === ZeroHash || !advertiser.domain) {
-      throw notFound(
-        "not-registered",
-        "No advertiser claim for this address. Register a name and domain first.",
+    try {
+      const collection = await loadVerifiedCollection(() =>
+        queryReceiptsByPayer(config.graphQueryUrl, config.graphApiKey, address),
       );
-    }
-
-    return res.json({
-      address,
-      name: advertiser.name,
-      domain: advertiser.domain,
-      status: advertiser.statusLabel,
-      verified: advertiser.status === 2,
-      challenge: advertiser.challenge,
-      record: buildRecord(advertiser.domain, advertiser.challenge),
-    });
-  }),
-);
-
-/**
- * Run the DNS check and record the verdict.
- *
- * `?dryRun=true` performs the lookup without writing, which is what the UI
- * polls while an advertiser waits for propagation - it costs no gas and cannot
- * revoke anything.
- */
-routes.post(
-  "/advertisers/:address/verify",
-  asyncRoute(async (req, res) => {
-    const address = parseAddress(req.params.address);
-    const dryRun = req.query.dryRun === "true";
-
-    const result = await checkDomain(address);
-
-    if (result.outcome === "not-registered") {
-      throw notFound("not-registered", "No advertiser claim for this address.");
-    }
-
-    if (!isAttestable(result)) {
-      // No resolver could be reached. That establishes nothing, so writing
-      // `false` would revoke a legitimate claim over a network problem.
+      return res.json({ address, ...collection });
+    } catch {
       return res.status(503).json({
-        address,
-        outcome: result.outcome,
-        verified: false,
-        attested: false,
-        message: "No resolver could be reached. Nothing was written on-chain.",
+        error: "ledger-unavailable",
+        message: "The Graph and canonical RPC evidence could not be verified.",
       });
     }
-
-    if (dryRun) return res.json({ ...result, attested: false, dryRun: true });
-
-    // Re-read at the last moment: if the claim changed during the lookup, this
-    // verdict belongs to a claim that no longer exists.
-    const current = await getChallenge(address);
-    if (current !== result.challenge) {
-      throw badRequest(
-        "challenge-changed",
-        "The claim changed during verification. Publish the new record and retry.",
-      );
-    }
-
-    const receipt = await submitDomainVerification(
-      address,
-      result.verified,
-      result.challenge,
-      result.checkedAt,
-    );
-
-    return res.json({ ...result, attested: true, transaction: receipt });
   }),
 );
 
-/** Everything this advertiser has paid for. */
-routes.get(
-  "/advertisers/:address/receipts",
-  asyncRoute(async (req, res) => {
-    const address = parseAddress(req.params.address);
-
-    if (!config.graphQueryUrl) {
-      throw badRequest("graph-not-configured", "GRAPH_QUERY_URL is not set.");
-    }
-
-    const evidence = await queryReceiptsByPayer(
-      config.graphQueryUrl,
-      config.graphApiKey ?? "",
-      address,
-    );
-
-    return res.json({
-      address,
-      count: evidence.receipts.length,
-      receipts: evidence.receipts,
-      indexedBlock: evidence.blockNumber,
-      hasIndexingErrors: evidence.hasIndexingErrors,
-    });
-  }),
-);
-
-/**
- * The public ledger: every settled sponsorship, with per-payer totals.
- *
- * Totals are computed here rather than in the browser so the ranking a client
- * shows is reproducible from one documented source, and so a client cannot
- * present a different total than the one the API would.
- */
+/** Latest verified sponsorship receipts with deterministic payer/publisher totals. */
 routes.get(
   "/receipts",
   asyncRoute(async (_req, res) => {
-    if (!config.graphQueryUrl) {
-      throw badRequest("graph-not-configured", "GRAPH_QUERY_URL is not set.");
+    try {
+      const collection = await loadVerifiedCollection(() =>
+        queryAllReceipts(config.graphQueryUrl, config.graphApiKey),
+      );
+      const byPayer = new Map<string, { paid: bigint; placements: number }>();
+      const byPublisher = new Map<string, { earned: bigint; placements: number }>();
+      let total = 0n;
+
+      for (const receipt of collection.receipts) {
+        const amount = BigInt(receipt.amount);
+        total += amount;
+
+        const payer = receipt.payer.toLowerCase();
+        const payerTotal = byPayer.get(payer) ?? { paid: 0n, placements: 0 };
+        byPayer.set(payer, {
+          paid: payerTotal.paid + amount,
+          placements: payerTotal.placements + 1,
+        });
+
+        const publisher = receipt.publisher.toLowerCase();
+        const publisherTotal = byPublisher.get(publisher) ?? { earned: 0n, placements: 0 };
+        byPublisher.set(publisher, {
+          earned: publisherTotal.earned + amount,
+          placements: publisherTotal.placements + 1,
+        });
+      }
+
+      const sponsors = [...byPayer].map(([address, value]) => ({ address, ...value }));
+      sponsors.sort((a, b) => (a.paid === b.paid ? 0 : a.paid > b.paid ? -1 : 1));
+      const publishers = [...byPublisher].map(([address, value]) => ({ address, ...value }));
+      publishers.sort((a, b) => (a.earned === b.earned ? 0 : a.earned > b.earned ? -1 : 1));
+
+      return res.json({
+        ...collection,
+        totalAmount: total.toString(),
+        sponsors: sponsors.map(({ address, paid, placements }) => ({
+          address,
+          paid: paid.toString(),
+          placements,
+        })),
+        publishers: publishers.map(({ address, earned, placements }) => ({
+          address,
+          earned: earned.toString(),
+          placements,
+        })),
+      });
+    } catch {
+      return res.status(503).json({
+        error: "ledger-unavailable",
+        message: "The Graph and canonical RPC evidence could not be verified.",
+      });
     }
-
-    const evidence = await queryAllReceipts(config.graphQueryUrl, config.graphApiKey ?? "");
-
-    const byPayer = new Map<string, { paid: bigint; placements: number }>();
-    const byPublisher = new Map<string, { earned: bigint; placements: number }>();
-    let total = BigInt(0);
-
-    for (const r of evidence.receipts) {
-      const amount = BigInt(r.amount);
-      total += amount;
-
-      const payer = r.payer.toLowerCase();
-      const p = byPayer.get(payer) ?? { paid: BigInt(0), placements: 0 };
-      byPayer.set(payer, { paid: p.paid + amount, placements: p.placements + 1 });
-
-      const publisher = r.publisher.toLowerCase();
-      const q = byPublisher.get(publisher) ?? { earned: BigInt(0), placements: 0 };
-      byPublisher.set(publisher, { earned: q.earned + amount, placements: q.placements + 1 });
-    }
-
-    return res.json({
-      count: evidence.receipts.length,
-      totalAmount: total.toString(),
-      receipts: evidence.receipts,
-      sponsors: [...byPayer.entries()]
-        .map(([address, v]) => ({ address, paid: v.paid.toString(), placements: v.placements }))
-        .sort((a, b) => Number(BigInt(b.paid) - BigInt(a.paid))),
-      publishers: [...byPublisher.entries()]
-        .map(([address, v]) => ({ address, earned: v.earned.toString(), placements: v.placements }))
-        .sort((a, b) => Number(BigInt(b.earned) - BigInt(a.earned))),
-      indexedBlock: evidence.blockNumber,
-      hasIndexingErrors: evidence.hasIndexingErrors,
-    });
   }),
 );

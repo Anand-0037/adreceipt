@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 import { TypedDataEncoder, id, isAddress } from "ethers";
 
@@ -12,14 +11,13 @@ const SUBJECT_TYPES = {
     { name: "disclosureVersion", type: "uint16" },
   ],
 };
-const LIVE_RECEIPT = "0xa63f1ce97fc2c2d97bb31f51e2f0989560d89937900d93fe36f303122d70f9cd";
-const LIVE_INPUT = {
-  publisher: "0x455a064eB69b064124bcE89f677Ce89d50B92911",
-  campaign: "adreceipt-demo-campaign-v1",
-  placement: "adreceipt-demo-placement-v1",
-  product: "https://adreceipt.fun",
-  content: "Sponsored recommendation: AdReceipt",
-};
+interface CampaignInput {
+  publisher: string;
+  campaign: string;
+  placement: string;
+  product: string;
+  content: string;
+}
 
 interface Draft {
   campaignId: string;
@@ -46,12 +44,12 @@ export function CampaignBuilder() {
     [publisher, campaign, placement, product, content],
   );
 
-  function createDraft(values: typeof LIVE_INPUT): Draft {
+  function createDraft(values: CampaignInput): Draft {
     const subject = {
       publisher: values.publisher,
       placementId: id(values.placement.trim()),
       productRefHash: id(values.product.trim()),
-      contentHash: id(values.content.trim()),
+      contentHash: id(values.content),
       disclosureVersion: 1,
     };
     return {
@@ -59,16 +57,6 @@ export function CampaignBuilder() {
       subject,
       subjectHash: TypedDataEncoder.hashStruct("SubjectV1", SUBJECT_TYPES, subject),
     };
-  }
-
-  function loadLiveCampaign() {
-    setPublisher(LIVE_INPUT.publisher);
-    setCampaign(LIVE_INPUT.campaign);
-    setPlacement(LIVE_INPUT.placement);
-    setProduct(LIVE_INPUT.product);
-    setContent(LIVE_INPUT.content);
-    setError("");
-    setDraft(createDraft(LIVE_INPUT));
   }
 
   function prepare(event: FormEvent) {
@@ -89,9 +77,6 @@ export function CampaignBuilder() {
   return (
     <div className="builder-grid">
       <form className="campaign-form" onSubmit={prepare} noValidate>
-        <button type="button" className="example-button" onClick={loadLiveCampaign}>
-          Load the live settled campaign
-        </button>
         <div>
           <label htmlFor="publisher">Publisher address</label>
           <input
@@ -171,13 +156,6 @@ export function CampaignBuilder() {
               These values match the contract&apos;s SubjectV1 hashing. Publisher signing, CRE
               evaluation, and Privy settlement remain separate authorized steps.
             </p>
-            {draft.subjectHash ===
-              "0x70c623cda09d526c20642a0f59b344eafbbe578a9e7a59dab8dcb41982be9512" && (
-              <p className="live-match">
-                Matches the settled Sepolia campaign.{" "}
-                <Link href={`/receipts/${LIVE_RECEIPT}`}>Open live receipt →</Link>
-              </p>
-            )}
           </>
         ) : (
           <>

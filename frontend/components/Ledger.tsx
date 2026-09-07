@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { API_BASE, explorer, type ReceiptEvidence } from "@/lib/api";
+import { explorer, ledgerApi, type LedgerData } from "@/lib/api";
 
 /**
  * The public ledger of settled sponsorships.
@@ -17,28 +17,6 @@ import { API_BASE, explorer, type ReceiptEvidence } from "@/lib/api";
  * client's own arithmetic.
  */
 
-interface SponsorRow {
-  address: string;
-  paid: string;
-  placements: number;
-}
-
-interface PublisherRow {
-  address: string;
-  earned: string;
-  placements: number;
-}
-
-interface LedgerData {
-  count: number;
-  totalAmount: string;
-  receipts: ReceiptEvidence[];
-  sponsors: SponsorRow[];
-  publishers: PublisherRow[];
-  indexedBlock: number;
-  hasIndexingErrors: boolean;
-}
-
 const usdc = (base: string) => (Number(base) / 1e6).toFixed(2);
 const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-4)}`;
 const when = (unix: string) =>
@@ -52,12 +30,8 @@ export function Ledger() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/receipts`, { cache: "no-store" })
-      .then(async (r) => {
-        const body = await r.json();
-        if (!r.ok) throw new Error(body?.message ?? r.statusText);
-        return body as LedgerData;
-      })
+    ledgerApi
+      .all()
       .then(setData)
       .catch((e: Error) => setError(e.message));
   }, []);
@@ -76,8 +50,7 @@ export function Ledger() {
   if (data.count === 0) {
     return (
       <p className="field-help">
-        No settled sponsorships yet. Every payment made through AdReceipt appears here
-        automatically — there is no separate reporting step, and nothing can be omitted from it.
+        No verified settlement is currently available from The Graph and Sepolia RPC.
       </p>
     );
   }
@@ -136,7 +109,7 @@ export function Ledger() {
       </section>
 
       <section>
-        <h2>Every settled placement</h2>
+        <h2>Latest verified placements</h2>
         <div className="table-scroll">
           <table className="ledger-table">
             <thead>
@@ -174,9 +147,9 @@ export function Ledger() {
       </section>
 
       <p className="field-help">
-        Indexed to block {data.indexedBlock}
-        {data.hasIndexingErrors && " · the indexer reported errors, so this view may be incomplete"}
-        . Amounts are exactly as recorded on-chain; nothing here is estimated or self-reported.
+        Graph block {data.indexedBlock} · RPC head {data.rpcHead} · every displayed row is
+        PAID_VERIFIED against both providers
+        {data.hasMore ? ` · showing the latest ${data.limit}` : ""}.
       </p>
     </div>
   );

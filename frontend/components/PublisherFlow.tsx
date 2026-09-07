@@ -1,55 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { advertiserApi, explorer, type AdvertiserChallenge } from "@/lib/api";
-import {
-  connect,
-  currentAccount,
-  describeWalletError,
-  hasWallet,
-  registerAdvertiser,
-} from "@/lib/wallet";
-import {
-  buildQuote,
-  buildSubject,
-  serialise,
-  signQuote,
-  type SignedQuote,
-} from "@/lib/quote";
-
-/**
- * The publisher's journey: register, describe the placement, sign it, hand it
- * to the advertiser, then show the disclosure once payment lands.
- *
- * The signature is the load-bearing step. Before any money moves the publisher
- * commits to the exact recommendation text and the price - which is what lets a
- * reader later check that the words on screen are the words that were paid for.
- */
-
-type StepState = "locked" | "active" | "done";
+import { useEffect, useState } from "react";
+import { explorer } from "@/lib/api";
+import { buildQuote, buildSubject, serialise, signQuote, type SignedQuote } from "@/lib/quote";
+import { connect, currentAccount, describeWalletError, hasWallet } from "@/lib/wallet";
+import { protocol } from "@/lib/protocol";
 
 function Step({
   index,
   title,
-  state,
+  locked,
+  done,
   children,
 }: {
   index: number;
   title: string;
-  state: StepState;
+  locked?: boolean;
+  done?: boolean;
   children: React.ReactNode;
 }) {
+  const state = locked ? "locked" : done ? "done" : "active";
   return (
     <section className={`flow-step flow-${state}`}>
       <header>
         <span className="flow-index" aria-hidden>
-          {state === "done" ? "✓" : index}
+          {done ? "✓" : index}
         </span>
         <h2>{title}</h2>
-        <span className="flow-state">
-          {state === "locked" ? "Locked" : state === "done" ? "Done" : "Now"}
-        </span>
+        <span className="flow-state">{locked ? "Locked" : done ? "Done" : "Now"}</span>
       </header>
       <div className="flow-body">{children}</div>
     </section>
@@ -58,261 +37,188 @@ function Step({
 
 export function PublisherFlow() {
   const [account, setAccount] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const [claim, setClaim] = useState<AdvertiserChallenge | null>(null);
-  const [brand, setBrand] = useState("");
-  const [domainName, setDomainName] = useState("");
-
-  const [placementLabel, setPlacementLabel] = useState("hosting-answer-1");
-  const [productRef, setProductRef] = useState("RenderStack");
-  const [text, setText] = useState(
-    "RenderStack is a good choice for a small Node service: predictable pricing and no cold starts.",
-  );
-  const [campaignLabel, setCampaignLabel] = useState("q3-hosting");
+  const [placementLabel, setPlacementLabel] = useState("");
+  const [campaignLabel, setCampaignLabel] = useState("");
+  const [productRef, setProductRef] = useState("");
+  const [recommendationText, setRecommendationText] = useState("");
   const [payer, setPayer] = useState("");
-  const [amount, setAmount] = useState("0.1");
-
+  const [recipient, setRecipient] = useState("");
+  const [amount, setAmount] = useState("");
   const [signed, setSigned] = useState<SignedQuote | null>(null);
+  const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  const refresh = useCallback(async (who: string) => {
-    try {
-      setClaim(await advertiserApi.challenge(who));
-    } catch {
-      setClaim(null);
-    }
-  }, []);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    currentAccount().then((a) => {
-      if (a) {
-        setAccount(a);
-        void refresh(a);
+    currentAccount().then((address) => {
+      if (address) {
+        setAccount(address);
+        setRecipient(address);
       }
     });
-  }, [refresh]);
+  }, []);
 
-  const run = async (fn: () => Promise<void>) => {
+  async function onConnect() {
     setBusy(true);
     setError(null);
     try {
-      await fn();
-    } catch (e) {
-      setError(describeWalletError(e));
+      const { address } = await connect();
+      setAccount(address);
+      setRecipient(address);
+    } catch (cause) {
+      setError(describeWalletError(cause));
     } finally {
       setBusy(false);
     }
-  };
+  }
 
-  const registered = Boolean(claim);
-  const verified = claim?.verified === true;
+  async function onSign() {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    setSigned(null);
+    try {
+      const subject = buildSubject({
+        publisher: account,
+        placementLabel,
+        productRef,
+        recommendationText,
+      });
+      const quote = buildQuote({
+        subject,
+        campaignLabel,
+        payer,
+        recipient,
+        amountUsdc: amount,
+        chainId: protocol.chainId,
+      });
+      setSigned(await signQuote(subject, quote));
+    } catch (cause) {
+      setError(describeWalletError(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
 
+  const complete = Boolean(
+    placementLabel &&
+      campaignLabel &&
+      productRef &&
+      recommendationText &&
+      payer &&
+      recipient &&
+      amount,
+  );
   return (
     <div className="flow-stack">
-      <Step index={1} title="Connect the publisher wallet" state={account ? "done" : "active"}>
+      <Step index={1} title="Connect the publisher wallet" done={Boolean(account)}>
         {account ? (
           <p className="field-help">
-            Signing as <span className="mono">{account}</span>. This address must be the publisher
-            named in the quote, or the recovered signature will not match.
+            Publisher signer: <span className="mono">{account}</span>
           </p>
         ) : (
           <>
             <p className="result-summary">
-              This wallet signs your placements and receives payment. It never needs to hold funds
-              to sign.
+              This wallet signs the recommendation and may choose a different payment recipient.
             </p>
-            <button
-              type="button"
-              disabled={busy || !hasWallet()}
-              onClick={() =>
-                run(async () => {
-                  const { address } = await connect();
-                  setAccount(address);
-                  setPayer((p) => p || "");
-                  await refresh(address);
-                })
-              }
-            >
-              {busy ? "Waiting for your wallet…" : "Connect wallet"}
+            <button type="button" onClick={onConnect} disabled={busy || !hasWallet()}>
+              {busy ? "Waiting for wallet…" : "Connect wallet"}
             </button>
-            {!hasWallet() && <p className="field-help">No browser wallet detected.</p>}
           </>
         )}
       </Step>
-
-      <Step
-        index={2}
-        title="Register as a publisher"
-        state={!account ? "locked" : registered ? "done" : "active"}
-      >
-        {!account && <p className="field-help">Connect a wallet first.</p>}
-
-        {account && !registered && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(async () => {
-                await registerAdvertiser(brand.trim(), domainName.trim());
-                await refresh(account);
-              });
-            }}
-          >
-            <p className="result-summary">
-              Publishers register the same way advertisers do. It is the same question — can you
-              prove you are who you say you are — asked of the other side of the deal.
-            </p>
-            <label htmlFor="pub-brand">Publisher name</label>
-            <input
-              id="pub-brand"
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              placeholder="AskFlow"
-            />
-            <label htmlFor="pub-domain" style={{ marginTop: 14 }}>
-              Domain you control
-            </label>
-            <div className="lookup-line">
-              <input
-                id="pub-domain"
-                value={domainName}
-                onChange={(e) => setDomainName(e.target.value)}
-                placeholder="askflow.example"
-                spellCheck={false}
-                className="mono"
-              />
-              <button type="submit" disabled={busy || !brand.trim() || !domainName.trim()}>
-                {busy ? "Confirm in wallet…" : "Register"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {registered && claim && (
-          <>
-            <p className="result-summary">
-              <strong>{claim.name}</strong> claims <span className="mono">{claim.domain}</span> —{" "}
-              {verified ? "domain proved." : "not yet proved."}
-            </p>
-            {!verified && (
-              <p className="field-help">
-                Prove it on the{" "}
-                <Link href="/advertiser" className="text-link">
-                  domain step
-                </Link>
-                . An advertiser paying you will want to know you are real too.
-              </p>
-            )}
-          </>
-        )}
+      <Step index={2} title="Define the placement" locked={!account} done={Boolean(signed)}>
+        <p className="result-summary">
+          These are your inputs. AdReceipt hashes the exact recommendation text without rewriting or
+          trimming it.
+        </p>
+        <label htmlFor="campaign">Campaign reference</label>
+        <input
+          id="campaign"
+          value={campaignLabel}
+          onChange={(event) => setCampaignLabel(event.target.value)}
+          placeholder="Your internal campaign ID"
+        />
+        <label htmlFor="placement" style={{ marginTop: 14 }}>
+          Placement reference
+        </label>
+        <input
+          id="placement"
+          value={placementLabel}
+          onChange={(event) => setPlacementLabel(event.target.value)}
+          placeholder="Page, message, or slot ID"
+        />
+        <label htmlFor="product" style={{ marginTop: 14 }}>
+          Product reference
+        </label>
+        <input
+          id="product"
+          value={productRef}
+          onChange={(event) => setProductRef(event.target.value)}
+          placeholder="SKU, URL, or product ID"
+        />
+        <label htmlFor="recommendation" style={{ marginTop: 14 }}>
+          Exact recommendation shown to the user
+        </label>
+        <textarea
+          id="recommendation"
+          rows={5}
+          value={recommendationText}
+          onChange={(event) => setRecommendationText(event.target.value)}
+          placeholder="Enter the exact commercial recommendation…"
+        />
+        <label htmlFor="payer" style={{ marginTop: 14 }}>
+          Payer wallet
+        </label>
+        <input
+          id="payer"
+          className="mono"
+          value={payer}
+          onChange={(event) => setPayer(event.target.value)}
+          placeholder="0x…"
+          spellCheck={false}
+        />
+        <label htmlFor="recipient" style={{ marginTop: 14 }}>
+          USDC recipient
+        </label>
+        <input
+          id="recipient"
+          className="mono"
+          value={recipient}
+          onChange={(event) => setRecipient(event.target.value)}
+          placeholder="0x…"
+          spellCheck={false}
+        />
+        <label htmlFor="amount" style={{ marginTop: 14 }}>
+          Price in test USDC
+        </label>
+        <input
+          id="amount"
+          className="mono"
+          inputMode="decimal"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder="0.10"
+        />
+        <button
+          type="button"
+          style={{ marginTop: 14 }}
+          disabled={busy || !account || !complete}
+          onClick={onSign}
+        >
+          {busy ? "Sign in wallet…" : "Create and sign quote"}
+        </button>
       </Step>
-
-      <Step index={3} title="Declare the placement" state={!account ? "locked" : "active"}>
-        {!account && <p className="field-help">Connect a wallet first.</p>}
-        {account && (
+      <Step index={3} title="Send the authorization to the payer" locked={!signed}>
+        {!signed ? (
+          <p className="field-help">Complete and sign the placement first.</p>
+        ) : (
           <>
             <p className="result-summary">
-              Describe the exact recommendation. The text below is hashed into the commitment, so a
-              reader can later check that what they are shown is what was paid for.
+              This packet authorizes one exact payment. It contains no private key and cannot
+              redirect the recipient or change the content.
             </p>
-
-            <label htmlFor="placement">Placement label</label>
-            <input id="placement" value={placementLabel} onChange={(e) => setPlacementLabel(e.target.value)} />
-
-            <label htmlFor="product" style={{ marginTop: 14 }}>
-              Product recommended
-            </label>
-            <input id="product" value={productRef} onChange={(e) => setProductRef(e.target.value)} />
-
-            <label htmlFor="text" style={{ marginTop: 14 }}>
-              Recommendation text, exactly as it will appear
-            </label>
-            <textarea id="text" rows={3} value={text} onChange={(e) => setText(e.target.value)} />
-            <p className="field-help">
-              Character for character. Change a word after signing and the receipt no longer matches
-              what the reader sees — which is the point.
-            </p>
-          </>
-        )}
-      </Step>
-
-      <Step index={4} title="Price it and sign" state={!account ? "locked" : signed ? "done" : "active"}>
-        {!account && <p className="field-help">Connect a wallet first.</p>}
-        {account && (
-          <>
-            <label htmlFor="campaign">Campaign label</label>
-            <input id="campaign" value={campaignLabel} onChange={(e) => setCampaignLabel(e.target.value)} />
-
-            <label htmlFor="payer" style={{ marginTop: 14 }}>
-              Advertiser wallet allowed to pay
-            </label>
-            <input
-              id="payer"
-              value={payer}
-              onChange={(e) => setPayer(e.target.value)}
-              placeholder="0x…"
-              spellCheck={false}
-              className="mono"
-            />
-
-            <label htmlFor="amount" style={{ marginTop: 14 }}>
-              Price in test USDC
-            </label>
-            <div className="lookup-line">
-              <input id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="mono" />
-              <button
-                type="button"
-                disabled={busy || !/^0x[0-9a-fA-F]{40}$/.test(payer.trim())}
-                onClick={() =>
-                  run(async () => {
-                    const subject = buildSubject({
-                      publisher: account,
-                      placementLabel,
-                      productRef,
-                      recommendationText: text,
-                    });
-                    const quote = buildQuote({
-                      subject,
-                      campaignLabel,
-                      payer: payer.trim(),
-                      recipient: account,
-                      amountUsdc: amount,
-                      chainId: 11155111,
-                    });
-                    setSigned(await signQuote(subject, quote));
-                  })
-                }
-              >
-                {busy ? "Sign in wallet…" : "Sign quote"}
-              </button>
-            </div>
-            <p className="field-help">
-              Only this advertiser can settle it, only at this price, only for this text, and only
-              for the next hour.
-            </p>
-          </>
-        )}
-
-        {signed && (
-          <div className="verdict verdict-ok" style={{ marginTop: 18 }}>
-            <strong>Quote signed</strong>
-            <span>
-              Receipt id will be <span className="mono">{signed.receiptId.slice(0, 22)}…</span>
-            </span>
-          </div>
-        )}
-      </Step>
-
-      <Step index={5} title="Hand it over and get paid" state={signed ? "active" : "locked"}>
-        {!signed && <p className="field-help">Sign a quote first.</p>}
-        {signed && (
-          <>
-            <p className="result-summary">
-              Send this to the advertiser. It contains no secret — the signature only authorises
-              this one payment, and no one else can redirect it.
-            </p>
-            <textarea readOnly rows={8} className="mono" value={serialise(signed)} />
+            <textarea readOnly rows={10} className="mono" value={serialise(signed)} />
             <div className="lookup-line" style={{ marginTop: 12 }}>
               <button
                 type="button"
@@ -335,16 +241,12 @@ export function PublisherFlow() {
               </a>
             </div>
             <p className="field-help">
-              Once the advertiser settles, the receipt appears at{" "}
-              <Link href={`/receipts/${signed.receiptId}`} className="text-link">
-                /receipts/{signed.receiptId.slice(0, 12)}…
-              </Link>{" "}
-              and the disclosure can be rendered from it.
+              After payment, follow <Link href={`/receipts/${signed.receiptId}`}>this receipt</Link>{" "}
+              while The Graph indexes it.
             </p>
           </>
         )}
       </Step>
-
       {error && <p className="form-error">{error}</p>}
     </div>
   );

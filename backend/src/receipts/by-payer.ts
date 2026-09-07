@@ -10,7 +10,7 @@ import { parseGraphSubjectResponse, type GraphSubjectEvidence } from "./graph";
  * silently.
  */
 const PAYER_QUERY = `
-query ReceiptsByPayer($payer: Bytes!, $first: Int = 25) {
+query ReceiptsByPayer($payer: Bytes!, $first: Int = 26) {
   receipts(
     first: $first
     where: { payer: $payer }
@@ -58,7 +58,7 @@ export async function queryReceiptsByPayer(
     body: JSON.stringify({
       // The Graph stores addresses lowercased; a checksummed argument matches nothing.
       query: PAYER_QUERY,
-      variables: { payer: payer.toLowerCase(), first: 25 },
+      variables: { payer: payer.toLowerCase(), first: 26 },
     }),
     signal: AbortSignal.timeout(8_000),
   });
@@ -75,7 +75,7 @@ export async function queryReceiptsByPayer(
  * all", which is the question a user or a regulator actually has.
  */
 const ALL_QUERY = `
-query AllReceipts($first: Int = 100) {
+query AllReceipts($first: Int = 26) {
   receipts(first: $first, orderBy: blockNumber, orderDirection: desc) {
     id
     campaignId
@@ -103,7 +103,7 @@ query AllReceipts($first: Int = 100) {
 export async function queryAllReceipts(
   endpoint: string,
   apiKey: string,
-  first = 100,
+  first = 26,
 ): Promise<GraphSubjectEvidence> {
   const response = await fetch(endpoint, {
     method: "POST",

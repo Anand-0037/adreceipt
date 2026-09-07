@@ -1,8 +1,9 @@
 "use client";
 
-import { BrowserProvider, Contract } from "ethers";
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 import { injected } from "./wallet";
-import { SETTLEMENT, USDC, type SignedQuote } from "./quote";
+import { parseSignedQuote, SETTLEMENT, USDC, type SignedQuote } from "./quote";
+import { protocol } from "./protocol";
 
 /**
  * Advertiser-side settlement.
@@ -44,20 +45,7 @@ export interface SettleProgress {
   receiptId?: string;
 }
 
-/** Parse a pasted signed quote, failing loudly rather than half-way through. */
-export function parseSignedQuote(raw: string): SignedQuote {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error("That is not valid JSON. Paste the whole blob the publisher gave you.");
-  }
-  const q = parsed as Partial<SignedQuote>;
-  if (!q?.subject || !q?.quote || !q?.signature) {
-    throw new Error("Missing subject, quote or signature. Paste the complete signed quote.");
-  }
-  return q as SignedQuote;
-}
+export { parseSignedQuote };
 
 export async function settle(
   signed: SignedQuote,
@@ -67,6 +55,9 @@ export async function settle(
   if (!eth) throw new Error("No browser wallet found.");
 
   const signer = await new BrowserProvider(eth).getSigner();
+  const network = await new BrowserProvider(eth).getNetwork();
+  if (network.chainId !== BigInt(protocol.chainId))
+    throw new Error(`Switch your wallet to ${protocol.network}.`);
   const me = await signer.getAddress();
 
   // Fail here rather than let the contract revert with WrongPayer after the
@@ -85,7 +76,7 @@ export async function settle(
   const balance = (await token.balanceOf(me)) as bigint;
   if (balance < amount) {
     throw new Error(
-      `You hold ${Number(balance) / 1e6} test USDC but this placement costs ${Number(amount) / 1e6}. Top up from the Circle faucet.`,
+      `You hold ${formatUnits(balance, 6)} test USDC but this placement costs ${formatUnits(amount, 6)}. Top up from the Circle faucet.`,
     );
   }
 
@@ -95,10 +86,11 @@ export async function settle(
   if (allowance < amount) {
     onProgress({
       step: "approving",
-      message: `Approve exactly ${Number(amount) / 1e6} USDC — not an unlimited allowance.`,
+      message: `Approve exactly ${formatUnits(amount, 6)} USDC — not an unlimited allowance.`,
     });
     const tx = await token.approve(SETTLEMENT, amount);
     const receipt = await tx.wait();
+    if (receipt?.status !== 1) throw new Error("The USDC approval was not confirmed.");
     approvalTx = receipt.hash as string;
   }
 
@@ -107,6 +99,7 @@ export async function settle(
   const settlement = new Contract(SETTLEMENT, SETTLEMENT_ABI as unknown as string[], signer);
   const tx = await settlement.settlePlacement(signed.subject, signed.quote, signed.signature);
   const receipt = await tx.wait();
+  if (receipt?.status !== 1) throw new Error("The settlement was not confirmed.");
 
   return {
     step: "done",
@@ -130,7 +123,8 @@ export function describeSettlementError(error: unknown): string {
     SubjectMismatch: "The recommendation text does not match what was signed.",
     WrongAsset: "This settlement contract only accepts the configured test USDC.",
     WrongChain: "That quote was signed for a different chain.",
-    NonExactTransfer: "The token did not transfer the exact amount. Fee-on-transfer tokens are rejected.",
+    NonExactTransfer:
+      "The token did not transfer the exact amount. Fee-on-transfer tokens are rejected.",
     UnsupportedSchema: "The quote uses a schema version this contract does not accept.",
   };
 
