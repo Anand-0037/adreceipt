@@ -116,5 +116,5 @@ export function errorHandler(
   const message = error instanceof Error ? error.message : String(error);
   // eslint-disable-next-line no-console
   console.error("unhandled:", message);
-  res.status(500).json({ error: "internal", message });
+  res.status(500).json({ error: "internal", message: "The request could not be completed." });
 }

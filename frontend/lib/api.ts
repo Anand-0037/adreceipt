@@ -1,45 +1,44 @@
-/**
- * Client for the Disclosed backend.
- *
- * Every value the UI renders comes from here, and everything here comes from a
- * contract read on Sepolia. Nothing in the interface is computed in the browser
- * and nothing is mocked - if the badge says Moderate, a tier attestation exists
- * on-chain saying so.
- */
-
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "http://localhost:8787";
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ??
+  "http://localhost:8787";
 
-export type TierLabel = "none" | "minimal" | "moderate" | "major";
+export type ReceiptStatus =
+  | "PAID_VERIFIED"
+  | "PENDING"
+  | "NOT_FOUND_AT_BLOCK"
+  | "INVALID"
+  | "UNAVAILABLE";
 
-export type AdvertiserStatus = "not-in-registry" | "pending" | "verified" | "revoked";
-
-export interface Badge {
-  address: string;
-  inRegistry: boolean;
-  verified: boolean;
-  status: AdvertiserStatus;
-  name: string;
-  domain: string;
-  ensName: string;
-  tier: number;
-  tierLabel: TierLabel;
-  placements: number;
-  registeredAt: number;
-  accountAgeDays: number;
+export interface ReceiptEvidence {
+  id: string;
+  campaignId: string;
+  subjectHash: string;
+  publisher: string;
+  payer: string;
+  recipient: string;
+  asset: string;
+  amount: string;
+  settledAt: string;
+  schemaVersion: number;
+  settlementContract: string;
+  transactionHash: string;
+  logIndex: string;
+  blockNumber: string;
+  blockTimestamp: string;
 }
 
-export interface CategorySummary {
-  category: string;
-  placements: number;
-  advertisers: number;
-}
-
-export interface ChallengeRecord {
-  name: string;
-  type: "TXT";
-  value: string;
-  instructions: string[];
+export interface VerificationResult {
+  status: ReceiptStatus;
+  reason: string;
+  evidence?: {
+    graph: {
+      receipt: ReceiptEvidence | null;
+      blockNumber: number;
+      hasIndexingErrors: boolean;
+    };
+    rpcHead: number;
+    rpc?: { chainId: number; receipt: ReceiptEvidence };
+  };
 }
 
 export interface Health {
@@ -47,8 +46,21 @@ export interface Health {
   network: string;
   chainId: number;
   block: number;
-  contracts: Record<string, string>;
-  attestationKey: string;
+  settlement: {
+    address: string;
+    asset: string;
+    deploymentBlock: number;
+    deploymentTransaction: string;
+  };
+  graph: { configured: boolean };
+  privy: {
+    configured: boolean;
+    credentials: boolean;
+    wallet: "configured" | "missing";
+    policy: "configured" | "missing";
+    authorizationKey: "configured" | "missing";
+    providerVerified: boolean;
+  };
 }
 
 export class ApiError extends Error {
@@ -61,76 +73,71 @@ export class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    // Chain state changes under us; a cached badge is a wrong badge.
-    cache: "no-store",
-    ...init,
-  });
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
 
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
+function parseVerification(value: unknown): VerificationResult {
+  if (
+    !isObject(value) ||
+    typeof value.status !== "string" ||
+    typeof value.reason !== "string"
+  ) {
     throw new ApiError(
-      response.status,
-      (body as { error?: string }).error ?? "unknown",
-      (body as { message?: string }).message ?? response.statusText,
+      502,
+      "invalid-response",
+      "The verifier returned an invalid response.",
     );
   }
-  return body as T;
+  const statuses: ReceiptStatus[] = [
+    "PAID_VERIFIED",
+    "PENDING",
+    "NOT_FOUND_AT_BLOCK",
+    "INVALID",
+    "UNAVAILABLE",
+  ];
+  if (!statuses.includes(value.status as ReceiptStatus)) {
+    throw new ApiError(
+      502,
+      "invalid-response",
+      "The verifier returned an unknown status.",
+    );
+  }
+  return value as unknown as VerificationResult;
+}
+
+async function get(path: string): Promise<unknown> {
+  const response = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
+  const body = await response.json().catch(() => null);
+  if (!response.ok && !(response.status === 503 && isObject(body))) {
+    const error = isObject(body) ? body : {};
+    throw new ApiError(
+      response.status,
+      typeof error.error === "string" ? error.error : "unknown",
+      typeof error.message === "string" ? error.message : response.statusText,
+    );
+  }
+  return body;
 }
 
 export const api = {
-  health: () => get<Health>("/health"),
-
-  advertisers: (options: { verified?: boolean; hideSponsored?: boolean } = {}) => {
-    const query = new URLSearchParams();
-    if (options.verified) query.set("verified", "true");
-    if (options.hideSponsored) query.set("hideSponsored", "true");
-    const suffix = query.toString() ? `?${query}` : "";
-    return get<{ count: number; advertisers: Badge[] }>(`/advertisers${suffix}`);
-  },
-
-  categories: () => get<{ count: number; categories: CategorySummary[] }>("/categories"),
-
-  advertisersInCategory: (
-    category: string,
-    options: { verified?: boolean; hideSponsored?: boolean } = {},
-  ) => {
-    const query = new URLSearchParams();
-    if (options.verified) query.set("verified", "true");
-    if (options.hideSponsored) query.set("hideSponsored", "true");
-    const suffix = query.toString() ? `?${query}` : "";
-    return get<{ category: string; count: number; advertisers: Badge[] }>(
-      `/categories/${encodeURIComponent(category)}/advertisers${suffix}`,
+  health: async () => (await get("/health")) as Health,
+  verifyReceipt: async (receiptId: string, atBlock?: number) => {
+    const query = atBlock ? `?atBlock=${atBlock}` : "";
+    return parseVerification(
+      await get(`/receipts/${encodeURIComponent(receiptId)}${query}`),
     );
   },
-
-  badge: (address: string) => get<Badge>(`/advertisers/${address}/status`),
-
-  flag: (address: string) => get<{ address: string; flagged: boolean }>(`/advertisers/${address}/flag`),
-
-  challenge: (address: string) =>
-    get<{
-      address: string;
-      name: string;
-      domain: string;
-      status: AdvertiserStatus;
-      challenge: string;
-      record: ChallengeRecord;
-    }>(`/advertisers/${address}/challenge`),
-
-  verify: (address: string, dryRun = false) =>
-    get<{
-      advertiser: string;
-      outcome: string;
-      verified: boolean;
-      attested: boolean;
-      transaction?: { hash: string; blockNumber: number };
-    }>(`/advertisers/${address}/verify${dryRun ? "?dryRun=true" : ""}`, { method: "POST" }),
+  verifySubject: async (subjectHash: string) =>
+    parseVerification(
+      await get(`/subjects/${encodeURIComponent(subjectHash)}`),
+    ),
 };
 
-/** Sepolia explorer links, so any claim in the UI can be checked independently. */
 export const explorer = {
-  address: (address: string) => `https://sepolia.etherscan.io/address/${address}`,
+  address: (address: string) =>
+    `https://sepolia.etherscan.io/address/${address}`,
   tx: (hash: string) => `https://sepolia.etherscan.io/tx/${hash}`,
+  block: (block: string | number) =>
+    `https://sepolia.etherscan.io/block/${block}`,
 };

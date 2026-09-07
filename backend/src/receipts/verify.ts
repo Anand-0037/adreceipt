@@ -32,6 +32,7 @@ export interface RpcEvidence {
 export interface VerificationEvidence {
   graph: GraphEvidence;
   rpc?: RpcEvidence;
+  rpcHead: number;
 }
 
 const HEX_FIELDS: (keyof ReceiptEvidence)[] = [
@@ -65,7 +66,7 @@ export function classifyReceipt(input: {
   }
 
   const graph = input.graph;
-  const evidence: VerificationEvidence = { graph, ...(input.rpc ? { rpc: input.rpc } : {}) };
+  const evidence: VerificationEvidence = { graph, rpcHead: input.rpcHead, ...(input.rpc ? { rpc: input.rpc } : {}) };
   if (!Number.isSafeInteger(graph.blockNumber) || graph.blockNumber < 0
       || !Number.isSafeInteger(input.rpcHead) || input.rpcHead < 0
       || graph.hasIndexingErrors || graph.blockNumber > input.rpcHead) {

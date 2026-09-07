@@ -10,7 +10,8 @@ type PrivyReadinessConfig = Pick<
   | "privyAuthorizationPrivateKey"
 >;
 
-type PrivyTransactionConfig = PrivyReadinessConfig & Pick<typeof config, "chainId">;
+type PrivyTransactionConfig = PrivyReadinessConfig &
+  Pick<typeof config, "chainId">;
 
 export interface PrivyTransaction {
   to: string;
@@ -64,7 +65,13 @@ export function buildPrivyTransactionRequest(
   };
   const authorizationSignature = generateAuthorizationSignature({
     authorizationPrivateKey: settings.privyAuthorizationPrivateKey,
-    input: { version: 1, url, method: "POST", headers: privyHeaders, body: requestBody },
+    input: {
+      version: 1,
+      url,
+      method: "POST",
+      headers: privyHeaders,
+      body: requestBody,
+    },
   });
 
   return {
@@ -79,7 +86,10 @@ export function buildPrivyTransactionRequest(
   };
 }
 
-export async function sendPrivyTransaction(transaction: PrivyTransaction, referenceId: string) {
+export async function sendPrivyTransaction(
+  transaction: PrivyTransaction,
+  referenceId: string,
+) {
   const request = buildPrivyTransactionRequest(transaction, referenceId);
   const response = await fetch(request.url, {
     method: "POST",
@@ -88,6 +98,15 @@ export async function sendPrivyTransaction(transaction: PrivyTransaction, refere
     signal: AbortSignal.timeout(15_000),
   });
   const body = await response.json();
-  if (!response.ok) throw new Error(`Privy returned HTTP ${response.status}`);
+  if (!response.ok) {
+    const detail =
+      body && typeof body === "object"
+        ? ((body as { message?: unknown; error?: unknown }).message ??
+          (body as { error?: unknown }).error)
+        : undefined;
+    const suffix =
+      typeof detail === "string" && detail.trim() ? `: ${detail}` : "";
+    throw new Error(`Privy returned HTTP ${response.status}${suffix}`);
+  }
   return body;
 }

@@ -41,6 +41,18 @@ export interface Deployment {
   roles: { creForwarder: string | null; creSimulator: string | null };
 }
 
+export interface SettlementDeployment {
+  mode: "deployed";
+  network: string;
+  chainId: number;
+  contract: "PlacementSettlementV1";
+  constructor: { settlementAsset: string };
+  address: string;
+  deploymentBlock: number;
+  deploymentTransaction: string;
+  deployedAt: string;
+}
+
 const NETWORK = process.env.NETWORK ?? "sepolia";
 
 /**
@@ -61,6 +73,20 @@ function loadDeployment(): Deployment {
 
 export const deployment = loadDeployment();
 export const contracts = deployment.contracts;
+
+function loadSettlementDeployment(): SettlementDeployment {
+  const path = join(
+    repoRoot,
+    "deployments",
+    `placement-settlement-${NETWORK}.json`,
+  );
+  if (!existsSync(path)) {
+    throw new Error(`No settlement deployment record at ${path}.`);
+  }
+  return JSON.parse(readFileSync(path, "utf8")) as SettlementDeployment;
+}
+
+export const settlementDeployment = loadSettlementDeployment();
 
 function required(name: string): string {
   const value = process.env[name];
@@ -89,7 +115,9 @@ export const config = {
   dnsRecordKey: process.env.DNS_RECORD_KEY ?? "disclosed-verification",
 
   /** Resolvers queried for the challenge lookup. Agreement is required. */
-  dnsResolvers: (process.env.DNS_RESOLVERS ?? "1.1.1.1,8.8.8.8").split(",").map((s) => s.trim()),
+  dnsResolvers: (process.env.DNS_RESOLVERS ?? "1.1.1.1,8.8.8.8")
+    .split(",")
+    .map((s) => s.trim()),
   graphQueryUrl: process.env.GRAPH_QUERY_URL ?? "",
   graphApiKey: process.env.GRAPH_API_KEY ?? "",
   graphMaxLag: Number(process.env.GRAPH_MAX_BLOCK_LAG ?? 20),
@@ -99,7 +127,9 @@ export const config = {
   privyWalletId: process.env.PRIVY_WALLET_ID ?? "",
   privyPolicyId: process.env.PRIVY_POLICY_ID ?? "",
   privyAuthorizationPrivateKey:
-    process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY ?? process.env.PRIVATE_KEY_PRIVY ?? "",
+    process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY ??
+    process.env.PRIVATE_KEY_PRIVY ??
+    "",
 };
 
 export function requireSimulatorKey(): string {

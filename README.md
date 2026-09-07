@@ -70,7 +70,7 @@ backend/src/privy/             Owner-authorized Privy client and default-deny po
 backend/src/receipts/          Graph query, RPC evidence reader, and fail-closed verifier
 subgraph/                      ReceiptCreated indexing for the live Sepolia contract
 cre/placement-authorization/   CRE placement policy workflow and simulation tests
-frontend/                      Earlier product UI; the V1 receipt screens are not implemented yet
+frontend/                      V1 campaign commitment and public receipt verification UI
 deployments/                   Public testnet deployment records
 ```
 
@@ -106,6 +106,9 @@ private policy material.
 ```http
 GET /receipts/0x<32-byte-receipt-id>
 GET /receipts/0x<32-byte-receipt-id>?atBlock=<positive-block-number>
+GET /subjects/0x<32-byte-subject-hash>
+GET /deployment
+GET /health
 GET /health/privy
 ```
 
@@ -113,11 +116,24 @@ The verifier returns `PAID_VERIFIED` only after it finds the Graph entity and in
 the successful transaction, expected settlement contract, exact `ReceiptCreated` log, Sepolia chain,
 schema, and every indexed field. Missing or inconsistent provider evidence fails closed.
 
-## Remaining release work
+## Web flow
+
+- `/campaign` prepares contract-compatible campaign, placement, product, content, and `SubjectV1`
+  commitments in the browser. It does not sign or broadcast a transaction.
+- `/ask` queries live Graph receipts by the exact recommendation `subjectHash`, verifies each
+  candidate through RPC, and changes the disclosure behavior only for `PAID_VERIFIED`.
+- `/receipts/:id` shows the full payment binding, Graph head, RPC chain, transaction, block, and
+  explorer links.
+
+The HTTP service exposes only V1 read endpoints. Privy transaction submission stays in the
+operator-controlled scripts, so a public caller cannot trigger a wallet transaction or a legacy
+DNS attestation.
+
+## Remaining external work
 
 - Review and broadcast the bounded `approve` and `settlePlacement` transactions.
 - Confirm one `ReceiptCreated` event through RPC, The Graph, and the receipt API.
-- Build the accepted `/campaign`, `/ask`, and `/receipts/:id` frontend paths with failure states.
+- Deploy the web app and API to stable public URLs, then run a cold demo.
 - Deploy the CRE workflow only if Confidential Workflows access becomes available.
 
 ## License

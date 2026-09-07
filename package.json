@@ -1,7 +1,7 @@
 {
-  "name": "disclosed-contracts",
+  "name": "adreceipt",
   "version": "0.1.0",
-  "description": "Disclosed - verifiable sponsorship disclosure registry. Smart contracts.",
+  "description": "Recommendation-bound test USDC settlement receipts.",
   "license": "MIT",
   "private": true,
   "scripts": {

@@ -1,6 +1,5 @@
 import express from "express";
-import { config, contracts } from "../config";
-import { hasSimulator } from "../chain/provider";
+import { config, settlementDeployment } from "../config";
 import { errorHandler } from "./errors";
 import { routes } from "./routes";
 
@@ -10,7 +9,8 @@ export function createServer() {
   app.use(express.json({ limit: "64kb" }));
   app.disable("x-powered-by");
 
-  // The registry is a public good; anything here is readable on-chain anyway.
+  // V1 exposes read-only public evidence. Transaction submission stays in the
+  // operator-controlled Privy scripts and never crosses this HTTP boundary.
   app.use((_req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -32,11 +32,10 @@ if (require.main === module) {
     // eslint-disable-next-line no-console
     console.log(
       [
-        `disclosed backend listening on :${config.port}`,
+        `AdReceipt backend listening on :${config.port}`,
         `  network    ${config.network} (${config.chainId})`,
-        `  registry   ${contracts.AdvertiserRegistry}`,
-        `  receiver   ${contracts.CREAttestationReceiver}`,
-        `  attestation key ${hasSimulator() ? "configured" : "MISSING - reads only"}`,
+        `  settlement ${settlementDeployment.address}`,
+        `  mode       read-only receipt verification`,
       ].join("\n"),
     );
   });

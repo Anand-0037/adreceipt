@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseGraphResponse } from "./graph";
+import { parseGraphResponse, parseGraphSubjectResponse } from "./graph";
 
 const receipt = {
   id: `0x${"11".repeat(32)}`,
@@ -21,21 +21,44 @@ const receipt = {
 };
 
 test("parses a complete Graph response", () => {
-  const parsed = parseGraphResponse({ data: { receipt, _meta: { block: { number: 100 }, hasIndexingErrors: false } } });
-  assert.deepEqual(parsed, { receipt, blockNumber: 100, hasIndexingErrors: false });
+  const parsed = parseGraphResponse({
+    data: {
+      receipt,
+      _meta: { block: { number: 100 }, hasIndexingErrors: false },
+    },
+  });
+  assert.deepEqual(parsed, {
+    receipt,
+    blockNumber: 100,
+    hasIndexingErrors: false,
+  });
 });
 
 test("accepts an indexed absence with valid metadata", () => {
-  assert.equal(parseGraphResponse({ data: { receipt: null, _meta: { block: { number: 100 } } } }).receipt, null);
+  assert.equal(
+    parseGraphResponse({
+      data: { receipt: null, _meta: { block: { number: 100 } } },
+    }).receipt,
+    null,
+  );
 });
 
 test("rejects malformed receipt fields instead of casting them", () => {
   for (const [key, value] of [
-    ["id", "not-bytes32"], ["payer", "not-address"], ["amount", "1.5"],
-    ["schemaVersion", "1"], ["transactionHash", `0x${"11".repeat(31)}`],
+    ["id", "not-bytes32"],
+    ["payer", "not-address"],
+    ["amount", "1.5"],
+    ["schemaVersion", "1"],
+    ["transactionHash", `0x${"11".repeat(31)}`],
   ]) {
     assert.throws(
-      () => parseGraphResponse({ data: { receipt: { ...receipt, [key]: value }, _meta: { block: { number: 100 } } } }),
+      () =>
+        parseGraphResponse({
+          data: {
+            receipt: { ...receipt, [key]: value },
+            _meta: { block: { number: 100 } },
+          },
+        }),
       /invalid runtime schema/,
       key,
     );
@@ -43,6 +66,39 @@ test("rejects malformed receipt fields instead of casting them", () => {
 });
 
 test("rejects Graph errors and malformed metadata", () => {
-  assert.throws(() => parseGraphResponse({ errors: [{ message: "failed" }] }), /query errors/);
-  assert.throws(() => parseGraphResponse({ data: { receipt, _meta: { block: { number: "100" } } } }), /valid metadata/);
+  assert.throws(
+    () => parseGraphResponse({ errors: [{ message: "failed" }] }),
+    /query errors/,
+  );
+  assert.throws(
+    () =>
+      parseGraphResponse({
+        data: { receipt, _meta: { block: { number: "100" } } },
+      }),
+    /valid metadata/,
+  );
+});
+
+test("parses subject receipts with the same runtime checks", () => {
+  const parsed = parseGraphSubjectResponse({
+    data: {
+      receipts: [receipt],
+      _meta: { block: { number: 100 }, hasIndexingErrors: false },
+    },
+  });
+  assert.deepEqual(parsed, {
+    receipts: [receipt],
+    blockNumber: 100,
+    hasIndexingErrors: false,
+  });
+  assert.throws(
+    () =>
+      parseGraphSubjectResponse({
+        data: {
+          receipts: [{ ...receipt, amount: "bad" }],
+          _meta: { block: { number: 100 } },
+        },
+      }),
+    /invalid runtime schema/,
+  );
 });

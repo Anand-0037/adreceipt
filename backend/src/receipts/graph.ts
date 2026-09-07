@@ -2,11 +2,12 @@ import { isAddress, isHexString } from "ethers";
 import type { GraphEvidence, ReceiptEvidence } from "./verify";
 
 const QUERY = `query Receipt($id: Bytes!) { receipt(id: $id) { id campaignId subjectHash publisher payer recipient asset amount settledAt schemaVersion settlementContract transactionHash logIndex blockNumber blockTimestamp } _meta { block { number } hasIndexingErrors } }`;
+const SUBJECT_QUERY = `query ReceiptsBySubject($subjectHash: Bytes!, $first: Int!) { receipts(first: $first, where: { subjectHash: $subjectHash }, orderBy: blockNumber, orderDirection: desc) { id campaignId subjectHash publisher payer recipient asset amount settledAt schemaVersion settlementContract transactionHash logIndex blockNumber blockTimestamp } _meta { block { number } hasIndexingErrors } }`;
 const DECIMAL = /^(0|[1-9][0-9]*)$/;
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : undefined;
 }
 
@@ -16,13 +17,41 @@ function parseReceipt(value: unknown): ReceiptEvidence | null {
   if (!receipt) throw new Error("Graph receipt is not an object");
 
   const bytes32 = ["id", "campaignId", "subjectHash", "transactionHash"];
-  const addresses = ["publisher", "payer", "recipient", "asset", "settlementContract"];
-  const decimals = ["amount", "settledAt", "logIndex", "blockNumber", "blockTimestamp"];
-  if (!bytes32.every((key) => typeof receipt[key] === "string" && isHexString(receipt[key] as string, 32))
-      || !addresses.every((key) => typeof receipt[key] === "string" && isAddress(receipt[key] as string))
-      || !decimals.every((key) => typeof receipt[key] === "string" && DECIMAL.test(receipt[key] as string))
-      || !["logIndex", "blockNumber", "blockTimestamp"].every((key) => Number.isSafeInteger(Number(receipt[key])))
-      || !Number.isSafeInteger(receipt.schemaVersion) || Number(receipt.schemaVersion) < 0) {
+  const addresses = [
+    "publisher",
+    "payer",
+    "recipient",
+    "asset",
+    "settlementContract",
+  ];
+  const decimals = [
+    "amount",
+    "settledAt",
+    "logIndex",
+    "blockNumber",
+    "blockTimestamp",
+  ];
+  if (
+    !bytes32.every(
+      (key) =>
+        typeof receipt[key] === "string" &&
+        isHexString(receipt[key] as string, 32),
+    ) ||
+    !addresses.every(
+      (key) =>
+        typeof receipt[key] === "string" && isAddress(receipt[key] as string),
+    ) ||
+    !decimals.every(
+      (key) =>
+        typeof receipt[key] === "string" &&
+        DECIMAL.test(receipt[key] as string),
+    ) ||
+    !["logIndex", "blockNumber", "blockTimestamp"].every((key) =>
+      Number.isSafeInteger(Number(receipt[key])),
+    ) ||
+    !Number.isSafeInteger(receipt.schemaVersion) ||
+    Number(receipt.schemaVersion) < 0
+  ) {
     throw new Error("Graph receipt has an invalid runtime schema");
   }
   return receipt as unknown as ReceiptEvidence;
@@ -32,14 +61,19 @@ export function parseGraphResponse(value: unknown): GraphEvidence {
   const body = object(value);
   if (!body) throw new Error("Graph response is not an object");
   const errors = body.errors;
-  if (Array.isArray(errors) && errors.length > 0) throw new Error("Graph returned query errors");
+  if (Array.isArray(errors) && errors.length > 0)
+    throw new Error("Graph returned query errors");
 
   const data = object(body.data);
   const meta = object(data?._meta);
   const block = object(meta?.block);
   const blockNumber = block?.number;
-  if (!Number.isSafeInteger(blockNumber) || Number(blockNumber) < 0
-      || (meta?.hasIndexingErrors !== undefined && typeof meta.hasIndexingErrors !== "boolean")) {
+  if (
+    !Number.isSafeInteger(blockNumber) ||
+    Number(blockNumber) < 0 ||
+    (meta?.hasIndexingErrors !== undefined &&
+      typeof meta.hasIndexingErrors !== "boolean")
+  ) {
     throw new Error("Graph response is missing valid metadata");
   }
   return {
@@ -49,7 +83,48 @@ export function parseGraphResponse(value: unknown): GraphEvidence {
   };
 }
 
-export async function queryReceipt(endpoint: string, apiKey: string, id: string): Promise<GraphEvidence> {
+export interface GraphSubjectEvidence {
+  receipts: ReceiptEvidence[];
+  blockNumber: number;
+  hasIndexingErrors: boolean;
+}
+
+export function parseGraphSubjectResponse(
+  value: unknown,
+): GraphSubjectEvidence {
+  const body = object(value);
+  if (!body) throw new Error("Graph response is not an object");
+  if (Array.isArray(body.errors) && body.errors.length > 0)
+    throw new Error("Graph returned query errors");
+  const data = object(body.data);
+  const meta = object(data?._meta);
+  const block = object(meta?.block);
+  const blockNumber = block?.number;
+  if (
+    !Number.isSafeInteger(blockNumber) ||
+    Number(blockNumber) < 0 ||
+    (meta?.hasIndexingErrors !== undefined &&
+      typeof meta.hasIndexingErrors !== "boolean") ||
+    !Array.isArray(data?.receipts)
+  ) {
+    throw new Error("Graph response is missing valid subject metadata");
+  }
+  return {
+    receipts: data.receipts.map((receipt) => {
+      const parsed = parseReceipt(receipt);
+      if (!parsed) throw new Error("Graph subject receipt cannot be null");
+      return parsed;
+    }),
+    blockNumber: Number(blockNumber),
+    hasIndexingErrors: meta?.hasIndexingErrors === true,
+  };
+}
+
+export async function queryReceipt(
+  endpoint: string,
+  apiKey: string,
+  id: string,
+): Promise<GraphEvidence> {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -61,4 +136,25 @@ export async function queryReceipt(endpoint: string, apiKey: string, id: string)
   });
   if (!response.ok) throw new Error(`Graph returned HTTP ${response.status}`);
   return parseGraphResponse(await response.json());
+}
+
+export async function queryReceiptsBySubject(
+  endpoint: string,
+  apiKey: string,
+  subjectHash: string,
+): Promise<GraphSubjectEvidence> {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      query: SUBJECT_QUERY,
+      variables: { subjectHash, first: 20 },
+    }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error(`Graph returned HTTP ${response.status}`);
+  return parseGraphSubjectResponse(await response.json());
 }
