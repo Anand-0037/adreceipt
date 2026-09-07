@@ -805,3 +805,398 @@ details input {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --- advertiser flow -------------------------------------------------- */
+.flow-stack {
+  display: grid;
+  gap: 18px;
+  max-width: 900px;
+}
+.flow-step {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.flow-step > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.flow-step h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.flow-index {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--ink);
+  font: 700 12px/1 Arial;
+}
+.flow-state {
+  margin-left: auto;
+  color: var(--faint);
+  font: 700 10px/1 Arial;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.flow-body {
+  padding: 20px;
+}
+.flow-active {
+  border-color: var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.flow-active .flow-state {
+  color: var(--accent-dark);
+}
+.flow-done .flow-index {
+  border-color: var(--verified);
+  color: var(--verified);
+}
+.flow-done .flow-state {
+  color: var(--verified);
+}
+/* Locked is dimmed, not hidden: the reader should see that a step exists and
+   why it cannot be reached yet. */
+.flow-locked {
+  opacity: 0.55;
+}
+.flow-locked .flow-index {
+  border-color: var(--faint);
+  color: var(--faint);
+}
+.record-block {
+  display: grid;
+  gap: 2px;
+  margin: 16px 0 0;
+  border: 1px solid var(--line);
+}
+.copy-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  background: #ebe5d9;
+}
+.copy-row + .copy-row {
+  border-top: 1px solid var(--line);
+}
+.copy-row dt {
+  color: var(--faint);
+  font: 700 10px/1.4 Arial;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.copy-row dd {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+.copy-row > div {
+  min-width: 0;
+  flex: 1;
+}
+.verdict {
+  display: grid;
+  gap: 6px;
+  margin: 18px 0 0;
+  border-left: 5px solid var(--unavailable);
+  padding: 12px 16px;
+  background: #ebe5d9;
+  font-size: 13.5px;
+}
+.verdict-ok {
+  border-left-color: var(--verified);
+}
+.verdict-no {
+  border-left-color: var(--pending);
+}
+.receipt-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.receipt-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 14px;
+  border-bottom: 1px dotted var(--line);
+  padding-bottom: 10px;
+  font-size: 13.5px;
+}
+.receipt-list li:last-child {
+  border-bottom: 0;
+}
+
+/* --- landing: the two-state demo -------------------------------------- */
+.demo-shell {
+  max-width: 880px;
+  display: grid;
+  gap: 16px;
+}
+.demo-prompt,
+.demo-answer {
+  border: 1px solid var(--ink);
+  background: var(--surface);
+  padding: 20px 22px;
+}
+.demo-prompt {
+  background: #ebe5d9;
+}
+.demo-prompt p {
+  margin: 6px 0 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.demo-role {
+  color: var(--faint);
+  font: 700 10px/1 Arial;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.demo-answer {
+  display: grid;
+  gap: 18px;
+  box-shadow: 7px 7px 0 var(--ink);
+}
+.demo-rec {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.demo-rec:first-of-type {
+  border-top: 0;
+  padding-top: 8px;
+}
+.demo-rec h3 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.demo-rec p {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+/* The badge is the payload of the whole page, so it gets the only strong
+   colour on the screen. The unverified state stays deliberately quiet - an
+   absent record is not an alarm. */
+.demo-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 12px;
+  border-left: 4px solid var(--faint);
+  padding: 9px 13px;
+  background: #f0ebe0;
+  font-size: 13px;
+}
+.demo-badge strong {
+  font-size: 13px;
+}
+.demo-badge span:not(.demo-dot) {
+  color: var(--muted);
+}
+.demo-badge a {
+  margin-left: auto;
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+.demo-badge-verified {
+  border-left-color: var(--verified);
+  background: #e6efe9;
+}
+.demo-badge-verified strong {
+  color: var(--verified);
+}
+.demo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--verified);
+}
+.demo-dot-muted {
+  background: var(--faint);
+}
+.demo-note {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.demo-evidence {
+  border: 1px solid var(--line);
+  padding: 14px 18px;
+  background: var(--surface);
+}
+.demo-evidence dl {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+.demo-evidence dt {
+  color: var(--faint);
+  font: 700 10px/1.4 Arial;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.demo-evidence dd {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+.demo-evidence p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* --- landing: explanatory sections ------------------------------------ */
+.how h2,
+.audience h2,
+.limits h2 {
+  margin: 0 0 22px;
+  font-size: 27px;
+  letter-spacing: -0.035em;
+}
+.how-steps {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+  list-style: none;
+  counter-reset: step;
+}
+.how-steps li {
+  padding: 20px 22px;
+  background: var(--surface);
+  counter-increment: step;
+}
+.how-steps h3 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: -0.015em;
+}
+.how-steps h3::before {
+  content: counter(step) " · ";
+  color: var(--accent-dark);
+  font-variant-numeric: tabular-nums;
+}
+.how-steps p {
+  margin: 7px 0 0;
+  max-width: 66ch;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+@media (min-width: 860px) {
+  .how-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.audience-grid {
+  display: grid;
+  gap: 18px;
+}
+@media (min-width: 860px) {
+  .audience-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.audience-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--line);
+  padding: 20px;
+  background: var(--surface);
+}
+.audience-grid h3 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: -0.015em;
+}
+.audience-grid p {
+  margin: 0;
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.audience-grid .text-link {
+  margin-top: 4px;
+}
+.limits {
+  max-width: 760px;
+}
+.limits ul {
+  display: grid;
+  gap: 9px;
+  margin: 0 0 16px;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.limits > p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* --- advertiser: balances --------------------------------------------- */
+.balance-grid {
+  display: grid;
+  gap: 1px;
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+@media (min-width: 560px) {
+  .balance-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.balance-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  background: var(--surface);
+}
+.balance-grid dt {
+  color: var(--faint);
+  font: 700 10px/1.4 Arial;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.balance-grid dd {
+  margin: 0;
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+}
+.receipts-title {
+  margin: 24px 0 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.flow-body label + .lookup-line,
+.flow-body input + label {
+  margin-top: 8px;
+}

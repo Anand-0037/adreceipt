@@ -121,3 +121,79 @@ export const explorer = {
   tx: (hash: string) => `https://sepolia.etherscan.io/tx/${hash}`,
   block: (block: string | number) => `https://sepolia.etherscan.io/block/${block}`,
 };
+
+// ---------------------------------------------------------------------------
+// Advertiser identity and history
+// ---------------------------------------------------------------------------
+
+export type AdvertiserStatus =
+  | "not-in-registry"
+  | "pending"
+  | "verified"
+  | "revoked";
+
+export interface ChallengeRecord {
+  name: string;
+  type: "TXT";
+  value: string;
+  instructions: string[];
+}
+
+export interface AdvertiserChallenge {
+  address: string;
+  name: string;
+  domain: string;
+  status: AdvertiserStatus;
+  verified: boolean;
+  challenge: string;
+  record: ChallengeRecord;
+}
+
+export interface VerifyOutcome {
+  advertiser: string;
+  outcome:
+    | "verified"
+    | "record-missing"
+    | "record-mismatch"
+    | "not-registered"
+    | "no-resolvers";
+  verified: boolean;
+  attested: boolean;
+  transaction?: { hash: string; blockNumber: number };
+  message?: string;
+}
+
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      (body as { error?: string }).error ?? "unknown",
+      (body as { message?: string }).message ?? response.statusText,
+    );
+  }
+  return body as T;
+}
+
+export const advertiserApi = {
+  /** Read live every time: the challenge changes whenever the claim does. */
+  challenge: (address: string) =>
+    call<AdvertiserChallenge>(`/advertisers/${address}/challenge`),
+
+  /** `dryRun` checks DNS without spending gas or writing a verdict. */
+  verify: (address: string, dryRun = false) =>
+    call<VerifyOutcome>(
+      `/advertisers/${address}/verify${dryRun ? "?dryRun=true" : ""}`,
+      { method: "POST" },
+    ),
+
+  receipts: (address: string) =>
+    call<{
+      address: string;
+      count: number;
+      receipts: ReceiptEvidence[];
+      indexedBlock: number;
+      hasIndexingErrors: boolean;
+    }>(`/advertisers/${address}/receipts`),
+};
