@@ -103,12 +103,15 @@ export function describeWalletError(error: unknown): string {
   if (name && known[name]) return known[name];
   const message = e?.shortMessage ?? e?.message ?? String(error);
   if (/user rejected/i.test(message)) return "You rejected the request in your wallet.";
+  // ethers throws a bare "invalid address" that names no field and tells the
+  // reader nothing about what a valid one looks like.
+  if (/invalid address/i.test(message)) {
+    return "One of the wallet addresses is not valid. An address is 0x followed by 40 hex characters.";
+  }
   return message;
 }
 
-const REGISTRY_ABI = [
-  "function register(string name, string domain) returns (bytes32)",
-] as const;
+const REGISTRY_ABI = ["function register(string name, string domain) returns (bytes32)"] as const;
 
 export const ADVERTISER_REGISTRY = "0xcE99a9ee7DD1af77e47036fe679fd1aDfFf2F8ac";
 

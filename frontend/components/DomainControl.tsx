@@ -97,7 +97,12 @@ export function DomainControl({ account }: { account: string | null }) {
           }}
         >
           <label htmlFor="dc-brand">Display name</label>
-          <input id="dc-brand" value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="DeployCo" />
+          <input
+            id="dc-brand"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            placeholder="DeployCo"
+          />
           <label htmlFor="dc-domain" style={{ marginTop: 14 }}>
             Domain you control
           </label>

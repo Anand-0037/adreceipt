@@ -1,40 +1,65 @@
 @import "tailwindcss";
+
 :root {
-  --paper: #f4f0e8;
-  --surface: #fffdf8;
-  --ink: #191b18;
-  --muted: #62665e;
-  --faint: #8c9087;
-  --line: #d8d3c8;
-  --accent: #ff5c35;
-  --accent-dark: #c53615;
+  /* Palette sampled from the Space NFT marketplace reference. */
+  --paper: #f0f1ee;
+  --surface: #ffffff;
+  --ink: #131825;
+  --muted: #4b5162;
+  --faint: #6b7183;
+  --line: #131825;
+  --accent: #1f6f3d;
+  --accent-dark: #16552e;
   --verified: #087f5b;
   --pending: #a46100;
   --invalid: #b42318;
   --unavailable: #555a52;
+
+  /* Decorative fills. Never used behind small text. */
+  --lime: #c6fb6f;
+  --mint: #67f8bb;
+
+  /* Structure: hairline dark borders with a hard offset shadow. */
+  --edge: 1.5px solid var(--ink);
+  --edge-thick: 2px solid var(--ink);
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow: 5px 5px 0 var(--ink);
+  --shadow-lg: 8px 8px 0 var(--ink);
+  --radius: 6px;
+
+  --display: var(--font-display), "Arial Black", sans-serif;
+  --body: var(--font-body), Arial, Helvetica, sans-serif;
 }
+
 * {
   box-sizing: border-box;
 }
+
 html,
 body {
   background: var(--paper);
+  /* Light only. Stops the browser inverting form controls under OS dark mode. */
+  color-scheme: light;
 }
+
 body {
   margin: 0;
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--body);
   -webkit-font-smoothing: antialiased;
 }
+
 a {
   color: inherit;
   text-underline-offset: 3px;
 }
+
 button,
 input,
 textarea {
   font: inherit;
 }
+
 button,
 input,
 textarea,
@@ -42,115 +67,150 @@ summary,
 a {
   outline-offset: 3px;
 }
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
 }
+
 .mono {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-variant-ligatures: none;
 }
+
+/* Light bar, wordmark left, lime pill right - as in the reference nav. */
 .site-header {
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
   position: sticky;
   top: 0;
-  z-index: 10;
-  backdrop-filter: blur(12px);
+  z-index: 20;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
 }
+
 .header-inner {
-  max-width: 1120px;
+  max-width: 1200px;
   margin: auto;
-  min-height: 64px;
+  min-height: 74px;
   padding: 0 24px;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 34px;
 }
+
 .wordmark {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   text-decoration: none;
-  font-weight: 800;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 19px;
   letter-spacing: -0.03em;
+  color: var(--ink);
+  white-space: nowrap;
 }
+
 .wordmark span {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  color: white;
-  background: var(--ink);
-  font:
-    700 11px / 1 Arial,
-    sans-serif;
-  transform: rotate(-3deg);
+  width: 26px;
+  height: 26px;
+  color: var(--ink);
+  background: var(--lime);
+  border: var(--edge);
+  border-radius: 50%;
+  font: 700 9.5px / 1 var(--body);
 }
+
 nav {
   display: flex;
-  gap: 24px;
+  gap: 26px;
   font-size: 14px;
+  font-weight: 500;
   color: var(--muted);
 }
+
 nav a {
   text-decoration: none;
 }
+
 nav a:hover {
   color: var(--ink);
 }
+
 .network-pill {
   margin-left: auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border: 1px solid var(--line);
-  padding: 6px 9px;
-  font:
-    600 11px / 1 Arial,
-    sans-serif;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--lime);
+  color: var(--ink);
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  font: 700 12px / 1 var(--body);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: var(--surface);
+  letter-spacing: 0.07em;
 }
+
 .network-pill i {
   width: 7px;
   height: 7px;
-  background: var(--verified);
+  background: var(--ink);
   border-radius: 50%;
 }
+
 .site-main {
   max-width: 1120px;
   margin: 0 auto;
   min-height: calc(100vh - 180px);
   padding: 72px 24px 96px;
 }
+
 .site-footer {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 12.5px;
 }
+
 .site-footer > div {
-  max-width: 1120px;
+  max-width: 1200px;
   margin: auto;
-  padding: 26px 24px;
+  padding: 30px 24px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 24px;
+  flex-wrap: wrap;
 }
+
 .site-footer p {
   margin: 0;
 }
+
+.site-footer strong {
+  color: var(--ink);
+}
+
+.site-footer a {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .page-stack {
   display: grid;
   gap: 44px;
   min-width: 0;
 }
+
 .page-stack > * {
   min-width: 0;
 }
+
 .intro {
   max-width: 810px;
 }
+
 .intro h1 {
   margin: 8px 0 18px;
   max-width: 780px;
@@ -159,9 +219,11 @@ nav a:hover {
     sans-serif;
   letter-spacing: -0.06em;
 }
+
 .compact-intro h1 {
   font-size: clamp(38px, 6vw, 64px);
 }
+
 .intro > p:last-child {
   margin: 0;
   max-width: 680px;
@@ -169,6 +231,7 @@ nav a:hover {
   font-size: 17px;
   line-height: 1.6;
 }
+
 .eyebrow {
   margin: 0;
   color: var(--accent-dark);
@@ -178,21 +241,25 @@ nav a:hover {
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
+
 .lookup-shell {
   max-width: 900px;
   display: grid;
   gap: 20px;
 }
+
 .recommendation-flow {
   max-width: 900px;
   display: grid;
   gap: 20px;
 }
+
 .recommendation-demo {
   border: 1px solid var(--ink);
   background: var(--surface);
   box-shadow: 7px 7px 0 var(--ink);
 }
+
 .conversation-question {
   display: grid;
   grid-template-columns: 42px 1fr;
@@ -201,6 +268,7 @@ nav a:hover {
   border-bottom: 1px solid var(--line);
   background: #ebe5d9;
 }
+
 .conversation-question span,
 .assistant-meta span {
   display: grid;
@@ -214,15 +282,18 @@ nav a:hover {
   font-weight: 800;
   letter-spacing: 0.08em;
 }
+
 .conversation-question p {
   margin: 5px 0 0;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
 }
+
 .assistant-answer {
   padding: 24px;
 }
+
 .assistant-meta {
   display: flex;
   align-items: center;
@@ -230,13 +301,16 @@ nav a:hover {
   color: var(--muted);
   font-size: 12px;
 }
+
 .assistant-meta p {
   margin: 0;
 }
+
 .assistant-meta span {
   color: var(--ink);
   background: var(--accent);
 }
+
 .recommendation-heading {
   display: flex;
   align-items: end;
@@ -244,11 +318,13 @@ nav a:hover {
   gap: 24px;
   margin-top: 28px;
 }
+
 .recommendation-heading h2 {
   margin: 5px 0 0;
   font-size: clamp(32px, 5vw, 48px);
   letter-spacing: -0.05em;
 }
+
 .disclosure-badge {
   display: inline-flex;
   align-items: center;
@@ -262,22 +338,26 @@ nav a:hover {
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
+
 .disclosure-paid_verified {
   border-color: var(--verified);
   color: var(--verified);
   background: #e5f4ed;
 }
+
 .disclosure-pending {
   border-color: var(--pending);
   color: var(--pending);
   background: #fff3dc;
 }
+
 .disclosure-invalid,
 .disclosure-unavailable {
   border-color: var(--invalid);
   color: var(--invalid);
   background: #fff0ee;
 }
+
 .assistant-answer blockquote {
   margin: 22px 0 10px;
   border-left: 4px solid var(--accent);
@@ -286,6 +366,7 @@ nav a:hover {
   font-weight: 700;
   line-height: 1.45;
 }
+
 .commitment-note {
   max-width: 650px;
   margin: 0 0 20px;
@@ -293,33 +374,40 @@ nav a:hover {
   font-size: 13px;
   line-height: 1.55;
 }
+
 .verification-stack {
   display: grid;
   gap: 20px;
 }
+
 .manual-lookup {
   border-top: 1px solid var(--line);
   padding-top: 18px;
 }
+
 .manual-lookup summary {
   font-weight: 700;
 }
+
 .manual-lookup .lookup-form {
   margin-top: 16px;
   box-shadow: none;
 }
+
 .lookup-form {
   padding: 24px;
   border: 1px solid var(--ink);
   background: var(--surface);
   box-shadow: 7px 7px 0 var(--ink);
 }
+
 label {
   display: block;
   margin-bottom: 8px;
   font-size: 13px;
   font-weight: 700;
 }
+
 input,
 textarea {
   width: 100%;
@@ -330,15 +418,18 @@ textarea {
   padding: 12px 13px;
   min-height: 46px;
 }
+
 input:focus,
 textarea:focus {
   border-color: var(--ink);
 }
+
 .lookup-line {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
 }
+
 button {
   min-height: 46px;
   border: 1px solid var(--ink);
@@ -352,16 +443,20 @@ button {
     transform 120ms ease,
     background 120ms ease;
 }
+
 button:hover {
   background: var(--accent-dark);
 }
+
 button:active {
   transform: translateY(2px);
 }
+
 button:disabled {
   opacity: 0.6;
   cursor: wait;
 }
+
 .example-button {
   min-height: auto;
   margin-top: 2px;
@@ -373,10 +468,12 @@ button:disabled {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
 .example-button:hover {
   color: var(--ink);
   background: transparent;
 }
+
 .live-match {
   border-left: 4px solid var(--verified);
   padding: 10px 12px;
@@ -386,37 +483,45 @@ button:disabled {
   font-weight: 700;
   line-height: 1.5;
 }
+
 .live-match a {
   color: inherit;
 }
+
 .field-help,
 .index-note {
   color: var(--faint);
   font-size: 12px;
   line-height: 1.5;
 }
+
 .lookup-form details {
   margin-top: 18px;
   border-top: 1px solid var(--line);
   padding-top: 14px;
 }
+
 summary {
   width: max-content;
   cursor: pointer;
   color: var(--muted);
   font-size: 13px;
 }
+
 details label {
   margin-top: 14px;
 }
+
 details input {
   max-width: 260px;
 }
+
 .form-error {
   color: var(--invalid);
   font-size: 13px;
   font-weight: 700;
 }
+
 .result-skeleton {
   height: 180px;
   border: 1px solid var(--line);
@@ -424,36 +529,44 @@ details input {
   background-size: 200% 100%;
   animation: scan 1.1s infinite linear;
 }
+
 @keyframes scan {
   to {
     background-position: -200% 0;
   }
 }
+
 .result {
   border-left: 7px solid var(--unavailable);
   padding: 26px 28px;
   background: var(--surface);
 }
+
 .result-paid_verified {
   border-color: var(--verified);
 }
+
 .result-pending {
   border-color: var(--pending);
 }
+
 .result-invalid {
   border-color: var(--invalid);
 }
+
 .result-heading {
   display: flex;
   align-items: center;
   gap: 14px;
 }
+
 .result-heading h2,
 .draft-output h2 {
   margin: 4px 0 0;
   font-size: 24px;
   letter-spacing: -0.03em;
 }
+
 .status-mark {
   width: 18px;
   height: 18px;
@@ -461,52 +574,64 @@ details input {
   border-radius: 50%;
   color: var(--unavailable);
 }
+
 .result-paid_verified .status-mark {
   color: var(--verified);
 }
+
 .result-pending .status-mark {
   color: var(--pending);
 }
+
 .result-invalid .status-mark {
   color: var(--invalid);
 }
+
 .result-summary {
   max-width: 680px;
   margin: 18px 0 8px;
   line-height: 1.55;
 }
+
 .reason {
   color: var(--muted);
   font-size: 13px;
 }
+
 .text-link {
   display: inline-block;
   margin-top: 16px;
   font-weight: 700;
   color: var(--accent-dark);
 }
+
 .agent-decision {
   border: 1px solid var(--ink);
   padding: 20px 24px;
   background: #ebe5d9;
 }
+
 .agent-decision strong {
   display: block;
   margin-top: 7px;
   font-size: 19px;
 }
+
 .agent-paid_verified {
   border-left: 7px solid var(--verified);
 }
+
 .alternate-path {
   margin: 0;
   color: var(--muted);
   font-size: 13px;
 }
+
 .alternate-path a {
   color: var(--accent-dark);
   font-weight: 700;
 }
+
 .graph-health {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -514,24 +639,29 @@ details input {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
+
 .graph-health > div {
   padding: 12px 10px 12px 0;
 }
+
 .graph-health dt {
   color: var(--faint);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
+
 .graph-health dd {
   margin: 5px 0 0;
   font-size: 13px;
   font-weight: 700;
 }
+
 .evidence-list {
   margin-top: 24px;
   border-top: 1px solid var(--line);
 }
+
 .evidence-row {
   display: grid;
   grid-template-columns: 180px 1fr;
@@ -539,18 +669,22 @@ details input {
   padding: 13px 0;
   border-bottom: 1px solid var(--line);
 }
+
 .evidence-row dt {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
 }
+
 .evidence-row dd {
   margin: 0;
   min-width: 0;
 }
+
 .evidence-row a {
   color: var(--accent-dark);
 }
+
 .boundary {
   max-width: 760px;
   border-top: 1px solid var(--line);
@@ -559,12 +693,14 @@ details input {
   font-size: 14px;
   line-height: 1.6;
 }
+
 .builder-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
   border: 1px solid var(--ink);
   background: var(--surface);
 }
+
 .policy-proof {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -573,20 +709,24 @@ details input {
   color: white;
   background: var(--ink);
 }
+
 .policy-proof h2 {
   margin: 7px 0 10px;
   font-size: 24px;
   letter-spacing: -0.03em;
 }
+
 .policy-proof p:not(.eyebrow) {
   margin: 0;
   color: #c7c9c3;
   font-size: 13px;
   line-height: 1.55;
 }
+
 .policy-proof dl {
   margin: 0;
 }
+
 .policy-proof dl > div {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
@@ -594,73 +734,89 @@ details input {
   padding: 12px 0;
   border-bottom: 1px solid #444740;
 }
+
 .policy-proof dt {
   color: #aaada5;
   font-size: 12px;
 }
+
 .policy-proof dd {
   margin: 0;
 }
+
 .policy-proof dd strong,
 .policy-proof dd span {
   display: block;
   font-size: 12px;
 }
+
 .policy-proof dd span {
   margin-top: 4px;
   color: #aaada5;
 }
+
 .campaign-form {
   display: grid;
   gap: 18px;
   padding: 28px;
   border-right: 1px solid var(--ink);
 }
+
 .field-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+
 .campaign-form button {
   justify-self: start;
 }
+
 .draft-output {
   padding: 28px;
   background: #ebe5d9;
   min-width: 0;
 }
+
 .draft-output > p:not(.eyebrow) {
   color: var(--muted);
   line-height: 1.55;
 }
+
 .draft-output dl > div {
   padding: 14px 0;
   border-top: 1px solid var(--line);
 }
+
 .draft-output dt {
   color: var(--muted);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+
 .draft-output dd {
   margin: 7px 0 0;
   font-size: 11px;
   overflow-wrap: anywhere;
 }
+
 .rail {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid var(--ink);
   border-bottom: 1px solid var(--ink);
 }
+
 .rail > div {
   padding: 22px 18px;
   border-right: 1px solid var(--line);
 }
+
 .rail > div:last-child {
   border: 0;
 }
+
 .rail span {
   display: grid;
   place-items: center;
@@ -672,15 +828,18 @@ details input {
   font-size: 12px;
   font-weight: 800;
 }
+
 .rail strong {
   display: block;
   font-size: 15px;
 }
+
 .rail p {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
 }
+
 .deployment-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -688,6 +847,7 @@ details input {
   color: var(--muted);
   font-size: 12px;
 }
+
 .deployment-strip span {
   display: block;
   margin-bottom: 5px;
@@ -695,106 +855,133 @@ details input {
   letter-spacing: 0.08em;
   font-size: 10px;
 }
+
 .deployment-strip strong,
 .deployment-strip a {
   color: var(--ink);
   font-size: 12px;
   font-weight: 700;
 }
+
 @media (max-width: 760px) {
   .header-inner {
     padding: 0 16px;
     gap: 18px;
   }
+
   nav {
     gap: 14px;
     font-size: 12px;
   }
+
   .network-pill {
     display: none;
   }
+
   .site-main {
     padding: 48px 16px 72px;
   }
+
   .intro h1 {
     font-size: clamp(34px, 11vw, 58px);
   }
+
   .lookup-line,
   .builder-grid,
   .field-pair,
   .policy-proof {
     grid-template-columns: 1fr;
   }
+
   .lookup-form {
     box-shadow: 4px 4px 0 var(--ink);
     padding: 18px;
   }
+
   .recommendation-demo {
     box-shadow: 4px 4px 0 var(--ink);
   }
+
   .conversation-question {
     grid-template-columns: 34px 1fr;
     padding: 16px;
   }
+
   .assistant-answer {
     padding: 20px;
   }
+
   .recommendation-heading {
     align-items: start;
     flex-direction: column;
     gap: 14px;
   }
+
   .campaign-form {
     border-right: 0;
     border-bottom: 1px solid var(--ink);
     padding: 20px;
   }
+
   .draft-output {
     padding: 20px;
   }
+
   .rail {
     grid-template-columns: 1fr 1fr;
   }
+
   .rail > div:nth-child(2) {
     border-right: 0;
   }
+
   .rail > div:nth-child(-n + 2) {
     border-bottom: 1px solid var(--line);
   }
+
   .deployment-strip {
     grid-template-columns: 1fr 1fr;
   }
+
   .graph-health {
     grid-template-columns: 1fr 1fr;
   }
+
   .evidence-row {
     grid-template-columns: 1fr;
     gap: 5px;
   }
+
   .site-footer > div {
     flex-direction: column;
     padding: 22px 16px;
   }
 }
+
 @media (max-width: 390px) {
   .wordmark {
     font-size: 0;
   }
+
   .wordmark span {
     font-size: 11px;
   }
+
   nav {
     margin-left: auto;
   }
+
   .rail,
   .deployment-strip {
     grid-template-columns: 1fr;
   }
+
   .rail > div {
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -812,10 +999,12 @@ details input {
   gap: 18px;
   max-width: 900px;
 }
+
 .flow-step {
   border: 1px solid var(--line);
   background: var(--surface);
 }
+
 .flow-step > header {
   display: flex;
   align-items: center;
@@ -823,11 +1012,13 @@ details input {
   padding: 16px 20px;
   border-bottom: 1px solid var(--line);
 }
+
 .flow-step h2 {
   margin: 0;
   font-size: 17px;
   letter-spacing: -0.02em;
 }
+
 .flow-index {
   display: grid;
   place-items: center;
@@ -838,6 +1029,7 @@ details input {
     700 12px / 1 Arial,
     sans-serif;
 }
+
 .flow-state {
   margin-left: auto;
   color: var(--faint);
@@ -847,38 +1039,47 @@ details input {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+
 .flow-body {
   padding: 20px;
 }
+
 .flow-active {
   border-color: var(--ink);
   box-shadow: 5px 5px 0 var(--ink);
 }
+
 .flow-active .flow-state {
   color: var(--accent-dark);
 }
+
 .flow-done .flow-index {
   border-color: var(--verified);
   color: var(--verified);
 }
+
 .flow-done .flow-state {
   color: var(--verified);
 }
+
 /* Locked is dimmed, not hidden: the reader should see that a step exists and
    why it cannot be reached yet. */
 .flow-locked {
   opacity: 0.55;
 }
+
 .flow-locked .flow-index {
   border-color: var(--faint);
   color: var(--faint);
 }
+
 .record-block {
   display: grid;
   gap: 2px;
   margin: 16px 0 0;
   border: 1px solid var(--line);
 }
+
 .copy-row {
   display: flex;
   align-items: center;
@@ -886,9 +1087,11 @@ details input {
   padding: 11px 14px;
   background: #ebe5d9;
 }
+
 .copy-row + .copy-row {
   border-top: 1px solid var(--line);
 }
+
 .copy-row dt {
   color: var(--faint);
   font:
@@ -897,15 +1100,18 @@ details input {
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
+
 .copy-row dd {
   margin: 3px 0 0;
   font-size: 12.5px;
   word-break: break-all;
 }
+
 .copy-row > div {
   min-width: 0;
   flex: 1;
 }
+
 .verdict {
   display: grid;
   gap: 6px;
@@ -915,12 +1121,15 @@ details input {
   background: #ebe5d9;
   font-size: 13.5px;
 }
+
 .verdict-ok {
   border-left-color: var(--verified);
 }
+
 .verdict-no {
   border-left-color: var(--pending);
 }
+
 .receipt-list {
   display: grid;
   gap: 10px;
@@ -928,6 +1137,7 @@ details input {
   padding: 0;
   list-style: none;
 }
+
 .receipt-list li {
   display: flex;
   flex-wrap: wrap;
@@ -937,6 +1147,7 @@ details input {
   padding-bottom: 10px;
   font-size: 13.5px;
 }
+
 .receipt-list li:last-child {
   border-bottom: 0;
 }
@@ -947,21 +1158,25 @@ details input {
   display: grid;
   gap: 16px;
 }
+
 .demo-prompt,
 .demo-answer {
   border: 1px solid var(--ink);
   background: var(--surface);
   padding: 20px 22px;
 }
+
 .demo-prompt {
   background: #ebe5d9;
 }
+
 .demo-prompt p {
   margin: 6px 0 0;
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+
 .demo-role {
   color: var(--faint);
   font:
@@ -970,24 +1185,29 @@ details input {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
 .demo-answer {
   display: grid;
   gap: 18px;
   box-shadow: 7px 7px 0 var(--ink);
 }
+
 .demo-rec {
   border-top: 1px solid var(--line);
   padding-top: 16px;
 }
+
 .demo-rec:first-of-type {
   border-top: 0;
   padding-top: 8px;
 }
+
 .demo-rec h3 {
   margin: 0;
   font-size: 17px;
   letter-spacing: -0.02em;
 }
+
 .demo-rec p {
   margin: 6px 0 0;
   max-width: 62ch;
@@ -995,6 +1215,7 @@ details input {
   font-size: 14px;
   line-height: 1.55;
 }
+
 /* The badge is the payload of the whole page, so it gets the only strong
    colour on the screen. The unverified state stays deliberately quiet - an
    absent record is not an alarm. */
@@ -1009,33 +1230,41 @@ details input {
   background: #f0ebe0;
   font-size: 13px;
 }
+
 .demo-badge strong {
   font-size: 13px;
 }
+
 .demo-badge span:not(.demo-dot) {
   color: var(--muted);
 }
+
 .demo-badge a {
   margin-left: auto;
   color: var(--accent-dark);
   font-weight: 700;
 }
+
 .demo-badge-verified {
   border-left-color: var(--verified);
   background: #e6efe9;
 }
+
 .demo-badge-verified strong {
   color: var(--verified);
 }
+
 .demo-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--verified);
 }
+
 .demo-dot-muted {
   background: var(--faint);
 }
+
 .demo-note {
   margin: 0;
   max-width: 70ch;
@@ -1043,16 +1272,19 @@ details input {
   font-size: 13px;
   line-height: 1.55;
 }
+
 .demo-evidence {
   border: 1px solid var(--line);
   padding: 14px 18px;
   background: var(--surface);
 }
+
 .demo-evidence dl {
   display: grid;
   gap: 10px;
   margin: 14px 0 12px;
 }
+
 .demo-evidence dt {
   color: var(--faint);
   font:
@@ -1061,11 +1293,13 @@ details input {
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
+
 .demo-evidence dd {
   margin: 2px 0 0;
   font-size: 12.5px;
   word-break: break-all;
 }
+
 .demo-evidence p {
   margin: 0;
   max-width: 68ch;
@@ -1082,6 +1316,7 @@ details input {
   font-size: 27px;
   letter-spacing: -0.035em;
 }
+
 .how-steps {
   display: grid;
   gap: 1px;
@@ -1092,21 +1327,25 @@ details input {
   list-style: none;
   counter-reset: step;
 }
+
 .how-steps li {
   padding: 20px 22px;
   background: var(--surface);
   counter-increment: step;
 }
+
 .how-steps h3 {
   margin: 0;
   font-size: 15px;
   letter-spacing: -0.015em;
 }
+
 .how-steps h3::before {
   content: counter(step) " · ";
   color: var(--accent-dark);
   font-variant-numeric: tabular-nums;
 }
+
 .how-steps p {
   margin: 7px 0 0;
   max-width: 66ch;
@@ -1114,20 +1353,24 @@ details input {
   font-size: 14px;
   line-height: 1.55;
 }
+
 @media (min-width: 860px) {
   .how-steps {
     grid-template-columns: 1fr 1fr;
   }
 }
+
 .audience-grid {
   display: grid;
   gap: 18px;
 }
+
 @media (min-width: 860px) {
   .audience-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
 .audience-grid article {
   display: flex;
   flex-direction: column;
@@ -1136,11 +1379,13 @@ details input {
   padding: 20px;
   background: var(--surface);
 }
+
 .audience-grid h3 {
   margin: 0;
   font-size: 15px;
   letter-spacing: -0.015em;
 }
+
 .audience-grid p {
   margin: 0;
   flex: 1;
@@ -1148,12 +1393,15 @@ details input {
   font-size: 14px;
   line-height: 1.55;
 }
+
 .audience-grid .text-link {
   margin-top: 4px;
 }
+
 .limits {
   max-width: 760px;
 }
+
 .limits ul {
   display: grid;
   gap: 9px;
@@ -1163,6 +1411,7 @@ details input {
   font-size: 14px;
   line-height: 1.55;
 }
+
 .limits > p {
   margin: 0;
   font-size: 14px;
@@ -1177,17 +1426,20 @@ details input {
   border: 1px solid var(--line);
   background: var(--line);
 }
+
 @media (min-width: 560px) {
   .balance-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
+
 .balance-grid > div {
   display: grid;
   gap: 3px;
   padding: 14px 16px;
   background: var(--surface);
 }
+
 .balance-grid dt {
   color: var(--faint);
   font:
@@ -1196,11 +1448,13 @@ details input {
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
+
 .balance-grid dd {
   margin: 0;
   font-size: 21px;
   font-variant-numeric: tabular-nums;
 }
+
 .receipts-title {
   margin: 24px 0 12px;
   padding-top: 18px;
@@ -1208,6 +1462,7 @@ details input {
   font-size: 14px;
   letter-spacing: -0.01em;
 }
+
 .flow-body label + .lookup-line,
 .flow-body input + label {
   margin-top: 8px;
@@ -1218,11 +1473,13 @@ details input {
   display: grid;
   gap: 40px;
 }
+
 .ledger h2 {
   margin: 0 0 14px;
   font-size: 20px;
   letter-spacing: -0.03em;
 }
+
 .ledger-summary {
   display: grid;
   gap: 1px;
@@ -1231,17 +1488,20 @@ details input {
   background: var(--line);
   box-shadow: 6px 6px 0 var(--ink);
 }
+
 @media (min-width: 620px) {
   .ledger-summary {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
 .ledger-summary > div {
   display: grid;
   gap: 3px;
   padding: 16px 18px;
   background: var(--surface);
 }
+
 .ledger-summary dt {
   color: var(--faint);
   font:
@@ -1250,23 +1510,27 @@ details input {
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
+
 .ledger-summary dd {
   margin: 0;
   font-size: 26px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
+
 /* Wide tables scroll inside their own container so the page never moves. */
 .table-scroll {
   overflow-x: auto;
   border: 1px solid var(--line);
   background: var(--surface);
 }
+
 .ledger-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13.5px;
 }
+
 .ledger-table th {
   position: sticky;
   top: 0;
@@ -1282,19 +1546,2378 @@ details input {
   text-transform: uppercase;
   white-space: nowrap;
 }
+
 .ledger-table td {
   border-bottom: 1px solid var(--line);
   padding: 11px 14px;
   white-space: nowrap;
 }
+
 .ledger-table tbody tr:last-child td {
   border-bottom: 0;
 }
+
 .ledger-table td.num {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
+
 .ledger-table a {
   color: var(--accent-dark);
+}
+
+/* ---------------------------------------------------------------------------
+   Landing page + wallet onboarding, following the Space marketplace reference:
+   warm off-white ground, hairline dark borders, hard offset shadows, lime CTA.
+   Scoped under .nb-* / .auth-* so the verification pages keep their own CSS.
+   --------------------------------------------------------------------------- */
+
+.nb-page {
+  display: grid;
+  gap: 96px;
+}
+
+.nb-display {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  margin: 0;
+}
+
+.nb-eyebrow {
+  font: 700 11.5px / 1 var(--body);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.nb-eyebrow-left {
+  text-align: left;
+}
+
+/* Shared button shape: hairline border, offset shadow, nudges on hover. */
+.nb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.13s ease,
+    box-shadow 0.13s ease;
+}
+
+.nb-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow);
+}
+
+.nb-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.nb-btn-lime {
+  background: var(--lime);
+}
+
+.nb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.nb-btn-wide {
+  width: 100%;
+  padding: 15px 24px;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.nb-hero {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+  padding-top: 26px;
+}
+
+.nb-hero h1 {
+  font-size: clamp(40px, 5.4vw, 68px);
+  max-width: 13ch;
+}
+
+.nb-hero-lede {
+  margin: 24px 0 30px;
+  max-width: 44ch;
+  font-size: 16px;
+  line-height: 1.62;
+  color: var(--muted);
+}
+
+.nb-hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Hatched disc behind the sample receipt, as in the reference hero. */
+.nb-disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-width: 430px;
+  margin-left: auto;
+}
+
+.nb-disc::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: var(--edge);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 9px,
+      color-mix(in srgb, var(--ink) 45%, transparent) 9px 10.5px
+    ),
+    var(--mint);
+}
+
+/* Sample receipt card floating over the disc. */
+.nb-receipt {
+  position: relative;
+  width: 78%;
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.nb-receipt-top {
+  padding: 12px 15px;
+  border-bottom: var(--edge);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+}
+
+.nb-receipt-body {
+  padding: 20px 16px;
+  background: linear-gradient(150deg, #eef6e4, #e4f3ef 55%, #f3eef8);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.nb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: var(--edge);
+  border-radius: 999px;
+  background: var(--lime);
+  font: 700 11.5px / 1 var(--body);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nb-badge i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.nb-receipt-quote {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.nb-receipt-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: var(--edge);
+}
+
+.nb-receipt-split div {
+  padding: 11px 14px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+}
+
+.nb-receipt-split div:first-child {
+  border-right: var(--edge);
+}
+
+.nb-receipt-foot {
+  padding: 11px;
+  border-top: var(--edge);
+  background: var(--paper);
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  display: block;
+  color: var(--ink);
+}
+
+.nb-receipt-foot:hover {
+  background: var(--lime);
+}
+
+/* ── Stats row ───────────────────────────────────────────────────────────── */
+.nb-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.nb-stat b {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(34px, 4.4vw, 52px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.nb-stat span {
+  display: block;
+  margin-top: 10px;
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+/* ── Bordered feature strip ──────────────────────────────────────────────── */
+.nb-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.nb-strip article {
+  padding: 28px 26px;
+  border-right: var(--edge);
+}
+
+.nb-strip article:last-child {
+  border-right: 0;
+}
+
+.nb-strip h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+  margin: 16px 0 8px;
+}
+
+.nb-strip p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ── Split section: visual left, copy right ──────────────────────────────── */
+.nb-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.nb-split h2,
+.nb-section h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(30px, 3.7vw, 46px);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 0 0 16px;
+}
+
+.nb-section h2 {
+  text-align: center;
+}
+
+.nb-split p {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.nb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nb-chip {
+  padding: 9px 15px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Three stacked panes standing in for the reference's image collage. */
+.nb-collage {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-height: 300px;
+}
+
+.nb-collage div {
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  border-right: var(--edge);
+  font: 700 12px / 1.35 var(--body);
+}
+
+.nb-collage div:last-child {
+  border-right: 0;
+}
+
+.nb-collage small {
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.nb-collage-1 {
+  background: linear-gradient(170deg, #f6e9c9, #eddcae);
+}
+
+.nb-collage-2 {
+  background: linear-gradient(170deg, #d9e7f7, #c2d6ef);
+}
+
+.nb-collage-3 {
+  background: linear-gradient(170deg, #dcf3e6, #bfe9d3);
+}
+
+/* ── Evidence table ──────────────────────────────────────────────────────── */
+.nb-table-wrap {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.nb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 640px;
+}
+
+.nb-table th {
+  text-align: left;
+  padding: 16px 20px;
+  border-bottom: var(--edge);
+  font: 700 10.5px / 1 var(--body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.nb-table td {
+  padding: 15px 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  vertical-align: middle;
+}
+
+.nb-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.nb-table b {
+  display: block;
+  font-size: 14px;
+}
+
+.nb-table small {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.nb-tag {
+  display: inline-block;
+  padding: 5px 10px;
+  border: var(--edge);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--lime) 55%, #fff);
+  font: 700 11.5px / 1 var(--body);
+  white-space: nowrap;
+}
+
+.nb-tag-neutral {
+  background: var(--paper);
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+.nb-faq {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.nb-faq details {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.nb-faq summary {
+  padding: 15px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  /* A flex <summary> sizes shrink-to-fit in Chromium, so the open-state
+     background stopped short of the card edge. Force it to fill. */
+  width: 100%;
+}
+
+.nb-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.nb-faq summary::after {
+  content: "+";
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.nb-faq details[open] summary {
+  background: var(--mint);
+  border-bottom: var(--edge);
+}
+
+.nb-faq details[open] summary::after {
+  content: "\2013";
+}
+
+.nb-faq p {
+  margin: 0;
+  padding: 15px 18px;
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: var(--muted);
+}
+
+/* ── Closing CTA ─────────────────────────────────────────────────────────── */
+.nb-cta {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--lime);
+  box-shadow: var(--shadow-lg);
+  padding: 46px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.nb-cta h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(26px, 3.2vw, 40px);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0;
+  max-width: 20ch;
+}
+
+.nb-cta-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .nb-hero,
+  .nb-split,
+  .nb-faq {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .nb-disc {
+    margin: 0 auto;
+  }
+
+  .nb-strip,
+  .nb-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .nb-strip article {
+    border-right: 0;
+    border-bottom: var(--edge);
+  }
+
+  .nb-strip article:last-child {
+    border-bottom: 0;
+  }
+
+  .nb-page {
+    gap: 68px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Wallet onboarding - card-per-section form, per the attendee-form reference.
+   --------------------------------------------------------------------------- */
+/* Full-viewport entry screen: no site chrome, no centred column. */
+.auth-wrap {
+  min-height: 100vh;
+}
+
+.auth-head {
+  margin-bottom: 26px;
+}
+
+.auth-head h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(30px, 4.2vw, 42px);
+  letter-spacing: -0.035em;
+  line-height: 1.06;
+  margin: 0 0 10px;
+}
+
+.auth-head p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--muted);
+  max-width: 54ch;
+}
+
+.auth-card {
+  background: var(--surface);
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 26px 24px;
+  margin-bottom: 20px;
+}
+
+.auth-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.auth-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: var(--edge);
+  background: var(--lime);
+  font: 700 14px / 1 var(--body);
+  flex: none;
+}
+
+.auth-avatar-2 {
+  background: var(--mint);
+}
+
+.auth-avatar-3 {
+  background: #f6e9c9;
+}
+
+.auth-card-head h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.auth-card-head .auth-step {
+  margin-left: auto;
+  font: 700 10.5px / 1 var(--body);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* Two-column labelled inputs, collapsing on narrow screens. */
+.auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.auth-row-single {
+  grid-template-columns: 1fr;
+}
+
+.auth-field label {
+  display: block;
+  font: 600 12px / 1 var(--body);
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+
+.auth-field input,
+.auth-field select {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+  border-radius: 5px;
+  background: var(--surface);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.auth-field input::placeholder {
+  color: #9aa0ae;
+}
+
+.auth-field input:focus,
+.auth-field select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-field input:disabled {
+  background: var(--paper);
+  color: var(--faint);
+}
+
+.auth-help {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+/* Chip row, mirroring the assign-tickets control. */
+.auth-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+  border-radius: 5px;
+  background: var(--surface);
+  min-height: 44px;
+}
+
+.auth-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: var(--edge);
+  border-radius: 999px;
+  background: var(--paper);
+  font: 600 12.5px / 1 var(--body);
+  cursor: pointer;
+}
+
+.auth-chip[aria-pressed="true"] {
+  background: var(--lime);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.auth-chip i {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.auth-status {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.auth-error {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: #ffe9e6;
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  margin-bottom: 18px;
+}
+
+.auth-ok {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--mint);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  margin-bottom: 18px;
+}
+
+.auth-switch {
+  margin-top: 26px;
+  font-size: 13.5px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.auth-switch a {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.auth-locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  .auth-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Role journey cards ──────────────────────────────────────────────────── */
+.nb-flows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.nb-flow {
+  display: flex;
+  flex-direction: column;
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 28px 26px;
+}
+
+.nb-flow header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.nb-flow h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+}
+
+.nb-flow header p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.nb-flow-steps {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 18px 0 0;
+  display: grid;
+  gap: 14px;
+  flex: 1;
+}
+
+.nb-flow-steps li {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.nb-flow-num {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: var(--edge);
+  border-radius: 50%;
+  background: var(--lime);
+  font: 700 12.5px / 1 var(--body);
+}
+
+.nb-flow-steps b {
+  display: block;
+  font-size: 14.5px;
+  line-height: 1.3;
+}
+
+.nb-flow-steps small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Connect gate shown while the wallet check runs. */
+.nb-gate {
+  min-height: 40vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .nb-flows {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Split sign-in: decorative avatar panel on the left, form on the right,
+   following the attendee-form reference but in the site's own palette.
+   --------------------------------------------------------------------------- */
+.auth-split {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  background: var(--surface);
+  min-height: 100vh;
+}
+
+/* Left: deep green panel with a soft line pattern behind the avatar grid.
+   Green rather than near-black, while staying dark enough for white text. */
+.auth-aside {
+  position: relative;
+  padding: 48px 42px;
+  background: linear-gradient(165deg, #17492f 0%, #0e3520 55%, #123f27 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  overflow: hidden;
+}
+
+.auth-aside::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(198, 251, 111, 0.2), transparent 44%),
+    radial-gradient(circle at 82% 88%, rgba(103, 248, 187, 0.18), transparent 48%),
+    repeating-linear-gradient(-35deg, transparent 0 22px, rgba(255, 255, 255, 0.05) 22px 23px);
+  pointer-events: none;
+}
+
+.auth-aside > * {
+  position: relative;
+}
+
+.auth-aside-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.auth-aside-mark span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--ink);
+  font: 700 9.5px / 1 var(--body);
+}
+
+.auth-aside h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  margin: 0 0 10px;
+}
+
+.auth-aside p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: #c9cdd8;
+  max-width: 34ch;
+}
+
+/* Avatar grid: two columns of tinted discs, as in the reference artwork. */
+.auth-avatars {
+  display: grid;
+  grid-template-columns: repeat(2, 92px);
+  gap: 18px;
+  margin-top: auto;
+  /* The panel is shorter than the form; keep the artwork in view while scrolling. */
+  position: sticky;
+  top: 110px;
+}
+
+.auth-avatars figure {
+  margin: 0;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.16);
+}
+
+.auth-note {
+  font-size: 12px;
+  color: #a7adbd;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  padding-top: 16px;
+}
+
+/* Right: the form column. It grows with its cards and the page scrolls -
+   an inner scroll region here silently hid the last card and the buttons.
+   The inner cap keeps the form readable on a wide monitor. */
+.auth-form-col {
+  padding: 56px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-form-inner {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.auth-form-col .auth-card {
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.auth-form-col .auth-card:focus-within {
+  border-color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 880px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .auth-aside {
+    padding: 30px 26px;
+    gap: 24px;
+  }
+
+  .auth-avatars {
+    grid-template-columns: repeat(4, 64px);
+    margin-top: 0;
+  }
+
+  .auth-avatars figure {
+    width: 64px;
+    height: 64px;
+  }
+
+  .auth-avatars figure:nth-child(n + 5) {
+    display: none;
+  }
+
+  .auth-note {
+    display: none;
+  }
+
+  .auth-form-col {
+    padding: 28px 22px;
+    max-height: none;
+  }
+}
+
+/* Fieldset reset so the role group matches the other labelled fields. */
+.auth-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.auth-fieldset legend {
+  padding: 0;
+  font: 600 12px / 1 var(--body);
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+
+/* ---------------------------------------------------------------------------
+   Entry screens fit one viewport.
+   /login and /register carry no site chrome, so the whole flow is sized to sit
+   inside 100vh without scrolling. Below 720px tall the page scrolls normally -
+   clipping would hide the connect button, which is worse than a scrollbar.
+   --------------------------------------------------------------------------- */
+@media (min-height: 720px) {
+  /* min-height, never a fixed height: the wrapper paints the green, so if the
+     form ever needs more room than the viewport a fixed height would stop the
+     background short and leave a bare strip under it. */
+  .auth-wrap {
+    min-height: 100vh;
+  }
+
+  .auth-split {
+    min-height: 100vh;
+  }
+}
+
+.auth-aside {
+  padding: 34px 34px;
+  gap: 20px;
+}
+
+.auth-aside h2 {
+  font-size: 23px;
+  margin-bottom: 8px;
+}
+
+.auth-aside p {
+  font-size: 13px;
+}
+
+.auth-avatars {
+  grid-template-columns: repeat(3, 74px);
+  gap: 14px;
+  position: static;
+}
+
+.auth-avatars figure {
+  width: 74px;
+  height: 74px;
+}
+
+.auth-avatars svg {
+  width: 44px;
+  height: 44px;
+}
+
+.auth-note {
+  padding-top: 14px;
+  font-size: 11.5px;
+}
+
+.auth-form-col {
+  padding: 30px 40px;
+}
+
+.auth-head {
+  margin-bottom: 18px;
+}
+
+.auth-head h1 {
+  font-size: clamp(24px, 2.7vw, 33px);
+  margin-bottom: 7px;
+}
+
+.auth-head p {
+  font-size: 13.5px;
+}
+
+.auth-card {
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.auth-card-head {
+  margin-bottom: 14px;
+}
+
+.auth-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.auth-card-head h2 {
+  font-size: 15.5px;
+}
+
+/* Identity fields and balances share one wrapping row. */
+.auth-row {
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.auth-row-flow {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+.auth-field label,
+.auth-fieldset legend {
+  font-size: 11.5px;
+  margin-bottom: 5px;
+}
+
+.auth-field input {
+  padding: 9px 11px;
+  font-size: 13px;
+}
+
+.auth-help {
+  margin-top: 5px;
+  font-size: 11.5px;
+}
+
+.auth-chips {
+  padding: 7px;
+  min-height: 0;
+}
+
+.auth-chip {
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+.auth-actions {
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.auth-status {
+  font-size: 12px;
+}
+
+.auth-error,
+.auth-ok {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+
+.auth-switch {
+  margin-top: 14px;
+  font-size: 12.5px;
+}
+
+.auth-form-col .nb-btn {
+  padding: 10px 18px;
+  font-size: 13.5px;
+}
+
+/* Compact read-only wallet summary shown once connected. */
+.auth-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 5px;
+  background: var(--paper);
+}
+
+.auth-summary div {
+  min-width: 0;
+}
+
+.auth-summary dt {
+  font: 600 10.5px / 1 var(--body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+
+.auth-summary dd {
+  margin: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-summary em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--invalid);
+}
+
+/* Single action row at the foot of the entry screen. */
+.auth-actions-end {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Final tightening so the connected register state clears an 800px viewport. */
+.auth-card {
+  padding: 15px 18px;
+  margin-bottom: 11px;
+}
+
+.auth-card-head {
+  margin-bottom: 12px;
+}
+
+.auth-head {
+  margin-bottom: 14px;
+}
+
+.auth-head h1 {
+  font-size: clamp(22px, 2.4vw, 30px);
+}
+
+.auth-head p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.auth-switch {
+  margin-top: 12px;
+}
+
+.auth-form-col {
+  padding: 24px 40px;
+}
+
+/* ---------------------------------------------------------------------------
+   Card-over-panel entry screen.
+   The reference floats the white form card on top of the illustrated panel
+   rather than butting them edge to edge, so the form overlaps the aside and
+   carries its own radius and drop shadow.
+   --------------------------------------------------------------------------- */
+.auth-split {
+  grid-template-columns: 0.92fr 1.08fr;
+  align-items: center;
+  background: var(--paper);
+}
+
+.auth-aside {
+  height: 100%;
+  justify-content: center;
+  padding: 40px 44px;
+}
+
+/* The floating form card, pulled left over the panel. */
+.auth-form-col {
+  position: relative;
+  z-index: 2;
+  margin: 0 40px 0 -110px;
+  padding: 26px 30px;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 60px rgba(19, 24, 37, 0.22),
+    0 2px 8px rgba(19, 24, 37, 0.1);
+  max-height: calc(100vh - 56px);
+}
+
+.auth-form-inner {
+  max-width: none;
+}
+
+/* Inner cards read as tiers stacked on the floating card, not boxes on a page. */
+.auth-form-col .auth-card {
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper) 62%, #fff);
+  box-shadow: none;
+}
+
+.auth-form-col .auth-card:focus-within {
+  background: #fff;
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+/* Filled avatars: tinted disc, no ring, art bleeds to the edge. */
+.auth-avatars {
+  grid-template-columns: repeat(3, 84px);
+  gap: 16px;
+}
+
+.auth-avatars figure {
+  width: 84px;
+  height: 84px;
+  border: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.auth-avatars svg {
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 880px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .auth-aside {
+    padding: 28px 24px;
+  }
+
+  .auth-form-col {
+    margin: -28px 16px 24px;
+    padding: 22px 20px;
+    max-height: none;
+  }
+
+  .auth-avatars {
+    grid-template-columns: repeat(6, 56px);
+  }
+
+  .auth-avatars figure {
+    width: 56px;
+    height: 56px;
+  }
+
+  .auth-avatars figure:nth-child(n + 5) {
+    display: revert;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   FINAL entry-screen layout. This block is authoritative - it supersedes the
+   earlier .auth-split / .auth-aside / .auth-form-col rules above.
+
+   Green fills the whole viewport; the white form card sits on top of it and
+   bleeds off the right edge, so no bare page background is ever visible.
+   --------------------------------------------------------------------------- */
+.auth-wrap {
+  min-height: 100vh;
+  background: linear-gradient(150deg, #1a5334 0%, #0d3520 52%, #12402a 100%);
+}
+
+.auth-split {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  align-items: center;
+  min-height: 100vh;
+  height: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Left panel is transparent: the wrapper already paints the green. */
+.auth-aside {
+  background: transparent;
+  height: 100%;
+  padding: 46px 24px 46px 56px;
+  justify-content: center;
+  gap: 30px;
+}
+
+.auth-aside h2 {
+  font-size: 25px;
+  line-height: 1.2;
+  max-width: 15ch;
+}
+
+.auth-aside p {
+  max-width: 33ch;
+}
+
+/* Right: the floating card, overlapping the panel and running off-screen. */
+.auth-form-col {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 38px 56px 38px 44px;
+  background: var(--surface);
+  border-radius: 24px 0 0 24px;
+  box-shadow: -22px 0 70px rgba(6, 26, 16, 0.42);
+  max-height: none;
+  justify-content: center;
+}
+
+.auth-form-inner {
+  max-width: 760px;
+  margin: 0;
+}
+
+.auth-avatars {
+  grid-template-columns: repeat(3, 88px);
+  gap: 18px;
+}
+
+.auth-avatars figure {
+  width: 88px;
+  height: 88px;
+}
+
+.auth-note {
+  max-width: 36ch;
+}
+
+@media (max-width: 980px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .auth-aside {
+    padding: 32px 24px 24px;
+    gap: 22px;
+  }
+
+  .auth-form-col {
+    border-radius: 24px 24px 0 0;
+    padding: 28px 22px;
+    box-shadow: 0 -14px 44px rgba(6, 26, 16, 0.35);
+  }
+
+  .auth-avatars {
+    grid-template-columns: repeat(6, 54px);
+    gap: 12px;
+  }
+
+  .auth-avatars figure {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+/* The chip group hugs its chips rather than stretching as an empty strip. */
+.auth-chips {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.auth-fieldset legend {
+  margin-bottom: 6px;
+}
+
+.auth-aside h2 {
+  max-width: 19ch;
+}
+
+/* ---------------------------------------------------------------------------
+   Corrections against the legacy global `button` rule further up this file,
+   which sets color:white, background:var(--ink) and min-height:46px. Class
+   selectors beat it on background but inherit its colour unless we say
+   otherwise - which is what made the role chips render white on white.
+   --------------------------------------------------------------------------- */
+.auth-chip {
+  color: var(--ink);
+  min-height: 0;
+  font-weight: 600;
+  transition:
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.auth-chip:hover {
+  background: color-mix(in srgb, var(--lime) 45%, #fff);
+}
+
+.auth-chip[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--lime);
+}
+
+.auth-chip[aria-pressed="true"]:hover {
+  background: var(--lime);
+}
+
+/* Same trap: the global rule would repaint these dark green on hover. */
+.nb-btn:hover {
+  background: var(--surface);
+}
+
+.nb-btn-lime,
+.nb-btn-lime:hover {
+  background: var(--lime);
+}
+
+.nb-btn-dark,
+.nb-btn-dark:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* The form card bleeds off the right edge, so its content fills the card
+   rather than sitting in a narrow column with dead white space beside it. */
+.auth-form-inner {
+  max-width: none;
+  width: 100%;
+}
+
+/* Inline field validation for the address inputs. */
+.field-error {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--invalid);
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--invalid);
+}
+
+input[aria-invalid="true"]:focus {
+  outline-color: var(--invalid);
+}
+
+/* Signed-quote summary: what the packet says, in words. */
+.quote-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 18px;
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.quote-summary dt {
+  font: 600 10.5px / 1 var(--body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 5px;
+}
+
+.quote-summary dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The JSON is only ever copied, so keep it collapsed by default. */
+.raw-packet {
+  margin-top: 14px;
+}
+
+.raw-packet summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.raw-packet summary:hover {
+  color: var(--ink);
+}
+
+.raw-packet textarea {
+  margin-top: 10px;
+}
+
+/* Closing panel for the publisher and payer flows. */
+.flow-done {
+  border: 1px solid var(--line);
+  background: var(--lime);
+  box-shadow: var(--shadow);
+  padding: 26px 24px;
+}
+
+.flow-done h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.flow-done p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+.flow-done-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Full-width shell.
+   The landing page fills the viewport with only a gutter; the inner tool pages
+   keep their centred reading column via .page-stack, so nothing else moves.
+   --------------------------------------------------------------------------- */
+:root {
+  --gutter: clamp(24px, 4vw, 72px);
+}
+
+.header-inner {
+  max-width: none;
+  padding: 0 var(--gutter);
+}
+
+.site-main {
+  max-width: none;
+  padding: 56px var(--gutter) 96px;
+}
+
+.site-footer > div {
+  max-width: none;
+  padding: 30px var(--gutter);
+}
+
+/* Tool pages stay a centred column at their previous width. */
+.page-stack {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Gutter matched to the reference design, which keeps content at ~82% of the
+   viewport with a ~9% margin each side (measured off the source image).
+   Clamped so it stays sane on phones and does not run away on ultrawide.
+   --------------------------------------------------------------------------- */
+:root {
+  --gutter: clamp(20px, 9vw, 200px);
+}
+
+.page-stack {
+  max-width: 1400px;
+}
+
+/* Hero card artwork panel, matching the reference's image area. */
+.nb-receipt-body {
+  position: relative;
+  padding: 0;
+  display: block;
+  background: none;
+  border-bottom: var(--edge);
+}
+
+.nb-receipt-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.nb-badge-float {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+/* Badge sits clear of the artwork's lower-right symbols. */
+.nb-badge-float {
+  left: 16px;
+  transform: none;
+  bottom: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   Hero presence: a larger disc and a taller card that overlaps it, so the
+   right-hand column carries the same weight as the headline.
+   --------------------------------------------------------------------------- */
+.nb-hero {
+  grid-template-columns: 1fr 0.92fr;
+  gap: 48px;
+}
+
+.nb-hero h1 {
+  max-width: 15ch;
+}
+
+.nb-disc {
+  max-width: 500px;
+  width: 100%;
+}
+
+.nb-receipt {
+  width: 86%;
+  box-shadow: var(--shadow-lg);
+}
+
+.nb-receipt-top {
+  padding: 14px 16px;
+  font-size: 15px;
+}
+
+.nb-receipt-split div {
+  padding: 13px 14px;
+  font-size: 15px;
+}
+
+.nb-receipt-foot {
+  padding: 13px;
+  font-size: 14px;
+}
+
+.nb-badge-float {
+  left: 14px;
+  bottom: 14px;
+}
+
+/* The disc has to read as a shape behind the card, not be hidden by it. */
+.nb-disc {
+  max-width: 520px;
+}
+
+.nb-receipt {
+  width: 68%;
+}
+
+/* Flow scene replaces the old three-pane collage. */
+.nb-flow-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* The supplied hero photo fills the card's image panel. */
+.nb-receipt-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* ---------------------------------------------------------------------------
+   Landing additions drawn from the reference: iconed feature cards, a card
+   grid for the verifier's verdicts, a full-width CTA bar, and a real footer.
+   --------------------------------------------------------------------------- */
+.nb-strip-icon {
+  display: block;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+.nb-strip-icon svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nb-strip .nb-badge {
+  font-size: 10.5px;
+  padding: 5px 10px;
+}
+
+/* Full-width action bar under the evidence table. */
+.nb-btn-bar {
+  display: flex;
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* Verdict cards. */
+.nb-verdict {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  height: 100%;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.nb-verdict:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: var(--shadow);
+}
+
+.nb-verdict-art {
+  display: grid;
+  place-items: center;
+  min-height: 132px;
+  border-bottom: var(--edge);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--ink) 8%, transparent) 10px 11px
+    ),
+    var(--paper);
+}
+
+.nb-verdict-ok .nb-verdict-art {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--ink) 10%, transparent) 10px 11px
+    ),
+    var(--lime);
+}
+
+.nb-verdict-wait .nb-verdict-art {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--ink) 10%, transparent) 10px 11px
+    ),
+    #f7e6b8;
+}
+
+.nb-verdict-no .nb-verdict-art {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--ink) 10%, transparent) 10px 11px
+    ),
+    #f4d4cf;
+}
+
+.nb-verdict-chip {
+  padding: 8px 14px;
+  border: var(--edge);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font: 700 11.5px / 1 var(--body);
+  letter-spacing: 0.06em;
+}
+
+.nb-verdict-body {
+  padding: 20px 22px 24px;
+}
+
+.nb-verdict-body h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.nb-verdict-body p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* Footer: brand column plus link columns, as in the reference. */
+.site-footer-top {
+  max-width: none;
+  margin: 0;
+  padding: 56px var(--gutter) 40px;
+  display: grid;
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: 40px;
+}
+
+.site-footer-brand p {
+  margin: 16px 0 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 38ch;
+}
+
+.site-footer-brand a {
+  font-size: 13px;
+}
+
+.site-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.site-footer-col h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+
+.site-footer-col a {
+  color: var(--muted);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-footer-col a:hover {
+  color: var(--ink);
+}
+
+.site-footer-base {
+  border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  padding: 20px var(--gutter);
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.site-footer-base p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .site-footer-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    padding-top: 40px;
+  }
+}
+
+/* Three-panel collage, matching the reference's image block: tall panels
+   butted together inside one border with hairline dividers. */
+.nb-collage {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  background: var(--surface);
+  min-height: 0;
+}
+
+.nb-collage-panel {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-right: var(--edge);
+}
+
+.nb-collage-panel:last-child {
+  border-right: 0;
+}
+/* The sign/settle/verify split reads as its own full screen: it fills the
+   viewport height with its content centred, so there is breathing room above
+   and below rather than it butting into the neighbouring sections. */
+.nb-split {
+  min-height: 100vh;
+  align-content: center;
+  align-items: center;
+  padding: 80px 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Tool pages centre their content column.
+   These blocks carry a max-width but no auto margin, so they hugged the left
+   edge of the much wider .page-stack. Sharing one width keeps the heading and
+   the cards on the same left edge while the column sits centred.
+   --------------------------------------------------------------------------- */
+.page-stack > .intro,
+.flow-stack,
+.recommendation-flow,
+.lookup-shell,
+.verification-stack {
+  margin-inline: auto;
+  width: 100%;
+}
+.page-stack > .intro {
+  max-width: 900px;
+}
+
+/* ---------------------------------------------------------------------------
+   Tool pages adopt the landing page's language.
+   The verification screens were built against the earlier theme: square
+   corners, 1px borders, 7px shadows and Arial headings. These overrides bring
+   them onto the same primitives as the landing - display type, hairline
+   borders with a small offset shadow, rounded corners and the lime accent -
+   without touching their markup.
+   --------------------------------------------------------------------------- */
+
+/* Typography */
+.intro h1,
+.recommendation-heading h2,
+.result-heading h2,
+.draft-output h2,
+.flow-step header h2,
+.ledger-summary h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+.intro h1 {
+  font-size: clamp(38px, 5vw, 62px);
+  line-height: 1.02;
+}
+.compact-intro h1 {
+  font-size: clamp(32px, 4.2vw, 50px);
+}
+.intro > p:last-child {
+  font-size: 16px;
+  color: var(--muted);
+}
+.eyebrow {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+/* Buttons: lime primary with the offset shadow, matching .nb-btn. */
+button {
+  min-height: 0;
+  padding: 12px 22px;
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: var(--lime);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 14px;
+  transition:
+    transform 0.13s ease,
+    box-shadow 0.13s ease,
+    background 0.13s ease;
+}
+button:hover {
+  background: var(--lime);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow);
+}
+button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+  border-radius: 5px;
+  padding: 11px 13px;
+  min-height: 0;
+  font-size: 14px;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+
+/* Cards.
+   .ledger is deliberately not here: it is a layout grid whose children
+   (.ledger-summary, .table-scroll) are already cards, so making it one too
+   nested a card inside a card with no padding. */
+.flow-step,
+.lookup-form,
+.recommendation-demo,
+.result,
+.draft-output,
+.campaign-form,
+.record-block,
+.result-skeleton {
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
+}
+.flow-active {
+  box-shadow: var(--shadow);
+}
+.flow-locked {
+  box-shadow: none;
+  opacity: 0.6;
+}
+.manual-lookup .lookup-form {
+  box-shadow: none;
+}
+
+/* Step header chips */
+.flow-index {
+  border-radius: 50%;
+  border: var(--edge);
+  background: var(--lime);
+  font-family: var(--body);
+  font-weight: 700;
+}
+.flow-locked .flow-index {
+  background: var(--paper);
+}
+.flow-state {
+  font-family: var(--body);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+/* Verdict badges become pills, as on the landing. */
+.disclosure-badge,
+.status-mark,
+.nb-tag {
+  border-radius: 999px;
+}
+.disclosure-badge {
+  border-width: 1.5px;
+  padding: 7px 13px;
+}
+
+/* Tables match the landing's evidence table. */
+.ledger-table {
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ledger-table th {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: var(--edge);
+  padding: 15px 18px;
+}
+.ledger-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.table-scroll {
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  background: var(--surface);
+}
+
+/* Links */
+.text-link {
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 1px;
+}
+.text-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Error and empty states read as cards, and sit in the same centred column
+   as the rest of the page rather than running the full width. */
+.page-stack > .form-error,
+.page-stack > .field-help,
+.form-error,
+.ledger > .field-help {
+  max-width: 900px;
+}
+.page-stack > .form-error,
+.page-stack > .field-help {
+  margin-inline: auto;
+  width: 100%;
+}
+.form-error {
+  border: var(--edge);
+  border-radius: var(--radius);
+  background: #ffe9e6;
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+/* Landing journey steps are links to where each step actually happens. */
+.nb-flow-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 5px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+}
+.nb-flow-link:hover {
+  background: color-mix(in srgb, var(--lime) 35%, transparent);
+}
+.nb-flow-link:hover b {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   The diagonal line pattern belongs to the whole green field, not just the
+   left panel. It used to live on .auth-aside::before, so it stopped at the
+   panel edge and the area around the floating card read as flat green.
+   --------------------------------------------------------------------------- */
+.auth-wrap {
+  background:
+    repeating-linear-gradient(-35deg, transparent 0 22px, rgba(255, 255, 255, 0.05) 22px 23px),
+    radial-gradient(circle at 12% 14%, rgba(198, 251, 111, 0.16), transparent 38%),
+    radial-gradient(circle at 88% 86%, rgba(103, 248, 187, 0.14), transparent 42%),
+    linear-gradient(150deg, #1a5334 0%, #0d3520 52%, #12402a 100%);
+  background-attachment: fixed;
+}
+
+/* The aside keeps only its local glows; the lines now come from the wrapper,
+   so drawing them here as well would double the pattern. */
+.auth-aside::before {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(198, 251, 111, 0.12), transparent 44%),
+    radial-gradient(circle at 82% 88%, rgba(103, 248, 187, 0.1), transparent 48%);
+}
+
+/* The aside's own overlay ended at the panel edge, so the green stepped
+   tone there. The wrapper paints the pattern and the glows for the whole
+   field now, so the aside needs no overlay of its own. */
+.auth-aside::before {
+  content: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Ledger on the current theme.
+   The table header still carried the old warm-tan (#ebe5d9) and Arial from the
+   previous design, and the summary tiles used a 1px/6px shadow rather than the
+   hairline + small offset used everywhere else.
+   --------------------------------------------------------------------------- */
+.ledger {
+  gap: 28px;
+}
+.ledger h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.03em;
+  margin: 0 0 14px;
+}
+
+.ledger-summary {
+  border: var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  overflow: hidden;
+}
+.ledger-summary > div {
+  padding: 18px 20px;
+}
+.ledger-summary dt {
+  font: 700 10.5px / 1.4 var(--body);
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.ledger-summary dd {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+.ledger-table th {
+  background: var(--paper);
+  color: var(--muted);
+  font: 700 10.5px / 1.4 var(--body);
+  letter-spacing: 0.12em;
+  border-bottom: var(--edge);
+}
+.ledger-table td {
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.ledger-table a {
+  color: var(--accent);
+  font-weight: 600;
+}
+.ledger-table a:hover {
+  color: var(--accent-dark);
+}
+
+/* The provenance line reads as a caption, not body copy. */
+.index-note {
+  font-size: 12px;
+  color: var(--faint);
+}
+/* The ledger shares the centred column with the heading above it; it was the
+   one content block left out of that rule, so its tables sat off to the left. */
+.ledger {
+  max-width: 900px;
+  margin-inline: auto;
+  width: 100%;
 }

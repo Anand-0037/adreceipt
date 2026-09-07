@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { formatUnits, isAddress } from "ethers";
 import { useEffect, useState } from "react";
+import { FlowDone } from "@/components/FlowDone";
 import { explorer } from "@/lib/api";
 import { buildQuote, buildSubject, serialise, signQuote, type SignedQuote } from "@/lib/quote";
 import { connect, currentAccount, describeWalletError, hasWallet } from "@/lib/wallet";
 import { protocol } from "@/lib/protocol";
+
+const shortAddress = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 function Step({
   index,
@@ -48,8 +52,13 @@ export function PublisherFlow() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Resolved after mount. Calling hasWallet() during render reads
+  // window.ethereum, which the server cannot see, so the button rendered
+  // disabled on the server and enabled on the client - a hydration mismatch.
+  const [walletReady, setWalletReady] = useState(false);
 
   useEffect(() => {
+    setWalletReady(hasWallet());
     currentAccount().then((address) => {
       if (address) {
         setAccount(address);
@@ -87,8 +96,8 @@ export function PublisherFlow() {
       const quote = buildQuote({
         subject,
         campaignLabel,
-        payer,
-        recipient,
+        payer: payer.trim(),
+        recipient: recipient.trim(),
         amountUsdc: amount,
         chainId: protocol.chainId,
       });
@@ -100,13 +109,18 @@ export function PublisherFlow() {
     }
   }
 
+  // Validate the two address fields here rather than letting ethers throw a
+  // bare "invalid address" at signing time, which names neither field.
+  const payerBad = payer.trim().length > 0 && !isAddress(payer.trim());
+  const recipientBad = recipient.trim().length > 0 && !isAddress(recipient.trim());
+
   const complete = Boolean(
     placementLabel &&
       campaignLabel &&
       productRef &&
       recommendationText &&
-      payer &&
-      recipient &&
+      isAddress(payer.trim()) &&
+      isAddress(recipient.trim()) &&
       amount,
   );
   return (
@@ -121,7 +135,7 @@ export function PublisherFlow() {
             <p className="result-summary">
               This wallet signs the recommendation and may choose a different payment recipient.
             </p>
-            <button type="button" onClick={onConnect} disabled={busy || !hasWallet()}>
+            <button type="button" onClick={onConnect} disabled={busy || !walletReady}>
               {busy ? "Waiting for wallet…" : "Connect wallet"}
             </button>
           </>
@@ -175,9 +189,16 @@ export function PublisherFlow() {
           className="mono"
           value={payer}
           onChange={(event) => setPayer(event.target.value)}
-          placeholder="0x…"
+          placeholder="0x… the advertiser's wallet address"
           spellCheck={false}
+          aria-invalid={payerBad}
+          aria-describedby={payerBad ? "payer-error" : undefined}
         />
+        {payerBad && (
+          <p id="payer-error" className="field-error">
+            Not a valid Ethereum address. It must be 0x followed by 40 hex characters.
+          </p>
+        )}
         <label htmlFor="recipient" style={{ marginTop: 14 }}>
           USDC recipient
         </label>
@@ -186,9 +207,16 @@ export function PublisherFlow() {
           className="mono"
           value={recipient}
           onChange={(event) => setRecipient(event.target.value)}
-          placeholder="0x…"
+          placeholder="0x… where the payment should land"
           spellCheck={false}
+          aria-invalid={recipientBad}
+          aria-describedby={recipientBad ? "recipient-error" : undefined}
         />
+        {recipientBad && (
+          <p id="recipient-error" className="field-error">
+            Not a valid Ethereum address. It must be 0x followed by 40 hex characters.
+          </p>
+        )}
         <label htmlFor="amount" style={{ marginTop: 14 }}>
           Price in test USDC
         </label>
@@ -218,7 +246,28 @@ export function PublisherFlow() {
               This packet authorizes one exact payment. It contains no private key and cannot
               redirect the recipient or change the content.
             </p>
-            <textarea readOnly rows={10} className="mono" value={serialise(signed)} />
+
+            {/* What the packet actually says, in words. The JSON itself is only
+                ever copied and pasted, so it sits behind a disclosure. */}
+            <dl className="quote-summary">
+              <div>
+                <dt>Amount</dt>
+                <dd>{formatUnits(signed.quote.amount, 6)} test USDC</dd>
+              </div>
+              <div>
+                <dt>Payer</dt>
+                <dd className="mono">{shortAddress(signed.quote.payer)}</dd>
+              </div>
+              <div>
+                <dt>Recipient</dt>
+                <dd className="mono">{shortAddress(signed.quote.recipient)}</dd>
+              </div>
+              <div>
+                <dt>Valid until</dt>
+                <dd>{new Date(signed.quote.validUntil * 1000).toLocaleString()}</dd>
+              </div>
+            </dl>
+
             <div className="lookup-line" style={{ marginTop: 12 }}>
               <button
                 type="button"
@@ -240,6 +289,11 @@ export function PublisherFlow() {
                 Settlement contract ↗
               </a>
             </div>
+            <details className="raw-packet">
+              <summary>Show the raw packet</summary>
+              <textarea readOnly rows={10} className="mono" value={serialise(signed)} />
+            </details>
+
             <p className="field-help">
               After payment, follow <Link href={`/receipts/${signed.receiptId}`}>this receipt</Link>{" "}
               while The Graph indexes it.
@@ -247,6 +301,15 @@ export function PublisherFlow() {
           </>
         )}
       </Step>
+      {signed && (
+        <FlowDone
+          title="That is the publisher side finished"
+          next={{ href: `/receipts/${signed.receiptId}`, label: "Track this receipt" }}
+        >
+          Send the copied packet to the payer. Once they settle, the receipt appears on-chain and
+          anyone can re-verify it.
+        </FlowDone>
+      )}
       {error && <p className="form-error">{error}</p>}
     </div>
   );
