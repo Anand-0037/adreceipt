@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { explorer, ledgerApi, type ReceiptEvidence } from "@/lib/api";
+import { DomainControl } from "./DomainControl";
 import {
   describeSettlementError,
   parseSignedQuote,
@@ -150,8 +151,11 @@ export function AdvertiserFlow() {
           </>
         )}
       </Step>
+      <Step index={3} title="Establish domain control" locked={!account}>
+        <DomainControl account={account} />
+      </Step>
       <Step
-        index={3}
+        index={4}
         title="Validate and settle the publisher quote"
         locked={!account}
         done={progress?.step === "done"}

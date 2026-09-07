@@ -6,7 +6,21 @@ import type { GraphSubjectEvidence } from "../receipts/graph";
 import { verifyReceiptCollection } from "../receipts/ledger";
 import { verifyReceipt, verifySubject } from "../receipts/service";
 import { privyReadiness } from "../privy/client";
-import { asyncRoute, badRequest, parseAddress } from "./errors";
+import { asyncRoute, badRequest, notFound, parseAddress } from "./errors";
+
+import { ZeroHash } from "ethers";
+import { getAdvertiser, getChallenge } from "../chain/reads";
+import { submitDomainVerification } from "../chain/writes";
+import { buildRecord } from "../dns/record";
+import { checkDomain } from "../dns/verify";
+import {
+  authorisationMessage,
+  checkAuthorisation,
+  CONTROL_COPY,
+  isRecordable,
+  normaliseDomain,
+  SIGNATURE_TTL_SECONDS,
+} from "../domain/control";
 
 export const routes = Router();
 
@@ -143,5 +157,159 @@ routes.get(
         message: "The Graph and canonical RPC evidence could not be verified.",
       });
     }
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// Domain control
+//
+// Reading is public because DNS is public; writing is signed because it spends
+// gas and touches an identity. A negative result is never written on-chain -
+// see backend/src/domain/control.ts for why that rule is load-bearing.
+// ---------------------------------------------------------------------------
+
+/**
+ * The current claim and a live DNS check. Read-only, unauthenticated, no gas.
+ *
+ * Live rather than cached on purpose: DNS is a public source anyone can query,
+ * so re-reading it now is stronger evidence than replaying a verdict we stored
+ * earlier, and it cannot go stale.
+ */
+routes.get(
+  "/advertisers/:address/domain",
+  asyncRoute(async (req, res) => {
+    const address = parseAddress(req.params.address);
+    const advertiser = await getAdvertiser(address);
+
+    if (advertiser.challenge === ZeroHash || !advertiser.domain) {
+      return res.json({
+        address,
+        registered: false,
+        state: "not-registered" as const,
+        message: CONTROL_COPY["not-registered"],
+      });
+    }
+
+    const record = buildRecord(advertiser.domain, advertiser.challenge);
+    const result = await checkDomain(address);
+
+    const state =
+      result.outcome === "verified"
+        ? ("controlled" as const)
+        : result.outcome === "record-mismatch"
+          ? ("record-mismatch" as const)
+          : result.outcome === "record-missing"
+            ? ("record-missing" as const)
+            : ("undetermined" as const);
+
+    return res.json({
+      address,
+      registered: true,
+      name: advertiser.name,
+      domain: normaliseDomain(advertiser.domain),
+      // What the registry currently holds, which may lag a live DNS change.
+      recordedOnChain: advertiser.status === 2,
+      state,
+      message: CONTROL_COPY[state],
+      recordable: isRecordable(state),
+      checkedAt: result.checkedAt,
+      record,
+      resolversAnswered: result.lookup?.reachable ?? 0,
+    });
+  }),
+);
+
+/** The message a wallet signs to authorise recording its own proof. */
+routes.get(
+  "/advertisers/:address/domain/authorisation",
+  asyncRoute(async (req, res) => {
+    const address = parseAddress(req.params.address);
+    const advertiser = await getAdvertiser(address);
+    if (!advertiser.domain) throw notFound("not-registered", "This wallet has no claim.");
+
+    const issuedAt = Math.floor(Date.now() / 1000);
+    return res.json({
+      address,
+      domain: normaliseDomain(advertiser.domain),
+      issuedAt,
+      expiresInSeconds: SIGNATURE_TTL_SECONDS,
+      message: authorisationMessage({ address, domain: advertiser.domain, issuedAt }),
+    });
+  }),
+);
+
+/**
+ * Record a successful proof on-chain.
+ *
+ * Writes only when the check passes right now, and only when the wallet whose
+ * identity is affected has signed for it. Anything else returns 200 with
+ * `attested: false` - a failure to prove control is not an event worth
+ * recording, and recording it would revoke the advertiser.
+ */
+routes.post(
+  "/advertisers/:address/domain/attest",
+  asyncRoute(async (req, res) => {
+    const address = parseAddress(req.params.address);
+    const { issuedAt, signature } = (req.body ?? {}) as {
+      issuedAt?: number;
+      signature?: string;
+    };
+
+    if (!signature || typeof issuedAt !== "number") {
+      throw badRequest(
+        "authorisation-required",
+        "Recording a proof needs a wallet signature. Fetch the authorisation message, sign it, and send it back.",
+      );
+    }
+
+    const advertiser = await getAdvertiser(address);
+    if (advertiser.challenge === ZeroHash || !advertiser.domain) {
+      throw notFound("not-registered", "This wallet has no claim.");
+    }
+
+    const auth = checkAuthorisation({
+      address,
+      domain: advertiser.domain,
+      issuedAt,
+      signature,
+    });
+    if (!auth.ok) throw badRequest("bad-authorisation", auth.reason ?? "Invalid signature.");
+
+    const result = await checkDomain(address);
+    if (result.outcome !== "verified") {
+      const state =
+        result.outcome === "record-mismatch"
+          ? ("record-mismatch" as const)
+          : result.outcome === "record-missing"
+            ? ("record-missing" as const)
+            : ("undetermined" as const);
+      // Deliberately not an error, and deliberately not a write.
+      return res.json({
+        address,
+        attested: false,
+        state,
+        message: CONTROL_COPY[state],
+      });
+    }
+
+    // Re-read at the last moment: a claim changed during the lookup would make
+    // this proof belong to a domain the advertiser no longer claims.
+    const current = await getChallenge(address);
+    if (current !== result.challenge) {
+      throw badRequest(
+        "challenge-changed",
+        "The claim changed while checking. Publish the new record and try again.",
+      );
+    }
+
+    const receipt = await submitDomainVerification(address, true, current, result.checkedAt);
+
+    return res.json({
+      address,
+      attested: true,
+      state: "controlled" as const,
+      message: "Domain control recorded on-chain.",
+      transaction: receipt,
+    });
   }),
 );

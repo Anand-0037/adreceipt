@@ -168,3 +168,77 @@ export const ledgerApi = {
     };
   },
 };
+
+// ---------------------------------------------------------------------------
+// Domain control
+//
+// Reading is public and costs nothing; recording requires the wallet's own
+// signature. A failed check is never written on-chain, so a bad moment for DNS
+// can never revoke a legitimate advertiser.
+// ---------------------------------------------------------------------------
+
+export type ControlState =
+  | "controlled"
+  | "record-missing"
+  | "record-mismatch"
+  | "not-registered"
+  | "undetermined";
+
+export interface DomainControl {
+  address: string;
+  registered: boolean;
+  name?: string;
+  domain?: string;
+  /** What the registry holds, which may lag a live DNS change. */
+  recordedOnChain?: boolean;
+  state: ControlState;
+  message: string;
+  recordable?: boolean;
+  checkedAt?: number;
+  resolversAnswered?: number;
+  record?: { name: string; type: "TXT"; value: string; instructions: string[] };
+}
+
+export interface DomainAuthorisation {
+  address: string;
+  domain: string;
+  issuedAt: number;
+  expiresInSeconds: number;
+  message: string;
+}
+
+export interface AttestResult {
+  address: string;
+  attested: boolean;
+  state: ControlState;
+  message: string;
+  transaction?: { hash: string; blockNumber: number };
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      (body as { error?: string }).error ?? "unknown",
+      (body as { message?: string }).message ?? response.statusText,
+    );
+  }
+  return body as T;
+}
+
+export const domainApi = {
+  /** Live DNS check. No gas, no writes, no authentication needed. */
+  status: (address: string) => request<DomainControl>(`/advertisers/${address}/domain`),
+
+  authorisation: (address: string) =>
+    request<DomainAuthorisation>(`/advertisers/${address}/domain/authorisation`),
+
+  attest: (address: string, issuedAt: number, signature: string) =>
+    request<AttestResult>(`/advertisers/${address}/domain/attest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ issuedAt, signature }),
+    }),
+};
