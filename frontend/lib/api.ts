@@ -202,7 +202,11 @@ export interface DomainControl {
 export interface DomainAuthorisation {
   address: string;
   domain: string;
+  chainId: number;
+  challenge: string;
+  nonce: string;
   issuedAt: number;
+  expiresAt: number;
   expiresInSeconds: number;
   message: string;
 }
@@ -235,10 +239,19 @@ export const domainApi = {
   authorisation: (address: string) =>
     request<DomainAuthorisation>(`/advertisers/${address}/domain/authorisation`),
 
-  attest: (address: string, issuedAt: number, signature: string) =>
-    request<AttestResult>(`/advertisers/${address}/domain/attest`, {
+  attest: (authorisation: DomainAuthorisation, signature: string) =>
+    request<AttestResult>(`/advertisers/${authorisation.address}/domain/attest`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ issuedAt, signature }),
+      body: JSON.stringify({
+        address: authorisation.address,
+        domain: authorisation.domain,
+        chainId: authorisation.chainId,
+        challenge: authorisation.challenge,
+        nonce: authorisation.nonce,
+        issuedAt: authorisation.issuedAt,
+        expiresAt: authorisation.expiresAt,
+        signature,
+      }),
     }),
 };

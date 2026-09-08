@@ -8,9 +8,13 @@ export function createServer() {
 
   app.use(express.json({ limit: "64kb" }));
   app.disable("x-powered-by");
+  // Render terminates TLS one hop in front of this process. Trust exactly that
+  // hop so domain-specific throttles see the client address rather than every
+  // visitor sharing the proxy address.
+  app.set("trust proxy", 1);
 
-  // V1 exposes read-only public evidence. Transaction submission stays in the
-  // operator-controlled Privy scripts and never crosses this HTTP boundary.
+  // Receipt evidence is public and read-only. The sole write endpoint records
+  // a positive domain proof after a one-time wallet authorization.
   app.use((_req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -35,7 +39,7 @@ if (require.main === module) {
         `AdReceipt backend listening on :${config.port}`,
         `  network    ${config.network} (${config.chainId})`,
         `  settlement ${settlementDeployment.address}`,
-        `  mode       read-only receipt verification`,
+        `  mode       receipt reads and signed domain attestations`,
       ].join("\n"),
     );
   });

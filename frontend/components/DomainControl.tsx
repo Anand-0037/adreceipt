@@ -181,7 +181,7 @@ export function DomainControl({ account }: { account: string | null }) {
                 // so it must be authorised by the wallet it concerns.
                 const auth = await domainApi.authorisation(account);
                 const signature = await signAuthorisation(auth.message);
-                const result = await domainApi.attest(account, auth.issuedAt, signature);
+                const result = await domainApi.attest(auth, signature);
                 setNote(result.message);
                 setTxHash(result.transaction?.hash ?? null);
                 await load(account);
