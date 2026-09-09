@@ -203,15 +203,8 @@ function sleep(ms: number): Promise<void> {
  */
 const handleDomainStatus = asyncRoute(async (req, res) => {
   const address = parseAddress(req.params.address);
+  requireDomainCapacity(domainStatusLimit, req.ip, address);
   const advertiser = await getAdvertiser(address);
-
-routes.get(
-  "/advertisers/:address/domain",
-  asyncRoute(async (req, res) => {
-    const address = parseAddress(req.params.address);
-    requireDomainCapacity(domainStatusLimit, req.ip, address);
-    const advertiser = await getAdvertiser(address);
-
 
   if (advertiser.challenge === ZeroHash || !advertiser.domain) {
     return res.json({

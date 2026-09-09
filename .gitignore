@@ -11,8 +11,6 @@ subgraph/tests/.bin/
 subgraph/tests/.latest.json
 coverage/
 coverage.json
-.env
-.env.*
 !.env.example
 deployments/localhost.json
 deployments/hardhat.json
@@ -36,3 +34,4 @@ frontend/.env.local
 *.log
 .DS_Store
 Thumbs.db
+config.bat
