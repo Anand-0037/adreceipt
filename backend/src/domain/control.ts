@@ -1,62 +1,36 @@
-import { verifyMessage } from "ethers";
+import { getAddress, hexlify, randomBytes, verifyMessage } from "ethers";
 
-/**
- * Domain control, done safely.
- *
- * Three rules, each of which closes a hole the previous implementation had:
- *
- * 1. A negative result is NEVER written on-chain. A missing record, a resolver
- *    timeout or a disagreement means we learned nothing - and because a `false`
- *    verdict revokes in the registry, writing one would let anybody knock a
- *    legitimate advertiser out by asking at the wrong moment.
- *
- * 2. Reading is public and writing is signed. Anyone may check whether a domain
- *    currently resolves - DNS is public, so gatekeeping it protects nothing. But
- *    recording a proof spends gas and touches someone's identity, so it must be
- *    authorised by the wallet it concerns.
- *
- * 3. The words are exact. A TXT record proves control of DNS at a moment in
- *    time. It does not prove trademark ownership, company employment, or any
- *    right to the textual brand name - so this module says "domain control"
- *    and never "verified brand".
- */
-
-/** How long a signed authorisation stays usable. */
 export const SIGNATURE_TTL_SECONDS = 300;
 
-/**
- * The message a wallet signs to authorise recording its own proof.
- *
- * Includes the address so a signature cannot be replayed for a different
- * advertiser, the domain so it cannot be moved to another claim, and a
- * timestamp so an old signature stops working. Deliberately human-readable:
- * someone should be able to read what they are signing in the wallet prompt.
- */
-export function authorisationMessage(input: {
+export interface DomainAuthorisation {
   address: string;
   domain: string;
+  chainId: number;
+  challenge: string;
+  nonce: string;
   issuedAt: number;
-}): string {
+  expiresAt: number;
+}
+
+export function normaliseDomain(domain: string): string {
+  return domain.trim().toLowerCase().replace(/\.+$/, "");
+}
+
+/** Human-readable wallet request, bound to one live registry challenge. */
+export function authorisationMessage(input: DomainAuthorisation): string {
   return [
     "AdReceipt: record domain control",
     "",
-    `Wallet: ${input.address.toLowerCase()}`,
+    `Wallet: ${getAddress(input.address).toLowerCase()}`,
     `Domain: ${normaliseDomain(input.domain)}`,
+    `Chain ID: ${input.chainId}`,
+    `Registry challenge: ${input.challenge.toLowerCase()}`,
+    `Request nonce: ${input.nonce.toLowerCase()}`,
     `Issued: ${input.issuedAt}`,
+    `Expires: ${input.expiresAt}`,
     "",
-    "Signing costs nothing and authorises recording a successful DNS proof for this wallet only.",
+    "Signing costs nothing and authorises one successful DNS proof for this wallet only.",
   ].join("\n");
-}
-
-/**
- * One spelling of a domain.
- *
- * Compared, resolved and signed in the same normalised form, so a trailing dot
- * or a capital letter cannot produce a signature that authorises one string and
- * a lookup that checks another.
- */
-export function normaliseDomain(domain: string): string {
-  return domain.trim().toLowerCase().replace(/\.+$/, "");
 }
 
 export interface AuthorisationResult {
@@ -64,49 +38,92 @@ export interface AuthorisationResult {
   reason?: string;
 }
 
-/** Recover the signer and confirm it is the advertiser, recently. */
-export function checkAuthorisation(input: {
-  address: string;
-  domain: string;
-  issuedAt: number;
-  signature: string;
-  now?: number;
-}): AuthorisationResult {
-  const now = input.now ?? Math.floor(Date.now() / 1000);
+/**
+ * One-instance, short-lived authorization store. A restart intentionally
+ * invalidates outstanding signatures. Scale-out requires shared atomic storage.
+ */
+export class DomainAuthorisationStore {
+  private readonly entries = new Map<string, DomainAuthorisation>();
 
-  if (!Number.isFinite(input.issuedAt)) {
-    return { ok: false, reason: "The authorisation has no valid timestamp." };
-  }
-  // A little tolerance for a clock that runs fast, but not enough to be useful.
-  if (input.issuedAt > now + 60) {
-    return { ok: false, reason: "The authorisation is dated in the future." };
-  }
-  if (now - input.issuedAt > SIGNATURE_TTL_SECONDS) {
-    return { ok: false, reason: "The authorisation has expired. Sign again." };
-  }
+  constructor(
+    private readonly chainId: number,
+    private readonly ttlSeconds = SIGNATURE_TTL_SECONDS,
+    private readonly nonce: () => string = () => hexlify(randomBytes(32)),
+  ) {}
 
-  let recovered: string;
-  try {
-    recovered = verifyMessage(
-      authorisationMessage({
-        address: input.address,
-        domain: input.domain,
-        issuedAt: input.issuedAt,
-      }),
-      input.signature,
-    );
-  } catch {
-    return { ok: false, reason: "The signature could not be read." };
-  }
-
-  if (recovered.toLowerCase() !== input.address.toLowerCase()) {
-    return {
-      ok: false,
-      reason: "That signature belongs to a different wallet than the one being recorded.",
+  issue(input: {
+    address: string;
+    domain: string;
+    challenge: string;
+    now?: number;
+  }): DomainAuthorisation {
+    const now = input.now ?? Math.floor(Date.now() / 1000);
+    this.prune(now);
+    const record: DomainAuthorisation = {
+      address: getAddress(input.address),
+      domain: normaliseDomain(input.domain),
+      chainId: this.chainId,
+      challenge: input.challenge.toLowerCase(),
+      nonce: this.nonce().toLowerCase(),
+      issuedAt: now,
+      expiresAt: now + this.ttlSeconds,
     };
+    this.entries.set(record.nonce, record);
+    return record;
   }
 
-  return { ok: true };
+  /** Verify and atomically consume a request. Only a valid signature burns it. */
+  consume(input: DomainAuthorisation & { signature: string; now?: number }): AuthorisationResult {
+    const now = input.now ?? Math.floor(Date.now() / 1000);
+    this.prune(now);
+    const nonce = input.nonce.toLowerCase();
+    const stored = this.entries.get(nonce);
+    if (!stored) {
+      return { ok: false, reason: "This authorisation is unknown, expired, or already used." };
+    }
+
+    let address: string;
+    try {
+      address = getAddress(input.address);
+    } catch {
+      return { ok: false, reason: "The authorisation contains an invalid wallet address." };
+    }
+    const supplied: DomainAuthorisation = {
+      address,
+      domain: normaliseDomain(input.domain),
+      chainId: input.chainId,
+      challenge: input.challenge.toLowerCase(),
+      nonce,
+      issuedAt: input.issuedAt,
+      expiresAt: input.expiresAt,
+    };
+    if (JSON.stringify(supplied) !== JSON.stringify(stored)) {
+      return { ok: false, reason: "The authorisation fields do not match the issued request." };
+    }
+    if (stored.expiresAt <= now || stored.issuedAt > now + 60) {
+      this.entries.delete(nonce);
+      return { ok: false, reason: "The authorisation has expired. Sign again." };
+    }
+
+    let recovered: string;
+    try {
+      recovered = verifyMessage(authorisationMessage(stored), input.signature);
+    } catch {
+      return { ok: false, reason: "The signature could not be read." };
+    }
+    if (getAddress(recovered) !== stored.address) {
+      return { ok: false, reason: "That signature belongs to a different wallet." };
+    }
+
+    this.entries.delete(nonce);
+    return { ok: true };
+  }
+
+  private prune(now: number): void {
+    for (const [nonce, entry] of this.entries) {
+      if (entry.expiresAt <= now) this.entries.delete(nonce);
+    }
+  }
 }
 
 export type ControlState =
@@ -116,13 +133,6 @@ export type ControlState =
   | "not-registered"
   | "undetermined";
 
-/**
- * How to describe each state to a person.
- *
- * `undetermined` exists so a resolver problem is never phrased as a failure by
- * the advertiser. Nothing about the domain was learned, and the interface must
- * not imply otherwise.
- */
 export const CONTROL_COPY: Record<ControlState, string> = {
   controlled: "Domain control confirmed by DNS just now.",
   "record-missing":
@@ -131,10 +141,9 @@ export const CONTROL_COPY: Record<ControlState, string> = {
     "A record exists but its value does not match the current challenge. The claim may have changed since it was published.",
   "not-registered": "This wallet has no claim to check.",
   undetermined:
-    "No resolver could be reached, so nothing was established. This says nothing about the domain.",
+    "The resolvers did not agree or could not both be reached, so nothing was established.",
 };
 
-/** Only a positive, current proof may ever be written on-chain. */
 export function isRecordable(state: ControlState): boolean {
   return state === "controlled";
 }

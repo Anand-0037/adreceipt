@@ -18,6 +18,8 @@ export const badRequest = (code: string, message: string, detail?: unknown) =>
 
 export const notFound = (code: string, message: string) => new HttpError(404, code, message);
 
+export const tooManyRequests = (message: string) => new HttpError(429, "rate-limit", message);
+
 /**
  * Validate and normalise an `:address` path parameter.
  *

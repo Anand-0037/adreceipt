@@ -6,21 +6,37 @@ import type { GraphSubjectEvidence } from "../receipts/graph";
 import { verifyReceiptCollection } from "../receipts/ledger";
 import { verifyReceipt, verifySubject } from "../receipts/service";
 import { privyReadiness } from "../privy/client";
-import { asyncRoute, badRequest, notFound, parseAddress } from "./errors";
+import { asyncRoute, badRequest, notFound, parseAddress, tooManyRequests } from "./errors";
 
 import { ZeroHash } from "ethers";
-import { getAdvertiser, getChallenge } from "../chain/reads";
+import { AdvertiserStatus, getAdvertiser, getChallenge } from "../chain/reads";
 import { submitDomainVerification } from "../chain/writes";
 import { buildRecord } from "../dns/record";
 import { checkDomain } from "../dns/verify";
 import {
   authorisationMessage,
-  checkAuthorisation,
   CONTROL_COPY,
+  DomainAuthorisationStore,
   isRecordable,
   normaliseDomain,
   SIGNATURE_TTL_SECONDS,
 } from "../domain/control";
+import { FixedWindowRateLimiter } from "../domain/rate-limit";
+
+const domainAuthorisations = new DomainAuthorisationStore(config.chainId);
+const domainStatusLimit = new FixedWindowRateLimiter(20, 60_000);
+const domainAuthorisationLimit = new FixedWindowRateLimiter(10, 60_000);
+const domainAttestationLimit = new FixedWindowRateLimiter(5, 60_000);
+
+function requireDomainCapacity(
+  limiter: FixedWindowRateLimiter,
+  ip: string | undefined,
+  address: string,
+): void {
+  if (!limiter.allow(`${ip ?? "unknown"}:${address.toLowerCase()}`)) {
+    throw tooManyRequests("Too many domain requests. Wait a minute and try again.");
+  }
+}
 
 export const routes = Router();
 
@@ -189,6 +205,14 @@ const handleDomainStatus = asyncRoute(async (req, res) => {
   const address = parseAddress(req.params.address);
   const advertiser = await getAdvertiser(address);
 
+routes.get(
+  "/advertisers/:address/domain",
+  asyncRoute(async (req, res) => {
+    const address = parseAddress(req.params.address);
+    requireDomainCapacity(domainStatusLimit, req.ip, address);
+    const advertiser = await getAdvertiser(address);
+
+
   if (advertiser.challenge === ZeroHash || !advertiser.domain) {
     return res.json({
       address,
@@ -252,16 +276,22 @@ routes.get(
   "/advertisers/:address/domain/authorisation",
   asyncRoute(async (req, res) => {
     const address = parseAddress(req.params.address);
+    requireDomainCapacity(domainAuthorisationLimit, req.ip, address);
     const advertiser = await getAdvertiser(address);
     if (!advertiser.domain) throw notFound("not-registered", "This wallet has no claim.");
+    if (advertiser.status === AdvertiserStatus.Verified) {
+      throw badRequest("already-recorded", "Domain control is already recorded for this claim.");
+    }
 
-    const issuedAt = Math.floor(Date.now() / 1000);
-    return res.json({
+    const authorisation = domainAuthorisations.issue({
       address,
-      domain: normaliseDomain(advertiser.domain),
-      issuedAt,
+      domain: advertiser.domain,
+      challenge: advertiser.challenge,
+    });
+    return res.json({
+      ...authorisation,
       expiresInSeconds: SIGNATURE_TTL_SECONDS,
-      message: authorisationMessage({ address, domain: advertiser.domain, issuedAt }),
+      message: authorisationMessage(authorisation),
     });
   }),
 );
@@ -278,15 +308,30 @@ routes.post(
   "/advertisers/:address/domain/attest",
   asyncRoute(async (req, res) => {
     const address = parseAddress(req.params.address);
-    const { issuedAt, signature } = (req.body ?? {}) as {
+    requireDomainCapacity(domainAttestationLimit, req.ip, address);
+    const { domain, chainId, challenge, nonce, issuedAt, expiresAt, signature } = (req.body ??
+      {}) as {
+      domain?: string;
+      chainId?: number;
+      challenge?: string;
+      nonce?: string;
       issuedAt?: number;
+      expiresAt?: number;
       signature?: string;
     };
 
-    if (!signature || typeof issuedAt !== "number") {
+    if (
+      !signature ||
+      typeof domain !== "string" ||
+      typeof chainId !== "number" ||
+      typeof challenge !== "string" ||
+      typeof nonce !== "string" ||
+      typeof issuedAt !== "number" ||
+      typeof expiresAt !== "number"
+    ) {
       throw badRequest(
         "authorisation-required",
-        "Recording a proof needs a wallet signature. Fetch the authorisation message, sign it, and send it back.",
+        "Recording a proof needs the complete signed authorisation request.",
       );
     }
 
@@ -295,13 +340,34 @@ routes.post(
       throw notFound("not-registered", "This wallet has no claim.");
     }
 
-    const auth = checkAuthorisation({
+    const auth = domainAuthorisations.consume({
       address,
-      domain: advertiser.domain,
+      domain,
+      chainId,
+      challenge,
+      nonce,
       issuedAt,
+      expiresAt,
       signature,
     });
     if (!auth.ok) throw badRequest("bad-authorisation", auth.reason ?? "Invalid signature.");
+    if (
+      normaliseDomain(advertiser.domain) !== normaliseDomain(domain) ||
+      advertiser.challenge.toLowerCase() !== challenge.toLowerCase()
+    ) {
+      throw badRequest(
+        "challenge-changed",
+        "The claim changed after this request was issued. Fetch and sign a new authorisation.",
+      );
+    }
+    if (advertiser.status === AdvertiserStatus.Verified) {
+      return res.json({
+        address,
+        attested: false,
+        state: "controlled" as const,
+        message: "Domain control was already recorded for this claim.",
+      });
+    }
 
     const result = await checkDomain(address);
     if (result.outcome !== "verified") {
