@@ -18,6 +18,10 @@ services:
         value: sepolia
       - key: SEPOLIA_RPC_URL
         sync: false
+      # Restricted to SIMULATOR_ROLE on CREAttestationReceiver. Required only
+      # for a wallet-authorized positive domain-control attestation.
+      - key: CRE_SIMULATOR_PRIVATE_KEY
+        sync: false
       - key: GRAPH_QUERY_URL
         value: https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1
       - key: GRAPH_MAX_BLOCK_LAG

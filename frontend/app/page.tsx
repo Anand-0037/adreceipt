@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { EntryGate } from "@/components/EntryGate";
 import { SettleIcon, SignIcon, VerifyIcon } from "@/components/FeatureIcons";
 import { FlowArtwork } from "@/components/FlowArtwork";
 import { ReceiptArtwork } from "@/components/HeroReceipt";
@@ -133,7 +132,7 @@ const CHECKS = [
   },
 ];
 
-/** The verifier's three outcomes. There is deliberately no optimistic state. */
+/** Every verifier outcome. There is deliberately no optimistic state. */
 const VERDICTS = [
   {
     state: "PAID_VERIFIED",
@@ -148,10 +147,22 @@ const VERDICTS = [
     body: "The payment is on-chain but The Graph has not caught up. The reader is told it is still indexing rather than shown a badge early.",
   },
   {
+    state: "NOT_FOUND_AT_BLOCK",
+    tone: "no",
+    title: "No receipt at that block",
+    body: "The indexer is fresh, but there is no matching receipt at the requested block. This does not prove the recommendation was organic.",
+  },
+  {
+    state: "INVALID",
+    tone: "no",
+    title: "Evidence disagrees",
+    body: "The Graph and canonical transaction differ on at least one bound field. The verifier refuses the paid claim.",
+  },
+  {
     state: "UNAVAILABLE",
     tone: "no",
-    title: "Cannot be shown",
-    body: "Evidence is missing or the two sources disagree on a field. The verifier fails closed and no badge is rendered at all.",
+    title: "Sources unavailable",
+    body: "The required provider evidence cannot be read. The application reports the outage and renders no verified badge.",
   },
 ];
 
@@ -188,229 +199,227 @@ export default function Home() {
   const short = `${protocol.settlement.slice(0, 6)}…${protocol.settlement.slice(-4)}`;
 
   return (
-    <EntryGate>
-      <div className="nb-page">
-        {/* ── Hero ──────────────────────────────────────────────────────────── */}
-        <section className="nb-hero">
-          <Reveal immediate>
-            <div>
-              <h1 className="nb-display">Verify the payment behind the recommendation.</h1>
-              <p className="nb-hero-lede">
-                A &ldquo;sponsored&rdquo; label is just the platform&rsquo;s word. AdReceipt binds a
-                payment to the exact recommendation it paid for, indexes it publicly, and re-checks
-                it against Ethereum before showing a badge.
-              </p>
-              <div className="nb-hero-actions">
-                <Link href="/ask" className="nb-btn nb-btn-lime">
-                  Verify a recommendation
-                </Link>
-                <Link href="/register" className="nb-btn">
-                  Connect wallet
-                </Link>
-              </div>
+    <div className="nb-page">
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <section className="nb-hero">
+        <Reveal immediate>
+          <div>
+            <h1 className="nb-display">Verify the payment behind the recommendation.</h1>
+            <p className="nb-hero-lede">
+              A &ldquo;sponsored&rdquo; label is just the platform&rsquo;s word. AdReceipt binds a
+              payment to the exact recommendation it paid for, indexes it publicly, and re-checks it
+              against Ethereum before showing a badge.
+            </p>
+            <div className="nb-hero-actions">
+              <Link href="/ask" className="nb-btn nb-btn-lime">
+                Verify a recommendation
+              </Link>
+              <Link href="/register" className="nb-btn">
+                Connect wallet
+              </Link>
             </div>
-          </Reveal>
-
-          <Reveal immediate delay={0.1}>
-            <div className="nb-disc">
-              {/* Illustrative card. The fields mirror the real receipt schema. */}
-              <article className="nb-receipt">
-                <div className="nb-receipt-top">Receipt &mdash; v1</div>
-                <div className="nb-receipt-body">
-                  <ReceiptArtwork />
-                  <span className="nb-badge nb-badge-float">
-                    <i aria-hidden />
-                    Paid verified
-                  </span>
-                </div>
-                <div className="nb-receipt-split">
-                  <div>2.50 USDC</div>
-                  <div className="mono">{short}</div>
-                </div>
-                <Link href="/ask" className="nb-receipt-foot">
-                  Check a receipt
-                </Link>
-              </article>
-            </div>
-          </Reveal>
-        </section>
-
-        {/* ── Feature strip ─────────────────────────────────────────────────── */}
-        <Reveal>
-          <section className="nb-strip">
-            {FEATURES.map((f) => (
-              <article key={f.title}>
-                <span className="nb-strip-icon">
-                  <f.Icon />
-                </span>
-                <span className="nb-badge">{f.tag}</span>
-                <h3>{f.title}</h3>
-                <p>{f.body}</p>
-              </article>
-            ))}
-          </section>
+          </div>
         </Reveal>
 
-        {/* ── Role journeys ─────────────────────────────────────────────────── */}
-        <section className="nb-section">
-          <Reveal>
-            <p className="nb-eyebrow">Two sides, one receipt</p>
-            <h2>Pick your path</h2>
-          </Reveal>
-          <div className="nb-flows">
-            {FLOWS.map((flow, i) => (
-              <Reveal key={flow.role} delay={i * 0.08}>
-                <article className="nb-flow">
-                  <header>
-                    <h3>{flow.role}</h3>
-                    <p>{flow.blurb}</p>
-                  </header>
-                  <ol className="nb-flow-steps">
-                    {flow.steps.map((s, n) => (
-                      <li key={s.label}>
-                        <span className="nb-flow-num">{n + 1}</span>
-                        {/* Each step links to the page where it happens, so the
-                            journey on the landing page is walkable, not just a list. */}
-                        <Link href={s.href} className="nb-flow-link">
-                          <b>{s.label}</b>
-                          <small>{s.note}</small>
-                        </Link>
-                      </li>
-                    ))}
-                  </ol>
-                  <Link href={flow.href} className="nb-btn nb-btn-lime nb-btn-wide">
-                    {flow.cta}
-                  </Link>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── What the quote binds ──────────────────────────────────────────── */}
-        <section className="nb-split">
-          <Reveal>
-            <FlowArtwork />
-          </Reveal>
-          <Reveal delay={0.08}>
-            <div>
-              <p className="nb-eyebrow nb-eyebrow-left">How a badge earns its place</p>
-              <h2>Payment bound to the exact recommendation</h2>
-              <p>
-                AdReceipt computes commitments from the content you supply. It never attaches a
-                sample receipt to a different recommendation. These are the fields the publisher
-                signs before any money moves.
-              </p>
-              <div className="nb-chips">
-                {BOUND.map((b) => (
-                  <span className="nb-chip" key={b}>
-                    {b}
-                  </span>
-                ))}
+        <Reveal immediate delay={0.1}>
+          <div className="nb-disc">
+            {/* Protocol preview. It deliberately makes no live payment claim. */}
+            <article className="nb-receipt">
+              <div className="nb-receipt-top">Protocol preview &mdash; v1</div>
+              <div className="nb-receipt-body">
+                <ReceiptArtwork />
+                <span className="nb-badge nb-badge-float">
+                  <i aria-hidden />
+                  Graph + RPC required
+                </span>
               </div>
-            </div>
-          </Reveal>
-        </section>
-
-        {/* ── Evidence table ────────────────────────────────────────────────── */}
-        <section className="nb-section">
-          <Reveal>
-            <p className="nb-eyebrow">Fail closed</p>
-            <h2>What gets checked</h2>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <div className="nb-table-wrap">
-              <table className="nb-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Check</th>
-                    <th scope="col">Source</th>
-                    <th scope="col">Fails when</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CHECKS.map((c) => (
-                    <tr key={c.check}>
-                      <td>
-                        <b>{c.check}</b>
-                        <small>{c.detail}</small>
-                      </td>
-                      <td>
-                        <span className="nb-tag">{c.source}</span>
-                      </td>
-                      <td>
-                        <span className="nb-tag nb-tag-neutral">{c.fails}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Link href="/ledger" className="nb-btn nb-btn-lime nb-btn-bar">
-              Open the receipt ledger
-            </Link>
-          </Reveal>
-        </section>
-
-        {/* ── Badge states ──────────────────────────────────────────────────── */}
-        <section className="nb-section">
-          <Reveal>
-            <p className="nb-eyebrow">Verdicts</p>
-            <h2>What a badge can say</h2>
-            <p className="nb-section-note" style={{ margin: "0 auto 34px", textAlign: "center" }}>
-              These are the only three answers the verifier gives. There is no optimistic state.
-            </p>
-          </Reveal>
-          <div className="nb-grid">
-            {VERDICTS.map((v, i) => (
-              <Reveal key={v.state} delay={i * 0.07}>
-                <article className={`nb-verdict nb-verdict-${v.tone}`}>
-                  <div className="nb-verdict-art">
-                    <span className="nb-verdict-chip">{v.state}</span>
-                  </div>
-                  <div className="nb-verdict-body">
-                    <h3>{v.title}</h3>
-                    <p>{v.body}</p>
-                  </div>
-                </article>
-              </Reveal>
-            ))}
+              <div className="nb-receipt-split">
+                <div>Exact USDC amount</div>
+                <div className="mono">{short}</div>
+              </div>
+              <Link href="/ask" className="nb-receipt-foot">
+                Open the live verifier
+              </Link>
+            </article>
           </div>
-        </section>
+        </Reveal>
+      </section>
 
-        {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-        <section className="nb-section">
-          <Reveal>
-            <p className="nb-eyebrow">Answers</p>
-            <h2>Frequently asked questions</h2>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <div className="nb-faq">
-              {FAQ.map((f) => (
-                <details key={f.q} open={f.open}>
-                  <summary>{f.q}</summary>
-                  <p>{f.a}</p>
-                </details>
+      {/* ── Feature strip ─────────────────────────────────────────────────── */}
+      <Reveal>
+        <section className="nb-strip">
+          {FEATURES.map((f) => (
+            <article key={f.title}>
+              <span className="nb-strip-icon">
+                <f.Icon />
+              </span>
+              <span className="nb-badge">{f.tag}</span>
+              <h3>{f.title}</h3>
+              <p>{f.body}</p>
+            </article>
+          ))}
+        </section>
+      </Reveal>
+
+      {/* ── Role journeys ─────────────────────────────────────────────────── */}
+      <section className="nb-section">
+        <Reveal>
+          <p className="nb-eyebrow">Two sides, one receipt</p>
+          <h2>Pick your path</h2>
+        </Reveal>
+        <div className="nb-flows">
+          {FLOWS.map((flow, i) => (
+            <Reveal key={flow.role} delay={i * 0.08}>
+              <article className="nb-flow">
+                <header>
+                  <h3>{flow.role}</h3>
+                  <p>{flow.blurb}</p>
+                </header>
+                <ol className="nb-flow-steps">
+                  {flow.steps.map((s, n) => (
+                    <li key={s.label}>
+                      <span className="nb-flow-num">{n + 1}</span>
+                      {/* Each step links to the page where it happens, so the
+                            journey on the landing page is walkable, not just a list. */}
+                      <Link href={s.href} className="nb-flow-link">
+                        <b>{s.label}</b>
+                        <small>{s.note}</small>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+                <Link href={flow.href} className="nb-btn nb-btn-lime nb-btn-wide">
+                  {flow.cta}
+                </Link>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── What the quote binds ──────────────────────────────────────────── */}
+      <section className="nb-split">
+        <Reveal>
+          <FlowArtwork />
+        </Reveal>
+        <Reveal delay={0.08}>
+          <div>
+            <p className="nb-eyebrow nb-eyebrow-left">How a badge earns its place</p>
+            <h2>Payment bound to the exact recommendation</h2>
+            <p>
+              AdReceipt computes commitments from the content you supply. It never attaches a sample
+              receipt to a different recommendation. These are the fields the publisher signs before
+              any money moves.
+            </p>
+            <div className="nb-chips">
+              {BOUND.map((b) => (
+                <span className="nb-chip" key={b}>
+                  {b}
+                </span>
               ))}
             </div>
-          </Reveal>
-        </section>
-
-        {/* ── Closing CTA ───────────────────────────────────────────────────── */}
-        <Reveal>
-          <section className="nb-cta">
-            <h2 className="nb-display">Bind a payment to what you actually recommended.</h2>
-            <div className="nb-cta-actions">
-              <Link href="/register" className="nb-btn">
-                Get started
-              </Link>
-              <Link href="/ledger" className="nb-btn">
-                Open the ledger
-              </Link>
-            </div>
-          </section>
+          </div>
         </Reveal>
-      </div>
-    </EntryGate>
+      </section>
+
+      {/* ── Evidence table ────────────────────────────────────────────────── */}
+      <section className="nb-section">
+        <Reveal>
+          <p className="nb-eyebrow">Fail closed</p>
+          <h2>What gets checked</h2>
+        </Reveal>
+        <Reveal delay={0.08}>
+          <div className="nb-table-wrap">
+            <table className="nb-table">
+              <thead>
+                <tr>
+                  <th scope="col">Check</th>
+                  <th scope="col">Source</th>
+                  <th scope="col">Fails when</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CHECKS.map((c) => (
+                  <tr key={c.check}>
+                    <td>
+                      <b>{c.check}</b>
+                      <small>{c.detail}</small>
+                    </td>
+                    <td>
+                      <span className="nb-tag">{c.source}</span>
+                    </td>
+                    <td>
+                      <span className="nb-tag nb-tag-neutral">{c.fails}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Link href="/ledger" className="nb-btn nb-btn-lime nb-btn-bar">
+            Open the receipt ledger
+          </Link>
+        </Reveal>
+      </section>
+
+      {/* ── Badge states ──────────────────────────────────────────────────── */}
+      <section className="nb-section">
+        <Reveal>
+          <p className="nb-eyebrow">Verdicts</p>
+          <h2>What a badge can say</h2>
+          <p className="nb-section-note" style={{ margin: "0 auto 34px", textAlign: "center" }}>
+            These are the five answers the verifier gives. There is no optimistic state.
+          </p>
+        </Reveal>
+        <div className="nb-grid">
+          {VERDICTS.map((v, i) => (
+            <Reveal key={v.state} delay={i * 0.07}>
+              <article className={`nb-verdict nb-verdict-${v.tone}`}>
+                <div className="nb-verdict-art">
+                  <span className="nb-verdict-chip">{v.state}</span>
+                </div>
+                <div className="nb-verdict-body">
+                  <h3>{v.title}</h3>
+                  <p>{v.body}</p>
+                </div>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+      <section className="nb-section">
+        <Reveal>
+          <p className="nb-eyebrow">Answers</p>
+          <h2>Frequently asked questions</h2>
+        </Reveal>
+        <Reveal delay={0.08}>
+          <div className="nb-faq">
+            {FAQ.map((f) => (
+              <details key={f.q} open={f.open}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── Closing CTA ───────────────────────────────────────────────────── */}
+      <Reveal>
+        <section className="nb-cta">
+          <h2 className="nb-display">Bind a payment to what you actually recommended.</h2>
+          <div className="nb-cta-actions">
+            <Link href="/register" className="nb-btn">
+              Get started
+            </Link>
+            <Link href="/ledger" className="nb-btn">
+              Open the ledger
+            </Link>
+          </div>
+        </section>
+      </Reveal>
+    </div>
   );
 }

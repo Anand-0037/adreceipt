@@ -113,14 +113,16 @@ export function describeWalletError(error: unknown): string {
 
 const REGISTRY_ABI = ["function register(string name, string domain) returns (bytes32)"] as const;
 
-export const ADVERTISER_REGISTRY = "0xcE99a9ee7DD1af77e47036fe679fd1aDfFf2F8ac";
-
 /** Register a claim from the connected wallet. The claim proves nothing yet. */
 export async function registerAdvertiser(name: string, domain: string): Promise<string> {
   const eth = injected();
   if (!eth) throw new Error("No wallet");
   const signer = await new BrowserProvider(eth).getSigner();
-  const registry = new Contract(ADVERTISER_REGISTRY, REGISTRY_ABI as unknown as string[], signer);
+  const registry = new Contract(
+    protocol.advertiserRegistry,
+    REGISTRY_ABI as unknown as string[],
+    signer,
+  );
   const receipt = await (await registry.register(name, domain)).wait();
   return receipt.hash as string;
 }
