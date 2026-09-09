@@ -184,57 +184,85 @@ routes.get(
 // see backend/src/domain/control.ts for why that rule is load-bearing.
 // ---------------------------------------------------------------------------
 
+const DOMAIN_POLL_INTERVAL_MS = 2500;
+const DOMAIN_POLL_MAX_TIMEOUT_MS = 25000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * The current claim and a live DNS check. Read-only, unauthenticated, no gas.
  *
  * Live rather than cached on purpose: DNS is a public source anyone can query,
  * so re-reading it now is stronger evidence than replaying a verdict we stored
  * earlier, and it cannot go stale.
+ *
+ * Supports long-polling with `?wait=true` to wait for DNS propagation until
+ * verified or a timeout is reached.
  */
-routes.get(
-  "/advertisers/:address/domain",
-  asyncRoute(async (req, res) => {
-    const address = parseAddress(req.params.address);
-    requireDomainCapacity(domainStatusLimit, req.ip, address);
-    const advertiser = await getAdvertiser(address);
+const handleDomainStatus = asyncRoute(async (req, res) => {
+  const address = parseAddress(req.params.address);
+  requireDomainCapacity(domainStatusLimit, req.ip, address);
+  const advertiser = await getAdvertiser(address);
 
-    if (advertiser.challenge === ZeroHash || !advertiser.domain) {
-      return res.json({
-        address,
-        registered: false,
-        state: "not-registered" as const,
-        message: CONTROL_COPY["not-registered"],
-      });
-    }
-
-    const record = buildRecord(advertiser.domain, advertiser.challenge);
-    const result = await checkDomain(address);
-
-    const state =
-      result.outcome === "verified"
-        ? ("controlled" as const)
-        : result.outcome === "record-mismatch"
-          ? ("record-mismatch" as const)
-          : result.outcome === "record-missing"
-            ? ("record-missing" as const)
-            : ("undetermined" as const);
-
+  if (advertiser.challenge === ZeroHash || !advertiser.domain) {
     return res.json({
       address,
-      registered: true,
-      name: advertiser.name,
-      domain: normaliseDomain(advertiser.domain),
-      // What the registry currently holds, which may lag a live DNS change.
-      recordedOnChain: advertiser.status === 2,
-      state,
-      message: CONTROL_COPY[state],
-      recordable: isRecordable(state),
-      checkedAt: result.checkedAt,
-      record,
-      resolversAnswered: result.lookup?.reachable ?? 0,
+      registered: false,
+      state: "not-registered" as const,
+      message: CONTROL_COPY["not-registered"],
     });
-  }),
-);
+  }
+
+  const shouldWait = req.query.wait === "true" || req.query.wait === "1";
+  const record = buildRecord(advertiser.domain, advertiser.challenge);
+  let result = await checkDomain(address);
+
+  if (shouldWait && result.outcome !== "verified") {
+    const startTime = Date.now();
+    while (
+      result.outcome !== "verified" &&
+      Date.now() - startTime + DOMAIN_POLL_INTERVAL_MS <= DOMAIN_POLL_MAX_TIMEOUT_MS
+    ) {
+      if (req.destroyed || res.writableEnded) {
+        return;
+      }
+      await sleep(DOMAIN_POLL_INTERVAL_MS);
+      if (req.destroyed || res.writableEnded) {
+        return;
+      }
+      result = await checkDomain(address);
+    }
+  }
+
+  const state =
+    result.outcome === "verified"
+      ? ("controlled" as const)
+      : result.outcome === "record-mismatch"
+        ? ("record-mismatch" as const)
+        : result.outcome === "record-missing"
+          ? ("record-missing" as const)
+          : ("undetermined" as const);
+
+  return res.json({
+    address,
+    registered: true,
+    name: advertiser.name,
+    domain: normaliseDomain(advertiser.domain),
+    // What the registry currently holds, which may lag a live DNS change.
+    recordedOnChain: advertiser.status === 2,
+    state,
+    message: CONTROL_COPY[state],
+    recordable: isRecordable(state),
+    checkedAt: result.checkedAt,
+    record,
+    resolversAnswered: result.lookup?.reachable ?? 0,
+  });
+});
+
+routes.get("/advertisers/:address/domain", handleDomainStatus);
+routes.get("/advertisers/:address/domain/status", handleDomainStatus);
 
 /** The message a wallet signs to authorise recording its own proof. */
 routes.get(
