@@ -1,0 +1,34 @@
+# Line endings
+#
+# Every blob in this repository is already stored with LF, but Windows clones
+# default to core.autocrlf=true, which rewrites the working tree to CRLF on
+# checkout. Biome then reads CRLF and reports a formatting error on every line
+# of every file, so `npm run quality:v1` fails locally for reasons that have
+# nothing to do with the change under review - while CI, on Linux, passes.
+#
+# `eol=lf` pins the working tree to LF regardless of a developer's autocrlf
+# setting. Because the stored blobs are already LF, this needs no renormalising
+# commit: it only changes what lands on disk at checkout.
+#
+# After pulling this file for the first time, refresh an existing checkout:
+#
+#   git rm --cached -r . && git reset --hard
+#
+# (Commit or stash your work first - `reset --hard` discards uncommitted
+# changes.) A fresh clone needs nothing.
+* text=auto eol=lf
+
+# Binary files, which must never be line-ending converted or diffed as text.
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.wasm  binary
+*.woff  binary
+*.woff2 binary
+
+# Generated. Collapsed in diffs so a dependency bump does not bury a review.
+package-lock.json  linguist-generated=true -diff
+bun.lock           linguist-generated=true -diff

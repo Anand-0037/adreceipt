@@ -16,6 +16,7 @@
   "include": [
     "main.ts",
     "workflow.ts",
-    "quote.ts"
+    "quote.ts",
+    "ticket.ts"
   ]
 }
