@@ -46,6 +46,18 @@ test("recording a proof refuses unauthenticated and malformed requests", async (
     });
     assert.equal(badAddress.status, 400);
 
+    // Malformed address on /domain and /domain/status endpoints
+    const badDomain = await fetch(`${base}/advertisers/not-an-address/domain`);
+    assert.equal(badDomain.status, 400);
+
+    const badStatus = await fetch(`${base}/advertisers/not-an-address/domain/status`);
+    assert.equal(badStatus.status, 400);
+
+    const badStatusWait = await fetch(
+      `${base}/advertisers/not-an-address/domain/status?wait=true`,
+    );
+    assert.equal(badStatusWait.status, 400);
+
     // The route removed for being unsafe must stay removed.
     const legacy = await fetch(`${base}/advertisers/${subject}/verify`, { method: "POST" });
     assert.equal(legacy.status, 404);
@@ -53,3 +65,4 @@ test("recording a proof refuses unauthenticated and malformed requests", async (
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+
