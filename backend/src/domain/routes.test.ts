@@ -53,9 +53,7 @@ test("recording a proof refuses unauthenticated and malformed requests", async (
     const badStatus = await fetch(`${base}/advertisers/not-an-address/domain/status`);
     assert.equal(badStatus.status, 400);
 
-    const badStatusWait = await fetch(
-      `${base}/advertisers/not-an-address/domain/status?wait=true`,
-    );
+    const badStatusWait = await fetch(`${base}/advertisers/not-an-address/domain/status?wait=true`);
     assert.equal(badStatusWait.status, 400);
 
     // The route removed for being unsafe must stay removed.
@@ -65,4 +63,3 @@ test("recording a proof refuses unauthenticated and malformed requests", async (
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
-
