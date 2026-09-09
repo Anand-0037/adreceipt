@@ -1,0 +1,45 @@
+{
+  "$comment": "Cross-runtime vectors for PlacementTicketV2. Regenerate with `npx hardhat run scripts/ticket-vectors.ts`. Asserted by test/PlacementTicketV2.test.ts (ethers) and cre/placement-authorization/workflow.test.ts (viem).",
+  "contextSalt": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "context": {
+    "schemaVersion": 2,
+    "topic": "developer-tools",
+    "intent": "compare",
+    "locale": "en-US",
+    "surface": "chat-answer"
+  },
+  "ticket": {
+    "schemaVersion": 2,
+    "ticketNonce": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "campaignRevisionHash": "0x3333333333333333333333333333333333333333333333333333333333333333",
+    "publisher": "0x9999999999999999999999999999999999999999",
+    "contextCommitment": "0xfae92a5ced582bb7eaa314f827a2f9cdafff0100618d3951938eca304c249664",
+    "productRefHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+    "contentHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "policyCommitment": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "policyProofLevel": 0,
+    "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "amount": "1000000",
+    "validUntil": "1800000000"
+  },
+  "quote": {
+    "schemaVersion": 1,
+    "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "subjectHash": "0x0f2d87d73b21f2bf604739f6aed53a79b7878789a60cafd60873fc736c1cab05",
+    "payer": "0x84B5711b5Ff458478A2E55bb4797F5b254517a57",
+    "recipient": "0x5555555555555555555555555555555555555555",
+    "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "amount": "1000000",
+    "validUntil": 1800000000,
+    "nonce": "0x7777777777777777777777777777777777777777777777777777777777777777",
+    "chainId": 11155111,
+    "settlementContract": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576"
+  },
+  "expected": {
+    "contextCommitment": "0xfae92a5ced582bb7eaa314f827a2f9cdafff0100618d3951938eca304c249664",
+    "ticketCommitment": "0x8cb23faf1df797d1734de9a8de08ff27aff98112e571fb0c616b395676eaa17e",
+    "subjectHash": "0x0f2d87d73b21f2bf604739f6aed53a79b7878789a60cafd60873fc736c1cab05",
+    "receiptId": "0x1900da348c35f1cee6513dbaef3e87748296df90512c18e3ffcab1d3ba42d7de"
+  }
+}
