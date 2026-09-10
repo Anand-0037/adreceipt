@@ -45,6 +45,28 @@ export function creSimulationArguments(args: {
   ];
 }
 
+export function sanitizeCreDiagnostic(
+  stderr: string,
+  replacements: ReadonlyArray<readonly [string, string]>,
+  secrets: readonly string[],
+): string {
+  const ansiEscape = new RegExp(`${String.fromCharCode(27)}\\[[0-?]*[ -/]*[@-~]`, "g");
+  let diagnostic = stderr.replaceAll(ansiEscape, "");
+  for (const [value, label] of [...replacements].sort((a, b) => b[0].length - a[0].length)) {
+    if (value) diagnostic = diagnostic.replaceAll(value, label);
+  }
+  for (const secret of secrets) {
+    if (secret.length >= 8) diagnostic = diagnostic.replaceAll(secret, "[REDACTED]");
+  }
+  return diagnostic
+    .replaceAll(/https?:\/\/\S+/gi, "[URL]")
+    .replaceAll(/0x[0-9a-f]{16,}/gi, "[HEX]")
+    .replaceAll(/\b[A-Za-z0-9+/_=-]{48,}\b/g, "[REDACTED]")
+    .replaceAll(/[\r\n]+/g, " | ")
+    .trim()
+    .slice(0, 600);
+}
+
 export const SUBJECT_TYPES = {
   SubjectV1: [
     { name: "publisher", type: "address" },
@@ -314,6 +336,22 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
     };
     const stderr = failure.stderr ?? "";
     const diagnostic = stderr.toLowerCase();
+    const sensitiveEnvironmentValues = Object.entries(process.env)
+      .filter(([key]) => /secret|token|key|password|database|base64/i.test(key))
+      .map(([, value]) => value ?? "")
+      .filter(Boolean);
+    const safeDetail = sanitizeCreDiagnostic(
+      stderr,
+      [
+        [resolve(process.env.CRE_CLI_PATH || "cre"), "[CRE_CLI]"],
+        [resolve(repoRoot, "cre"), "[CRE_PROJECT]"],
+        [configPath, "[CONFIG]"],
+        [envPath, "[POLICY_ENV]"],
+        [resolve(directory, "home"), "[TEMP_HOME]"],
+        [rawPolicy, "[PRIVATE_POLICY]"],
+      ],
+      sensitiveEnvironmentValues,
+    );
     const category =
       failure.code === "ENOENT"
         ? "CLI_NOT_FOUND"
@@ -334,6 +372,7 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       signal: failure.signal ?? null,
       stdoutBytes: Buffer.byteLength(failure.stdout ?? ""),
       stderrBytes: Buffer.byteLength(stderr),
+      detail: safeDetail,
       indicators: {
         bun: /\bbun\b/.test(diagnostic),
         missing: /not found|no such file|does not exist/.test(diagnostic),
