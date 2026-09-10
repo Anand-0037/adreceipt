@@ -39,6 +39,20 @@ The current release is deployed at **[adreceipt-web.onrender.com](https://adrece
 
 The public API is available at **[adreceipt-api.onrender.com](https://adreceipt-api.onrender.com)**. Its [health endpoint](https://adreceipt-api.onrender.com/health) reports the current Sepolia, Graph, settlement, Privy, and V2 runtime status. Free instances may need a short cold start after inactivity.
 
+## Product walkthrough
+
+The advertiser describes the outcome, reviews the agent-prepared campaign, and signs the exact revision before it can become active.
+
+[![AdReceipt advertiser campaign setup](docs/screenshots/advertiser-campaign.png)](https://adreceipt-web.onrender.com/advertiser)
+
+The publisher keeps the organic answer separate, applies adult and sensitive-context safeguards, and withholds sponsored creative until its payment proof is verified.
+
+[![AdReceipt publisher query and safety controls](docs/screenshots/publisher-experience.png)](https://adreceipt-web.onrender.com/publisher)
+
+The public receipt starts with the human-readable result. This live V2 receipt shows the real 0.1 test-USDC payment and the agreement between The Graph and canonical Sepolia RPC evidence.
+
+[![AdReceipt verified Sepolia payment receipt](docs/screenshots/verified-receipt.png)](https://adreceipt-web.onrender.com/receipts/0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1)
+
 ## See the idea in one flow
 
 ~~~text
@@ -384,6 +398,34 @@ The MCP server exposes four narrow tools: `get_adcp_capabilities`, `get_products
 
 The adapter does not claim automatic registration in ChatGPT, a public MCP directory, or an AdCP catalogue, and it does not implement A2A. Campaign activation still requires the advertiser's EIP-712 signature, and delivery spend is reported only after The Graph and Sepolia RPC agree.
 
+### Publisher SDK
+
+The framework-independent [`@adreceipt/sdk`](sdk/) puts AdReceipt in a publisher's response path without taking control of the organic answer. It evaluates the query, prepares the exact publisher-signed placement, and returns sponsored creative only after the stored evidence and live receipt verification agree.
+
+~~~ts
+import { AdReceiptClient, createPublisherRouter } from "@adreceipt/sdk";
+
+const adreceipt = new AdReceiptClient({
+  apiBaseUrl: "https://adreceipt-api.onrender.com",
+  receiptBaseUrl: "https://adreceipt-web.onrender.com",
+});
+
+const router = createPublisherRouter({
+  client: adreceipt,
+  generateOrganic: (query) => model.generate(query),
+});
+
+const response = await router.answer({
+  query: userQuery,
+  ageEligibility: "ADULT_DECLARED",
+  coarseLocale: "en-IN",
+});
+~~~
+
+Eligibility never releases the creative. The publisher signs an exact quote, an authenticated operator settles it through the policy-constrained Privy wallet, and the SDK renders sponsorship only after `PAID_VERIFIED`. Provider failures preserve the organic answer and suppress the advertisement.
+
+The package is currently source-distributed in this repository and independently package-tested; it has not been published to the npm registry. Build and test it with `npm --prefix sdk test`. See [sdk/README.md](sdk/README.md) for the signing and verification lifecycle.
+
 ## Future impact
 
 AI advertising should not repeat the web’s model of invisible tracking, opaque auctions, and platform-controlled attribution.
@@ -407,7 +449,7 @@ The long-term invariant remains simple:
 - The web app, API, contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live; the deployed routes and known verified receipt passed a cold-browser check on September 10, 2026.
 - Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
 - In-product settlement remains operator-controlled through a separate bearer token; public visitors cannot spend from the Privy organization wallet.
-- The publisher SDK is implemented locally and fails closed when receipt evidence is pending, unavailable, invalid, or inconsistent.
+- The publisher SDK is available on public `main`, is independently package-tested, and fails closed when receipt evidence is pending, unavailable, invalid, or inconsistent. It is source-distributed and is not yet published to the npm registry.
 - AdCP seller interoperability is implemented through four MCP tools over stdio and Streamable HTTP; public catalogue registration, A2A, auctions, and the remaining AdCP media-buy operations are outside the current release.
 - The project demonstrates testnet infrastructure with team-controlled participants, not production adoption.
 
