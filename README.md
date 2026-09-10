@@ -18,6 +18,19 @@ An advertiser approves a campaign. A publisher offers a separately rendered spon
 
 > **Stripe receipts tell you a payment happened. AdReceipt tells you which AI sponsorship it paid for.**
 
+## Live demo
+
+The current release is deployed at **[adreceipt-web.onrender.com](https://adreceipt-web.onrender.com)**.
+
+| Start here | What to try |
+| --- | --- |
+| [Advertiser](https://adreceipt-web.onrender.com/advertiser) | Turn a product brief into an editable campaign and sign the approved revision |
+| [Publisher](https://adreceipt-web.onrender.com/publisher) | Ask a question, inspect the contextual decision, and follow the placement proof |
+| [Receipt ledger](https://adreceipt-web.onrender.com/ledger) | Browse receipts indexed from the live Sepolia settlement contract |
+| [Verified V2 receipt](https://adreceipt-web.onrender.com/receipts/0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1) | Read the human summary and expand the Graph, RPC, signature, and transaction evidence |
+
+The public API is available at **[adreceipt-api.onrender.com](https://adreceipt-api.onrender.com)**. Its [health endpoint](https://adreceipt-api.onrender.com/health) reports the current Sepolia, Graph, settlement, Privy, and V2 runtime status. Free instances may need a short cold start after inactivity.
+
 ## See the idea in one flow
 
 ~~~text
@@ -377,9 +390,8 @@ The long-term invariant remains simple:
 
 ## Current boundaries
 
-- The contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are live on Sepolia.
+- The web app, API, contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live; the deployed routes and known verified receipt passed a cold-browser check on September 10, 2026.
 - Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
-- The web app and API still need stable public deployment URLs and a cold public demo.
 - Settlement submission is operator-controlled; authenticated in-product orchestration remains future work.
 - AdCP/MCP interoperability is specified and tracked, not yet implemented.
 - The project demonstrates testnet infrastructure with team-controlled participants, not production adoption.
