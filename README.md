@@ -1,223 +1,391 @@
+<p align="center">
+  <img src="frontend/public/brand/adreceipt-logo.png" alt="AdReceipt" width="430" />
+</p>
+
+<p align="center"><strong>Every sponsored AI recommendation should come with a receipt.</strong></p>
+
+<p align="center">
+AdReceipt lets advertiser agents buy contextual placements while giving users independent proof of who paid, how much, for which recommendation, and under what policy.
+</p>
+
 # AdReceipt
 
-AdReceipt makes a paid AI recommendation independently checkable. A publisher signs the exact
-recommendation context and price, a Privy-managed payer settles test USDC directly to the named
-recipient, and one immutable receipt is indexed by The Graph. The API accepts a receipt as paid
-only when the indexed fields match the successful Sepolia transaction and its event log.
+AI assistants are becoming places where people discover products, tools, and services. That creates a new trust problem: when an AI recommends something, the user cannot tell whether the recommendation was organic, sponsored, or quietly influenced by a commercial relationship.
 
-The receipt proves that a specific payment happened for a signed recommendation context. It does
-not prove that payment caused a model response, that the recommended product is good, or that an
-independent customer has adopted the system.
+A normal “Sponsored” badge is only a promise from the platform collecting the money. AdReceipt gives that badge evidence.
 
-## V2 agentic advertising flow
+An advertiser approves a campaign. A publisher offers a separately rendered sponsored placement. AdReceipt checks that the context is relevant and safe, privately evaluates the campaign policy, settles the exact payment, and binds the payment to the exact placement. The advertisement appears as **Sponsored · Verified** only after The Graph discovers the receipt and Ethereum RPC independently confirms every field.
 
-V2 extends the deployed receipt protocol into one complete advertising lifecycle:
+> **Stripe receipts tell you a payment happened. AdReceipt tells you which AI sponsorship it paid for.**
 
-```text
-advertiser brief -> editable campaign -> advertiser signature -> PostgreSQL
-user query -> independent answer + deterministic safety/matching decision
-eligible decision -> PlacementTicketV2 -> CRE_SIMULATED policy result
-publisher signature -> bounded settlement -> ReceiptCreated
-The Graph + RPC -> Sponsored · Verified -> observed impression/click metrics
-```
+## See the idea in one flow
 
-Campaigns, decisions, tickets, signatures, and measurement are persisted. No product, campaign,
-creative, wallet, or performance number is compiled into the application. Unknown age, sensitive
-context, an unavailable organic-answer provider, stale Graph data, a failed CRE simulation, an
-unpaid ticket, or mismatched RPC evidence suppresses the verified sponsored placement.
+~~~text
+Advertiser:
+“Promote KaggleIngest to ML developers.
+Budget: 10 USDC. Never advertise in sensitive conversations.”
 
-`PlacementTicketV2` commits to the approved campaign revision, the salted sanitized context,
-creative, confidential-policy commitment, amount, asset, chain, and settlement contract. Its hash
-becomes `SubjectV1.placementId`, so V2 uses the already deployed V1 contract and receipt event.
-Cross-runtime vectors keep the application and Chainlink encodings byte-identical.
+                         ↓
 
-## Current V1 flow
+Advertiser agent prepares targeting, creative, budget, and safety rules
+                         ↓
+Advertiser reviews and signs the exact campaign revision
+                         ↓
 
-```mermaid
-flowchart LR
-    P["Publisher signs quote"] --> C["CRE placement check"]
-    C -->|"CRE_SIMULATED"| W["Privy payer"]
-    W -->|"test USDC"| S["PlacementSettlementV1"]
-    S --> R["Publisher recipient"]
-    S -->|"ReceiptCreated"| G["The Graph"]
-    G --> V["Receipt API"]
-    S -.->|"RPC transaction and log"| V
-```
+User:
+“What can help me load Kaggle datasets into my coding agent?”
 
-`PlacementSettlementV1` has no escrow, DNS, ENS, registry, or spend-tier gate. It checks the
-publisher's EIP-712 signature, payer, token, amount, recipient, chain, contract, expiry, subject
-hash, schema version, and replay nonce before transferring the exact amount.
+                         ↓
 
-## Live Sepolia evidence
+Organic answer is generated independently
+                         ↓
+Context is classified without exposing the raw query to advertisers
+                         ↓
+Relevance and safety pass
+                         ↓
+Private campaign policy approves the exact placement
+                         ↓
+Privy-controlled payer settles test USDC on Sepolia
+                         ↓
+ReceiptCreated → The Graph → independent RPC verification
+                         ↓
 
-| Component     | Verified state                                                                                                                                                                                                                                                                                   |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Settlement    | [`0x2fB6889Cc142C622a0479aF56b75B98beAeD3576`](https://sepolia.etherscan.io/address/0x2fB6889Cc142C622a0479aF56b75B98beAeD3576), deployed at block `11648834` in [transaction `0xf2db…c584`](https://sepolia.etherscan.io/tx/0xf2dbcfa9c1ede10519c37cedce0e69f59b1f0e8fc5b761edb69742cd5852c584) |
-| Asset         | Circle test USDC, [`0x1c7D…7238`](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238)                                                                                                                                                                               |
-| Subgraph      | Studio version `0.0.1`, deployment `QmXQmu8ce7JEATADtGXK65NceaKsF79Jz8whT9S6Tx3N8E`; [query endpoint](https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1)                                                                                                                             |
-| Privy         | Default-deny policy rejected a disallowed signing request and allowed the bounded approval plus settlement                                                                                                                                                                                       |
-| Chainlink CRE | `CRE_SIMULATED`: eligible and over-bid paths pass locally; no confidential workflow is deployed                                                                                                                                                                                                  |
-| V1 receipt    | [`0xa63f…f9cd`](https://sepolia.etherscan.io/tx/0x29d0f2cb187f8c33d06329dd90f59dcd82b346c62c701cce53f37253cb69db28), settled through the bounded Privy policy in block `11652460`                                                                                                                |
-| V2 receipt    | Placement `0x3038…0b0b` bound to receipt `0x67eb…ebf1`; [0.1 test-USDC settlement](https://sepolia.etherscan.io/tx/0x61b0ed24e27947835f8e7fd4e910086f456f5066603254106d5214e4dbefe163) confirmed in block `11669540` and returned `PAID_VERIFIED` after Graph/RPC comparison |
+┌─────────────────────────────────────────────────────┐
+│ Sponsored · Verified ✓                              │
+│                                                     │
+│ KaggleIngest                                        │
+│ Load Kaggle datasets directly into your workflow.   │
+│                                                     │
+│ Why this ad?                         View receipt ↗  │
+└─────────────────────────────────────────────────────┘
+~~~
 
-The publisher and recipient used for these tests are team-controlled. These transactions prove
-the testnet integration, not third-party adoption. The V2 application recorded one impression and
-one click only after the new ticket reached `PAID_VERIFIED`; those metrics are application events,
-not onchain measurement or fraud proofs. Exact deployment data is stored in
-[`deployments/placement-settlement-sepolia.json`](deployments/placement-settlement-sepolia.json).
+If the query is irrelevant, sensitive, from an under-18 or unknown-age session, or cannot be verified, AdReceipt shows no sponsored placement. Money cannot turn an irrelevant campaign into a match.
 
-Detailed evidence and proof boundaries are documented for [Privy](docs/evidence/privy.md),
-[Chainlink CRE](docs/evidence/chainlink.md), and [The Graph](docs/evidence/the-graph.md). The team’s
-use of coding assistants is described in [AI_ASSISTANCE.md](AI_ASSISTANCE.md).
+## What the product includes
 
-## Frozen receipt event
+### For advertisers
 
-```solidity
-event ReceiptCreated(
-    bytes32 indexed receiptId,
-    bytes32 indexed campaignId,
-    bytes32 indexed subjectHash,
-    address publisher,
-    address payer,
-    address recipient,
-    address asset,
-    uint256 amount,
-    uint64 settledAt,
-    uint16 schemaVersion
-);
-```
+The advertiser starts with a plain-language brief instead of a large ad-manager form. The campaign agent suggests targeting, intent, creative, locale, and a maximum placement cost. The advertiser can edit the draft and must sign the exact final revision before it becomes active.
 
-The Graph mapping, generated ABI, RPC decoder, and API verifier all use this exact schema. Changing
-its fields or indexed parameters requires coordinated updates across those components.
+### For AI publishers
 
-## Repository map
+The publisher keeps the organic answer separate from advertising. For an eligible query, it can request an exact placement ticket, obtain a signed quote, and receive payment through the existing settlement protocol.
 
-```text
-contracts/                     Direct settlement and supporting prototype contracts
-test/                          Hardhat settlement and contract tests
-backend/src/privy/             Owner-authorized Privy client and default-deny policy
-backend/src/receipts/          Graph query, RPC evidence reader, and fail-closed verifier
-backend/src/v2/                Campaigns, context policy, ticket authorization, budgets, and metrics
-backend/migrations/            PostgreSQL V2 schema
-subgraph/                      ReceiptCreated indexing for the live Sepolia contract
-cre/placement-authorization/   CRE placement policy workflow and simulation tests
-frontend/                      Advertiser, publisher, settlement, ledger, and receipt UI
-deployments/                   Public testnet deployment records
-```
+### For users and auditors
 
-The DNS, ENS, tier, and refundable-escrow contracts are retained as an earlier prototype. Domain
-control is exposed as an optional advertiser-onboarding signal, but it does not gate or alter V1
-payment verification. ENS, spend tiers, and refundable escrow are not part of the accepted V1 path.
+The user sees sponsored creative only after payment verification. **Why this ad?** explains the contextual match, safety decision, personalization status, policy proof, and payment proof. The receipt page starts with a human explanation and keeps hashes and chain data available as technical evidence.
 
-## Local verification
+### For external agents
 
-Requirements: Node.js 22, npm, Bun 1.3.14, PostgreSQL 16, and the Chainlink CRE CLI.
+The service exposes [LLM discovery instructions](frontend/public/llms.txt) and an [OpenAPI description](frontend/public/openapi.json). An agent that already knows the AdReceipt origin can discover campaign, placement, measurement, and verification operations. A thin AdCP/MCP adapter is the next interoperability layer; [issue #22](https://github.com/Anand-0037/adreceipt/issues/22) tracks it without creating a second campaign or settlement system.
 
-```bash
+## Architecture
+
+~~~mermaid
+flowchart TB
+    subgraph Advertiser["Advertiser side"]
+        H["Human advertiser"]
+        A["Advertiser agent"]
+        M["CampaignManifestV2"]
+        H -->|"brief + budget"| A
+        A -->|"editable draft"| M
+        H -->|"wallet approval"| M
+    end
+
+    subgraph Publisher["AI publisher surface"]
+        U["User query"]
+        O["Independent organic answer"]
+        X["Sanitized ContextEnvelopeV2"]
+        GATE{"Relevant, adult and non-sensitive?"}
+        MATCH["Relevance-first campaign match"]
+        T["PlacementTicketV2"]
+        CARD["Sponsored · Verified"]
+        U --> O
+        U --> X
+        X --> GATE
+        GATE -->|"yes"| MATCH
+        GATE -->|"no"| NOAD["Suppress advertisement"]
+        M --> MATCH
+        MATCH --> T
+    end
+
+    subgraph Trust["AdReceipt trust protocol"]
+        CRE["Chainlink CRE confidential policy check"]
+        Q["Publisher-signed EIP-712 quote"]
+        PRIVY["Privy organization wallet + default-deny policy"]
+        SETTLE["PlacementSettlementV1"]
+        EVENT["ReceiptCreated"]
+        T --> CRE
+        CRE -->|"eligible"| Q
+        Q --> PRIVY
+        PRIVY -->|"bounded test-USDC payment"| SETTLE
+        SETTLE --> EVENT
+    end
+
+    subgraph Verify["Independent verification"]
+        GRAPH["The Graph receipt discovery"]
+        RPC["Canonical Sepolia RPC evidence"]
+        VERIFY{"Every receipt field agrees?"}
+        EVENT --> GRAPH
+        EVENT --> RPC
+        GRAPH --> VERIFY
+        RPC --> VERIFY
+        VERIFY -->|"PAID_VERIFIED"| CARD
+        VERIFY -->|"missing, stale or inconsistent"| NOAD
+    end
+
+    CARD --> METRICS["Application-observed impression and click"]
+~~~
+
+The blockchain integration is the trust boundary, rather than a decorative payment step:
+
+1. **CampaignManifestV2** binds the advertiser-approved campaign revision.
+2. **ContextEnvelopeV2** commits to a coarse, sanitized context. The raw query is never committed onchain or sent to the advertiser.
+3. **PlacementTicketV2** binds campaign, context, creative, policy, amount, asset, chain, and settlement contract.
+4. Its commitment becomes **SubjectV1.placementId**, preserving compatibility with the deployed V1 contract.
+5. The publisher signs an expiring EIP-712 quote for that exact subject.
+6. Privy submits only policy-allowed approval and settlement calls.
+7. **PlacementSettlementV1** transfers the exact amount and emits an immutable **ReceiptCreated**.
+8. The Graph discovers the receipt. Ethereum RPC remains canonical.
+9. The UI changes to **Sponsored · Verified** only when both sources agree field by field.
+
+## Why each integration is necessary
+
+| Integration | Role in AdReceipt | Verified boundary |
+| --- | --- | --- |
+| **Ethereum Sepolia** | Canonical settlement and immutable receipt event | Contract and two test-USDC receipt flows are live |
+| **Privy** | Organization payer with a default-deny transaction policy | One disallowed request was rejected; bounded approval and settlement were allowed |
+| **The Graph** | Live receipt discovery by receipt ID and recommendation subject | Studio indexes the deployed contract; verified status still requires RPC corroboration |
+| **Chainlink CRE** | Confidentially evaluates private targeting and maximum-bid policy | Authenticated CLI eligible and over-bid simulations pass; status is **CRE_SIMULATED** |
+| **Groq** | Produces campaign suggestions and an organic answer | The deterministic policy and verification pipeline fails closed if the model is unavailable |
+| **PostgreSQL** | Persists campaigns, signed revisions, decisions, tickets, and measurements | No in-memory production fallback |
+
+## Live Sepolia proof
+
+All addresses and transactions below are public testnet evidence. The payer, publisher, and recipient are team-controlled. This proves the integration, not customer adoption or mainnet production use.
+
+### Deployment
+
+| Item | Value |
+| --- | --- |
+| Network | Ethereum Sepolia, chain ID **11155111** |
+| Settlement contract | [0x2fB6889Cc142C622a0479aF56b75B98beAeD3576](https://sepolia.etherscan.io/address/0x2fB6889Cc142C622a0479aF56b75B98beAeD3576) |
+| Deployment transaction | [0xf2dbcfa9c1ede10519c37cedce0e69f59b1f0e8fc5b761edb69742cd5852c584](https://sepolia.etherscan.io/tx/0xf2dbcfa9c1ede10519c37cedce0e69f59b1f0e8fc5b761edb69742cd5852c584) |
+| Deployment block | **11648834** |
+| Settlement asset | [Circle test USDC 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238](https://sepolia.etherscan.io/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) |
+| Graph Studio endpoint | [adreceipt/0.0.1](https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1) |
+| Subgraph deployment | **QmXQmu8ce7JEATADtGXK65NceaKsF79Jz8whT9S6Tx3N8E** |
+
+The machine-readable deployment record is in [deployments/placement-settlement-sepolia.json](deployments/placement-settlement-sepolia.json).
+
+### First V1 settlement
+
+| Item | Value |
+| --- | --- |
+| Privy payer | **0x84B5711b5Ff458478A2E55bb4797F5b254517a57** |
+| USDC approval | [0xdef5ba01d21df8b9c817a330f0e3e16f5dc0482e39f19531d8b32bb1fb655bd3](https://sepolia.etherscan.io/tx/0xdef5ba01d21df8b9c817a330f0e3e16f5dc0482e39f19531d8b32bb1fb655bd3) |
+| Settlement | [0x29d0f2cb187f8c33d06329dd90f59dcd82b346c62c701cce53f37253cb69db28](https://sepolia.etherscan.io/tx/0x29d0f2cb187f8c33d06329dd90f59dcd82b346c62c701cce53f37253cb69db28) |
+| Receipt ID | **0xa63f1ce97fc2c2d97bb31f51e2f0989560d89937900d93fe36f303122d70f9cd** |
+| Block | **11652460** |
+| Amount | **0.1 test USDC** |
+
+### V2 ticket-bound settlement
+
+This is the complete V2 proof: the paid receipt is bound to a persisted campaign, sanitized context, creative, policy commitment, exact quote, and placement ticket.
+
+| Item | Value |
+| --- | --- |
+| Placement ID | **0x30387eff3f77b1e25962ba2f96de01e13360a5bfd7422447ef11c9a4c0480b0b** |
+| USDC approval | [0x60acf40ea5a86a05d21777efe54d3cfef493f18a54032080ddcb4067175dadd9](https://sepolia.etherscan.io/tx/0x60acf40ea5a86a05d21777efe54d3cfef493f18a54032080ddcb4067175dadd9) |
+| Settlement | [0x61b0ed24e27947835f8e7fd4e910086f456f5066603254106d5214e4dbefe163](https://sepolia.etherscan.io/tx/0x61b0ed24e27947835f8e7fd4e910086f456f5066603254106d5214e4dbefe163) |
+| Receipt ID | **0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1** |
+| Block | **11669540** |
+| Amount | **0.1 test USDC** |
+| Final application status | **PAID_VERIFIED** after The Graph and RPC comparison |
+
+The V2 application accepted one viewable impression and one click only after this ticket became **PAID_VERIFIED**. They are application-observed events, not onchain facts or fraud proofs.
+
+Detailed proof boundaries are available for [Privy](docs/evidence/privy.md), [The Graph](docs/evidence/the-graph.md), and [Chainlink CRE](docs/evidence/chainlink.md).
+
+## What a receipt proves
+
+A valid AdReceipt proves:
+
+- a named payer transferred the exact asset and amount to the named recipient;
+- the publisher signed an exact, expiring quote;
+- the payment was bound to a campaign and recommendation subject;
+- the configured settlement contract emitted the receipt;
+- The Graph indexed the event;
+- canonical RPC evidence matches the indexed entity.
+
+It does not prove:
+
+- that the advertised product is good;
+- that payment caused or changed the organic answer;
+- that an impression, click, or conversion is fraud-free;
+- that the testnet participants are independent customers;
+- that CRE currently enforces settlement onchain.
+
+These limits are deliberate. AdReceipt verifies commercial provenance while keeping product quality and advertising performance as separate questions.
+
+## Privacy and safety
+
+AdReceipt does not send the raw conversation to advertisers. The context engine reduces a query to a closed vocabulary such as topic, intent, locale, and surface. A salted commitment binds that sanitized context to the placement without publishing the original prompt.
+
+Before a commercial placement can proceed, the application checks:
+
+- the session is confirmed as adult;
+- the context is not sensitive;
+- the campaign is active and within budget;
+- topic, intent, locale, and product are allowed;
+- semantic relevance meets the floor;
+- the placement amount is within the private campaign ceiling;
+- the creative, recipient, payer, asset, chain, and contract match the signed ticket.
+
+Unknown age, mental-health or other sensitive context, irrelevant campaigns, provider failure, stale indexing, and mismatched chain evidence all fail closed.
+
+## Product screens
+
+| Route | Purpose |
+| --- | --- |
+| **/advertiser** | Turn a brief into an editable campaign, then review and sign the exact revision |
+| **/publisher** | Ask a normal question and see the separate sponsored placement lifecycle |
+| **/ledger** | Browse indexed settlement receipts |
+| **/receipts/:id** | Read the human receipt and expand the full cryptographic evidence |
+| **/campaign** and **/ask** | Direct aliases for the advertiser and publisher journeys |
+
+The public receipt API is read-only. Privy payment submission remains operator-controlled, so a website visitor cannot spend from the organization wallet. Authenticated in-product settlement is planned as a separate security-sensitive improvement.
+
+## Run locally
+
+### Requirements
+
+- Node.js 22
+- npm
+- Bun 1.3.14
+- PostgreSQL 16
+- Chainlink CRE CLI
+
+### Install and verify
+
+~~~bash
 git clone https://github.com/Anand-0037/adreceipt.git
 cd adreceipt
+
 npm ci
 npm --prefix backend ci
 npm --prefix frontend ci
 npm install --prefix subgraph --no-audit --no-fund
 npm run cre:install
+
 npm run verify:all
-```
+~~~
 
-Start PostgreSQL and the two application processes after configuring the root `.env`:
+The verification command compiles the contracts and CRE WASM workflow, builds the Subgraph and frontend, and runs the contract, Graph, backend, CRE, and TypeScript checks.
 
-```bash
+### Configure
+
+Copy [.env.example](.env.example) to **.env** and fill in the required local values. All packages read the repository-root environment file so RPC, Graph, settlement, Privy, Groq, and database configuration stay consistent.
+
+Never commit API keys, wallet keys, deployer keys, Privy authorization keys, or private policy material.
+
+### Start PostgreSQL and the app
+
+~~~bash
 docker run --name adreceipt-postgres \
   -e POSTGRES_USER=adreceipt \
   -e POSTGRES_PASSWORD=change-me \
   -e POSTGRES_DB=adreceipt \
-  -p 127.0.0.1:54329:5432 -d postgres:16-alpine
+  -p 127.0.0.1:54329:5432 \
+  -d postgres:16-alpine
 
-# DATABASE_URL=postgresql://adreceipt:change-me@127.0.0.1:54329/adreceipt
+# Set DATABASE_URL=postgresql://adreceipt:change-me@127.0.0.1:54329/adreceipt
 npm --prefix backend run dev
 npm --prefix frontend run dev
-```
+~~~
 
-`verify:all` compiles contracts and the CRE WASM workflow, builds the subgraph and frontend, then
-runs contract, Graph, backend, and CRE tests plus every TypeScript check. Tests and simulations are
-local evidence; they do not substitute for a public transaction or a deployed confidential
-workflow.
+Open:
 
-For local configuration, copy [`.env.example`](.env.example) to `.env`. Every package uses that
-repository-root file so Graph, RPC, settlement, and Privy coordinates cannot drift between
-processes. Never commit API keys, wallet keys, deploy keys, or private policy material.
+- <http://localhost:3000/advertiser>
+- <http://localhost:3000/publisher>
+- <http://localhost:3000/ledger>
 
-## Agent discovery
+Local tests and simulations do not replace the public transaction proof above. The CRE simulator is explicitly not a deployed TEE.
 
-An agent that already knows the AdReceipt origin can discover the service through two public,
-same-origin resources:
+## Repository map
 
-- [`/llms.txt`](frontend/public/llms.txt) explains when to use AdReceipt, the required lifecycle,
-  and its trust and privacy boundaries.
-- [`/openapi.json`](frontend/public/openapi.json) describes the callable campaign, context,
-  placement, measurement, and receipt operations.
+~~~text
+contracts/                     Direct settlement and supporting prototype contracts
+test/                          Hardhat contract and cross-runtime commitment tests
+backend/src/privy/             Privy client and default-deny transaction policy
+backend/src/receipts/          Graph queries, RPC evidence, and fail-closed verification
+backend/src/v2/                Campaigns, context, tickets, budgets, and measurements
+backend/migrations/            PostgreSQL V2 schema
+subgraph/                      Live ReceiptCreated indexing
+cre/placement-authorization/   Confidential placement-policy workflow and tests
+frontend/                      Advertiser, publisher, ledger, and receipt product
+deployments/                   Public testnet deployment records
+docs/evidence/                 Provider-specific evidence boundaries
+~~~
 
-Every rendered page links to these resources with `describedby` and `service-desc` relations. This
-makes the deployed application self-describing, but it does not automatically place AdReceipt in
-an agent's tool registry. A production integration still needs one of these distribution paths:
+The repository retains DNS, ENS, spend-tier, and refundable-escrow contracts from an earlier prototype. Optional domain control can support advertiser onboarding, but none of those systems gates or alters the accepted settlement receipt path.
 
-1. direct installation of the OpenAPI tool by a publisher or advertiser agent;
-2. an AdCP/MCP adapter registered in advertising-agent catalogs;
-3. an A2A server and valid `/.well-known/agent-card.json` after an actual A2A task endpoint exists;
-4. a publisher SDK that embeds context decision, placement, and verification calls.
+## API and agent discovery
 
-The current release implements the first path. It does not publish an A2A Agent Card because the
-application does not yet implement the A2A task protocol.
+The main V2 lifecycle is available through typed HTTP endpoints:
 
-## Receipt API
+~~~http
+POST /api/v2/campaigns/suggest
+POST /api/v2/campaigns
+POST /api/v2/campaigns/:id/revisions/:revision/approve
+POST /api/v2/decisions
+POST /api/v2/placements
+POST /api/v2/placements/:id/sign
+POST /api/v2/placements/:id/verify
+POST /api/v2/placements/:id/measurements
+GET  /api/v2/receipts/:receiptId/evidence
+GET  /api/v2/campaigns/:id/metrics
 
-```http
-GET /receipts/0x<32-byte-receipt-id>
-GET /receipts/0x<32-byte-receipt-id>?atBlock=<positive-block-number>
-GET /subjects/0x<32-byte-subject-hash>
-GET /deployment
-GET /health
-GET /health/privy
-POST /v2/campaigns/suggest
-POST /v2/campaigns
-POST /v2/campaigns/:id/revisions/:revision/approve
-POST /v2/decisions
-POST /v2/placements
-POST /v2/placements/:id/sign
-POST /v2/placements/:id/verify
-POST /v2/placements/:id/measurements
-GET  /v2/receipts/:receiptId/evidence
-GET  /v2/campaigns/:id/metrics
-```
+GET  /api/receipts/:receiptId
+GET  /api/subjects/:subjectHash
+GET  /api/deployment
+GET  /api/health
+~~~
 
-The verifier returns `PAID_VERIFIED` only after it finds the Graph entity and independently confirms
-the successful transaction, expected settlement contract, exact `ReceiptCreated` log, Sepolia chain,
-schema, and every indexed field. Missing or inconsistent provider evidence fails closed.
+See [frontend/public/openapi.json](frontend/public/openapi.json) for schemas and [frontend/public/llms.txt](frontend/public/llms.txt) for agent guidance.
 
-## Web flow
+The current release is self-describing but does not claim automatic registration in ChatGPT, an MCP directory, AdCP, or A2A. The planned AdCP/MCP adapter will expose the existing lifecycle through four narrow tools: capability discovery, product discovery, media-buy creation, and delivery reporting.
 
-- `/campaign` turns an advertiser brief into editable targeting and creative, persists the final
-  manifest, and requires its advertiser wallet to sign the exact revision before activation.
-- `/ask` creates an independent organic answer, applies the adult/non-sensitive contextual gate,
-  matches active campaigns, runs CRE simulation for the exact ticket, obtains the publisher quote,
-  and exposes settlement only after a complete preflight.
-- `/receipts/:id` shows the full payment binding, Graph head, RPC chain, transaction, block, and
-  explorer links.
+## Future impact
 
-Receipt endpoints are public and read-only. V2 measurement accepts events only for a stored
-`PAID_VERIFIED` ticket; clicks require a prior viewable impression and event UUIDs are idempotent.
-The metrics are application-observed, not onchain facts or fraud proofs. The optional domain-control endpoint can record only a
-current positive DNS result after the claimant signs a short-lived, one-time authorization bound to
-the wallet, domain, Sepolia chain ID, and current registry challenge. Missing or inconsistent DNS
-evidence is never written. Privy payment submission remains in operator-controlled scripts, so a
-public caller cannot trigger a payer-wallet transaction.
+AI advertising should not repeat the web’s model of invisible tracking, opaque auctions, and platform-controlled attribution.
 
-## Remaining external work
+AdReceipt can become a neutral trust layer underneath AI chat, search, coding agents, terminals, shopping assistants, and publisher SDKs:
 
-- Deploy the web app, API, and PostgreSQL to stable public URLs, then run a cold demo and record the
-  human-narrated submission video.
-- Deploy the CRE workflow only if Confidential Workflows access becomes available.
+- **Advertiser agents** can discover inventory and manage campaigns within human-approved budgets.
+- **Publishers** can monetize useful AI experiences without blending paid content into organic answers.
+- **Users** can inspect why an advertisement appeared and verify its commercial provenance.
+- **Auditors and regulators** can verify payment and policy evidence without trusting the publisher’s database.
+- **Ad networks and protocols** can use one receipt format instead of inventing a new disclosure system for every surface.
 
-## License
+The next protocol direction is selective disclosure: prove that a valid policy-bound payment exists while keeping exact bids and targeting strategy private. At scale, impressions and clicks can be aggregated before settlement rather than producing one blockchain transaction per event.
 
-MIT — see [LICENSE](LICENSE).
+The long-term invariant remains simple:
+
+> **No valid receipt means no Verified Sponsored claim.**
+
+## Current boundaries
+
+- The contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are live on Sepolia.
+- Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
+- The web app and API still need stable public deployment URLs and a cold public demo.
+- Settlement submission is operator-controlled; authenticated in-product orchestration remains future work.
+- AdCP/MCP interoperability is specified and tracked, not yet implemented.
+- The project demonstrates testnet infrastructure with team-controlled participants, not production adoption.
+
+## License and disclosure
+
+AdReceipt is released under the [MIT License](LICENSE).
+
+The team’s use of coding assistants is documented in [AI_ASSISTANCE.md](AI_ASSISTANCE.md).
