@@ -3,6 +3,7 @@ import { config, settlementDeployment } from "../config";
 import { errorHandler } from "./errors";
 import { routes } from "./routes";
 import { v2Routes } from "../v2/routes";
+import { mcpRoutes } from "../mcp/http";
 
 export function createServer() {
   const app = express();
@@ -18,14 +19,22 @@ export function createServer() {
   // a positive domain proof after a one-time wallet authorization.
   app.use((_req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    // The MCP transport sends its protocol version and session id as headers,
+    // and browser-based agents cannot reach /mcp unless they are allowed here.
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Accept, Authorization, Mcp-Session-Id, Mcp-Protocol-Version",
+    );
+    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
     next();
   });
   app.options("*", (_req, res) => res.sendStatus(204));
 
   app.use(routes);
   app.use(v2Routes);
+  // The AdCP adapter. Same services as the REST routes above, reached over MCP.
+  app.use(mcpRoutes());
   app.use((_req, res) => res.status(404).json({ error: "not-found" }));
   app.use(errorHandler);
 

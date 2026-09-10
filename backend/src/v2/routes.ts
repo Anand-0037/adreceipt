@@ -155,6 +155,18 @@ v2Routes.get("/v2/status", (_req, res) =>
     operatorSettlement: operatorSettlementReady(config.operatorSettlementToken)
       ? "configured"
       : "unavailable",
+    // The AdCP adapter serves the same lifecycle over MCP. `inventoryReady`
+    // mirrors what get_products will actually advertise.
+    adcp: {
+      transport: "POST /mcp",
+      tools: [
+        "get_adcp_capabilities",
+        "get_products",
+        "create_media_buy",
+        "get_media_buy_delivery",
+      ],
+      inventoryReady: placementBindingsReady() && v2Store.configured(),
+    },
   }),
 );
 
