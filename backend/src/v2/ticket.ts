@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { dirname, delimiter, resolve } from "node:path";
 import { promisify } from "node:util";
 import {
   AbiCoder,
@@ -253,8 +253,12 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       );
       childEnv.HOME = home;
     }
+    const creCli = process.env.CRE_CLI_PATH || "cre";
+    if (creCli !== "cre") {
+      childEnv.PATH = `${dirname(creCli)}${delimiter}${childEnv.PATH ?? ""}`;
+    }
     const { stdout } = await runFile(
-      process.env.CRE_CLI_PATH || "cre",
+      creCli,
       [
         "workflow",
         "simulate",
