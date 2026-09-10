@@ -91,7 +91,7 @@ The user sees sponsored creative only after payment verification. **Why this ad?
 
 ### For external agents
 
-The service exposes [LLM discovery instructions](frontend/public/llms.txt) and an [OpenAPI description](frontend/public/openapi.json). An agent that already knows the AdReceipt origin can discover campaign, placement, measurement, and verification operations. A thin AdCP/MCP adapter is the next interoperability layer; [issue #22](https://github.com/Anand-0037/adreceipt/issues/22) tracks it without creating a second campaign or settlement system.
+The service exposes [LLM discovery instructions](frontend/public/llms.txt), an [OpenAPI description](frontend/public/openapi.json), and a working [AdCP seller adapter over MCP](docs/adcp-mcp-adapter.md). External advertising agents can discover the available sponsored-recommendation product, prepare a media buy, receive the exact campaign payload that requires advertiser signature, and read delivery evidence. The adapter calls the same campaign store, eligibility engine, receipt verifier, and measurement ledger as the web application.
 
 ## Architecture
 
@@ -334,6 +334,7 @@ test/                          Hardhat contract and cross-runtime commitment tes
 backend/src/privy/             Privy client and default-deny transaction policy
 backend/src/receipts/          Graph queries, RPC evidence, and fail-closed verification
 backend/src/v2/                Campaigns, context, tickets, budgets, and measurements
+backend/src/mcp/               Four-tool AdCP seller adapter over MCP
 backend/migrations/            PostgreSQL V2 schema
 subgraph/                      Live ReceiptCreated indexing
 cre/placement-authorization/   Confidential placement-policy workflow and tests
@@ -364,11 +365,15 @@ GET  /api/receipts/:receiptId
 GET  /api/subjects/:subjectHash
 GET  /api/deployment
 GET  /api/health
+
+POST /mcp                       Streamable HTTP MCP transport
 ~~~
 
 See [frontend/public/openapi.json](frontend/public/openapi.json) for schemas and [frontend/public/llms.txt](frontend/public/llms.txt) for agent guidance.
 
-The current release is self-describing but does not claim automatic registration in ChatGPT, an MCP directory, AdCP, or A2A. The planned AdCP/MCP adapter will expose the existing lifecycle through four narrow tools: capability discovery, product discovery, media-buy creation, and delivery reporting.
+The MCP server exposes four narrow tools: `get_adcp_capabilities`, `get_products`, `create_media_buy`, and `get_media_buy_delivery`. Run it locally over stdio with `npm --prefix backend run mcp`, or connect over Streamable HTTP at `POST https://adreceipt-api.onrender.com/mcp`. A complete example and the conformance boundary are documented in [docs/adcp-mcp-adapter.md](docs/adcp-mcp-adapter.md).
+
+The adapter does not claim automatic registration in ChatGPT, a public MCP directory, or an AdCP catalogue, and it does not implement A2A. Campaign activation still requires the advertiser's EIP-712 signature, and delivery spend is reported only after The Graph and Sepolia RPC agree.
 
 ## Future impact
 
@@ -393,7 +398,7 @@ The long-term invariant remains simple:
 - The web app, API, contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live; the deployed routes and known verified receipt passed a cold-browser check on September 10, 2026.
 - Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
 - In-product settlement remains operator-controlled through a separate bearer token; public visitors cannot spend from the Privy organization wallet.
-- AdCP/MCP interoperability is specified and tracked, not yet implemented.
+- AdCP seller interoperability is implemented through four MCP tools over stdio and Streamable HTTP; public catalogue registration, A2A, auctions, and the remaining AdCP media-buy operations are outside the current release.
 - The project demonstrates testnet infrastructure with team-controlled participants, not production adoption.
 
 ## License and disclosure
