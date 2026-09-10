@@ -5,3 +5,11 @@ staging-settings:
     workflow-path: "./main.ts"
     config-path: "./config.staging.json"
     secrets-path: "../secrets.yaml"
+
+runtime-settings:
+  user-workflow:
+    workflow-name: "adreceipt-placement-authorization-runtime"
+  workflow-artifacts:
+    workflow-path: "./wasm/workflow.wasm"
+    config-path: "./config.staging.json"
+    secrets-path: "../secrets.yaml"

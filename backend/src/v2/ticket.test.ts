@@ -18,6 +18,7 @@ test("hosted CRE simulation pins the real project root", () => {
   ]);
   assert.equal(args[args.indexOf("--config") + 1], "/tmp/config.json");
   assert.equal(args[args.indexOf("--env") + 1], "/tmp/policy.env");
+  assert.equal(args[args.indexOf("--target") + 1], "runtime-settings");
   assert.equal(args.includes("--non-interactive"), true);
 });
 

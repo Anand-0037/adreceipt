@@ -3,4 +3,5 @@ bun.lock
 bun.lockb
 *.wasm
 .cre_build_tmp*
+wasm/
 *.env

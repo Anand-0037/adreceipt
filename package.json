@@ -23,7 +23,7 @@
     "cre:install": "cd cre/placement-authorization && bun install --no-save",
     "cre:test": "cd cre/placement-authorization && bun test workflow.test.ts",
     "cre:typecheck": "cd cre/placement-authorization && bun run typecheck",
-    "cre:build": "cd cre/placement-authorization && bun node_modules/@chainlink/cre-sdk/bin/cre-compile.ts main.ts /tmp/adreceipt-placement-authorization.wasm",
+    "cre:build": "cd cre/placement-authorization && mkdir -p wasm && bun node_modules/@chainlink/cre-sdk/bin/cre-compile.ts main.ts wasm/workflow.wasm",
     "cre:simulate": "cd cre && cre workflow simulate placement-authorization --target staging-settings --non-interactive --trigger-index 0 --env ../.env",
     "cre:simulate:ineligible": "cd cre && cre workflow simulate placement-authorization --target staging-settings --config ./config.ineligible.json --non-interactive --trigger-index 0 --env ../.env",
     "graph:codegen": "npm --prefix subgraph run codegen",

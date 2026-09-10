@@ -34,7 +34,7 @@ export function creSimulationArguments(args: {
     "simulate",
     "placement-authorization",
     "--target",
-    "staging-settings",
+    "runtime-settings",
     "--config",
     args.configPath,
     "--env",

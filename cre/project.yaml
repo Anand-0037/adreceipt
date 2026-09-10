@@ -8,6 +8,13 @@ staging-settings:
     - chain-name: ethereum-testnet-sepolia
       url: https://ethereum-sepolia-rpc.publicnode.com
 
+# The hosted API uses the same policy and network with a WASM artifact compiled
+# during the deploy build. This keeps the compiler out of the request path.
+runtime-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://ethereum-sepolia-rpc.publicnode.com
+
 # ==========================================================================
 production-settings:
   rpcs:

@@ -17,7 +17,9 @@ services:
       chmod +x .render/bin/cre .render/bin/bun &&
       npm --prefix backend ci &&
       cd cre/placement-authorization &&
-      ../../.render/bin/bun install --no-save
+      ../../.render/bin/bun install --no-save &&
+      mkdir -p wasm &&
+      ../../.render/bin/bun node_modules/@chainlink/cre-sdk/bin/cre-compile.ts main.ts wasm/workflow.wasm
     startCommand: npm --prefix backend start
     healthCheckPath: /health
     autoDeployTrigger: off
