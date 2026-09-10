@@ -333,6 +333,11 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
         dependencies: /node_modules|package\.json|module/.test(diagnostic),
         credentialsFile: /cre\.yaml|context\.yaml/.test(diagnostic),
         directory: /directory|path/.test(diagnostic),
+        cliPath: stderr.includes(resolve(process.env.CRE_CLI_PATH || "cre")),
+        projectPath: stderr.includes(resolve(repoRoot, "cre")),
+        configPath: stderr.includes(configPath),
+        envPath: stderr.includes(envPath),
+        temporaryHome: stderr.includes(resolve(directory, "home")),
       },
     });
     throw new Error("CRE_SIMULATION_UNAVAILABLE");
