@@ -8,7 +8,7 @@ services:
     branch: main
     buildCommand: >-
       mkdir -p .render/bin /tmp/adreceipt-bun &&
-      curl -fsSL https://github.com/smartcontractkit/cre-cli/releases/download/v1.33.0/cre_linux_amd64.tar.gz |
+      curl -fsSL https://github.com/smartcontractkit/cre-cli/releases/download/v1.33.0/cre_linux_amd64_ldd2-35.tar.gz |
       tar -xz -C .render/bin &&
       mv .render/bin/cre_v1.33.0_linux_amd64 .render/bin/cre &&
       curl -fsSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64.zip -o /tmp/adreceipt-bun.zip &&
