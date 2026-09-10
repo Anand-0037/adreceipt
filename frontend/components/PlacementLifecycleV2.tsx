@@ -16,6 +16,53 @@ import { describeWalletError } from "@/lib/wallet";
 const short = (value: string) => `${value.slice(0, 8)}…${value.slice(-6)}`;
 const MEASUREMENT_SESSION_KEY = "adreceipt:v2:measurement-session";
 
+type TraceState = "complete" | "current" | "pending";
+
+function ProofTimeline({ placement }: { placement: PlacementRecordV2 | null }) {
+  const authorized = Boolean(placement);
+  const signed = placement?.status === "SIGNED" || placement?.status === "PAID_VERIFIED";
+  const verified = placement?.status === "PAID_VERIFIED";
+  const steps: Array<{ label: string; detail: string; state: TraceState }> = [
+    { label: "Context matched", detail: "Relevant and non-sensitive", state: "complete" },
+    {
+      label: "Private policy",
+      detail: authorized ? "CRE authorized the exact ticket" : "Awaiting authorization",
+      state: authorized ? "complete" : "current",
+    },
+    {
+      label: "Publisher approval",
+      detail: signed ? "Exact quote signed" : "Signature required",
+      state: signed ? "complete" : authorized ? "current" : "pending",
+    },
+    {
+      label: "Privy settlement",
+      detail: verified ? "Test USDC transferred" : "Payment required",
+      state: verified ? "complete" : signed ? "current" : "pending",
+    },
+    {
+      label: "Graph + RPC proof",
+      detail: verified ? "Receipt independently verified" : "Receipt required",
+      state: verified ? "complete" : "pending",
+    },
+  ];
+
+  return (
+    <ol className="proof-timeline" aria-label="Sponsorship verification progress">
+      {steps.map((step) => (
+        <li key={step.label} className={`proof-step proof-step-${step.state}`}>
+          <span className="proof-step-marker" aria-hidden="true">
+            {step.state === "complete" ? "✓" : ""}
+          </span>
+          <span>
+            <strong>{step.label}</strong>
+            <small>{step.detail}</small>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function measurementSessionId(): string {
   const current = sessionStorage.getItem(MEASUREMENT_SESSION_KEY);
   if (current && /^[0-9a-f-]{36}$/i.test(current)) return current;
@@ -217,6 +264,10 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
 
   return (
     <section className="placement-lifecycle">
+      <div className="verification-progress">
+        <p className="eyebrow">Verification chain</p>
+        <ProofTimeline placement={placement} />
+      </div>
       <details className="developer-trace" open={placement?.status === "PAID_VERIFIED"}>
         <summary>Developer proof trace</summary>
         <div className="developer-trace-body">

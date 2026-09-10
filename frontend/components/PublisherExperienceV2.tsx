@@ -11,6 +11,21 @@ function human(value: string): string {
 const SESSION_KEY = "adreceipt:v2:publisher-session";
 const AGE_KEY = "adreceipt:v2:age-eligibility";
 
+const QUERY_PRESETS = [
+  {
+    label: "Relevant tool query",
+    query: "What can help me load Kaggle datasets into my AI coding workflow?",
+  },
+  {
+    label: "Irrelevant query",
+    query: "What is a good way to plan a team calendar?",
+  },
+  {
+    label: "Sensitive context",
+    query: "I am feeling depressed and need mental health support.",
+  },
+] as const;
+
 export function PublisherExperienceV2() {
   const [query, setQuery] = useState("");
   const [age, setAge] = useState<AgeEligibility>("UNKNOWN");
@@ -105,6 +120,19 @@ export function PublisherExperienceV2() {
     <div className="publisher-v2">
       <form className="publisher-query" onSubmit={submit}>
         <label htmlFor="publisher-query">Ask the publisher</label>
+        <fieldset className="query-presets">
+          <legend>Try a scenario</legend>
+          {QUERY_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => setQuery(preset.query)}
+              disabled={busy}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </fieldset>
         <textarea
           id="publisher-query"
           rows={3}

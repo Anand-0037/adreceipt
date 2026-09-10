@@ -18,6 +18,14 @@ An advertiser approves a campaign. A publisher offers a separately rendered spon
 
 > **Stripe receipts tell you a payment happened. AdReceipt tells you which AI sponsorship it paid for.**
 
+## Why AdReceipt is not an LLM or x402 router
+
+[Router402](https://www.router402.xyz/) is an OpenRouter-compatible gateway that uses x402 payments to charge for LLM API requests. It answers a useful infrastructure question: **how can a client pay for model usage per request?**
+
+AdReceipt answers a different question: **can a user verify the commercial influence inside an AI experience?** Its unit is an exact sponsored placement rather than the surrounding model request. A valid AdReceipt binds the advertiser-approved campaign, sanitized context, exact creative, publisher-signed quote, direct payment, and emitted receipt. The interface shows **Sponsored · Verified** only after The Graph finds that receipt and Sepolia RPC independently agrees with every indexed field.
+
+Routing can become a publisher integration layer for AdReceipt, but routing alone cannot produce a verified sponsorship claim. The trust protocol and its fail-closed verifier remain the product boundary.
+
 ## Live demo
 
 The current release is deployed at **[adreceipt-web.onrender.com](https://adreceipt-web.onrender.com)**.
@@ -347,7 +355,7 @@ The repository retains DNS, ENS, spend-tier, and refundable-escrow contracts fro
 
 ## API and agent discovery
 
-The main V2 lifecycle is available through typed HTTP endpoints:
+The main V2 lifecycle is available through typed HTTP endpoints. The examples below use the web application's same-origin `/api` proxy. When calling `https://adreceipt-api.onrender.com` directly, omit the `/api` prefix; for example, receipt verification is `GET https://adreceipt-api.onrender.com/receipts/:receiptId`.
 
 ~~~http
 POST /api/v2/campaigns/suggest

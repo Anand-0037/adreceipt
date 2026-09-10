@@ -1274,6 +1274,38 @@ legend {
   justify-self: start;
 }
 
+.query-presets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.query-presets > legend {
+  margin-right: 2px;
+  padding: 0;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.query-presets button {
+  min-height: auto;
+  border-color: var(--line);
+  padding: 7px 9px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+}
+
+.query-presets button:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--paper);
+}
+
 .publisher-query fieldset {
   display: flex;
   flex-wrap: wrap;
@@ -1283,6 +1315,83 @@ legend {
 .publisher-result {
   display: grid;
   gap: 18px;
+}
+
+.verification-progress {
+  min-width: 0;
+}
+
+.proof-timeline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  padding-right: 10px;
+  color: var(--faint);
+}
+
+.proof-step::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 9px;
+  left: 20px;
+  right: 0;
+  border-top: 1px solid var(--line);
+}
+
+.proof-step:last-child::after {
+  display: none;
+}
+
+.proof-step-marker {
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #ebe5d9;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.proof-step strong,
+.proof-step small {
+  display: block;
+}
+
+.proof-step strong {
+  color: inherit;
+  font-size: 11px;
+}
+
+.proof-step small {
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.proof-step-complete {
+  color: var(--verified);
+}
+
+.proof-step-current {
+  color: var(--pending);
+}
+
+.proof-step-current .proof-step-marker {
+  border-width: 5px;
+  border-color: var(--pending);
 }
 
 .organic-answer,
@@ -1525,6 +1634,24 @@ legend {
   .publisher-query fieldset {
     align-items: start;
     flex-direction: column;
+  }
+
+  .proof-timeline {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .proof-step {
+    padding: 0;
+  }
+
+  .proof-step::after {
+    top: 20px;
+    bottom: -10px;
+    left: 9px;
+    right: auto;
+    border-top: 0;
+    border-left: 1px solid var(--line);
   }
 }
 

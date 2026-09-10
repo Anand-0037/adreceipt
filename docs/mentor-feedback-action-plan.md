@@ -28,6 +28,14 @@ The existing direct-payment architecture stays intact. Advertiser funds move fro
 
 ## Submission priorities
 
+### Demo clarity already added locally
+
+- The publisher includes prepared relevant, irrelevant, and sensitive-context queries so a reviewer can reproduce the three important policy outcomes without inventing prompts.
+- The placement view shows a verification chain driven by real application state: context match, private policy authorization, publisher signature, Privy settlement, and Graph-plus-RPC proof.
+- The timeline marks payment and verification complete only after the stored placement reaches `PAID_VERIFIED`.
+
+These controls explain the existing system; they do not create a mock success path or duplicate the settlement and verification services.
+
 ### 1. Make the landing page choose a primary user
 
 The hero currently speaks to advertisers, publishers, and users at once. The primary entry point should be the advertiser who wants to launch a trustworthy sponsored AI placement.
@@ -109,6 +117,12 @@ After the successful placement, use two short failure examples:
 This demonstrates that money cannot buy relevance and that the safety gate is part of the transaction path.
 
 ## Router/proxy direction
+
+### Competitive boundary checked on September 10, 2026
+
+[Router402](https://github.com/itublockchain/hackmoney-router402) publicly describes an OpenRouter-compatible gateway that charges for LLM requests with x402 micropayments. Its payment authorizes model usage; it does not claim to bind a sponsored creative, publisher approval, campaign policy, and independently verified settlement receipt into one disclosure.
+
+AdReceipt should therefore avoid competing on model routing or generic pay-per-request infrastructure. A future router belongs at the publisher boundary only to make integration easier. The product remains the commercial-provenance system that decides whether an exact sponsored placement may carry a verified claim.
 
 The strongest next product direction is to place AdReceipt directly in the publisher's response path:
 
