@@ -2,7 +2,7 @@ const { chmodSync, copyFileSync, existsSync, mkdirSync } = require("node:fs");
 const { resolve } = require("node:path");
 
 const repositoryRoot = resolve(__dirname, "../..");
-const runtimeBin = resolve(__dirname, "../node_modules/.bin");
+const runtimeBin = resolve(__dirname, "../runtime-bin");
 
 for (const executable of ["cre", "bun"]) {
   const source = resolve(repositoryRoot, ".render/bin", executable);
