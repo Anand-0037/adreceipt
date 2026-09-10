@@ -51,6 +51,16 @@ test("serves the V1 deployment and does not expose legacy advertiser writes", as
     const invalidMeasurementBody = (await invalidMeasurement.json()) as { error?: string };
     assert.equal(invalidMeasurement.status, 400);
     assert.equal(invalidMeasurementBody.error, "invalid-event");
+
+    const settlement = await fetch(`${base}/v2/placements/0x${"11".repeat(32)}/settle`, {
+      method: "POST",
+    });
+    const settlementBody = (await settlement.json()) as { error?: string };
+    assert.ok(settlement.status === 401 || settlement.status === 503);
+    assert.ok(
+      settlementBody.error === "operator-authorization-required" ||
+        settlementBody.error === "operator-settlement-unavailable",
+    );
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),

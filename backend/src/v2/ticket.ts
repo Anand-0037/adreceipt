@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
@@ -233,6 +233,26 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
   try {
     await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
     await writeFile(envPath, `CRE_CAMPAIGN_POLICY_JSON='${rawPolicy}'\n`, { mode: 0o600 });
+    const childEnv = { ...process.env };
+    if (process.env.CRE_CREDENTIALS_BASE64 || process.env.CRE_CONTEXT_BASE64) {
+      if (!process.env.CRE_CREDENTIALS_BASE64 || !process.env.CRE_CONTEXT_BASE64) {
+        throw new Error("CRE_SIMULATION_UNAVAILABLE");
+      }
+      const home = resolve(directory, "home");
+      const creHome = resolve(home, ".cre");
+      await mkdir(creHome, { recursive: true, mode: 0o700 });
+      await writeFile(
+        resolve(creHome, "cre.yaml"),
+        Buffer.from(process.env.CRE_CREDENTIALS_BASE64, "base64"),
+        { mode: 0o600 },
+      );
+      await writeFile(
+        resolve(creHome, "context.yaml"),
+        Buffer.from(process.env.CRE_CONTEXT_BASE64, "base64"),
+        { mode: 0o600 },
+      );
+      childEnv.HOME = home;
+    }
     const { stdout } = await runFile(
       process.env.CRE_CLI_PATH || "cre",
       [
@@ -251,6 +271,7 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       ],
       {
         cwd: resolve(repoRoot, "cre"),
+        env: childEnv,
         timeout: 90_000,
         maxBuffer: 10 * 1024 * 1024,
       },

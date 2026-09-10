@@ -18,7 +18,7 @@ export function createServer() {
   // a positive domain proof after a one-time wallet authorization.
   app.use((_req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     next();
   });

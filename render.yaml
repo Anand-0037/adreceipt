@@ -22,6 +22,17 @@ services:
       # for a wallet-authorized positive domain-control attestation.
       - key: CRE_SIMULATOR_PRIVATE_KEY
         sync: false
+      # Base64-encoded ~/.cre credential and public context files used only by
+      # the hosted non-interactive CRE simulator. Both are written to a
+      # short-lived private HOME and removed after each authorization.
+      - key: CRE_CREDENTIALS_BASE64
+        sync: false
+      - key: CRE_CONTEXT_BASE64
+        sync: false
+      # Protects the in-product Privy settlement action. This is never exposed
+      # through a NEXT_PUBLIC variable or stored in the browser.
+      - key: OPERATOR_SETTLEMENT_TOKEN
+        sync: false
       - key: GRAPH_QUERY_URL
         value: https://api.studio.thegraph.com/query/1754808/adreceipt/0.0.1
       - key: GRAPH_MAX_BLOCK_LAG

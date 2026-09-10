@@ -10,6 +10,8 @@ import { queryReceiptsByCampaign } from "../receipts/by-payer";
 import { verifyReceiptCollection } from "../receipts/ledger";
 import { attachPublisherSignature, preparePlacement } from "./ticket";
 import { suggestCampaign } from "./agent";
+import { authorizeOperator, operatorSettlementReady } from "./operator";
+import { settleSignedPlacement } from "./settlement";
 
 export const v2Routes = Router();
 export const v2Store = new V2Store(config.databaseUrl);
@@ -117,6 +119,22 @@ function placementError(error: unknown): never {
   if (message === "PLACEMENT_NOT_FOUND") {
     throw notFound("placement-not-found", "Placement ticket not found.");
   }
+  if (message === "PLACEMENT_NOT_SIGNED") {
+    throw badRequest(
+      "placement-not-signed",
+      "The publisher must sign the exact placement quote before settlement.",
+    );
+  }
+  if (message === "QUOTE_ALREADY_USED") {
+    throw badRequest("quote-already-used", "This placement quote has already been settled.");
+  }
+  if (/^PRIVY_|^PAYER_|^USDC_|^PLACEMENT_SETTLEMENT_|^RPC_TIMEOUT/.test(message)) {
+    throw new HttpError(
+      503,
+      "settlement-unavailable",
+      "The bounded Privy settlement could not be completed. No verified placement was shown.",
+    );
+  }
   if (message === "DECISION_NOT_FOUND") {
     throw notFound("decision-not-found", "Context decision not found.");
   }
@@ -134,6 +152,9 @@ v2Routes.get("/v2/status", (_req, res) =>
     policyProofLevel: "CRE_SIMULATED",
     settlement: "PlacementSettlementV1",
     placementBindings: placementBindingsReady() ? placementBindings : "unavailable",
+    operatorSettlement: operatorSettlementReady(config.operatorSettlementToken)
+      ? "configured"
+      : "unavailable",
   }),
 );
 
@@ -335,6 +356,34 @@ v2Routes.post(
           verification.status === "INVALID" ? { ...placement, status: "INVALID" } : placement,
         verification,
       });
+    } catch (error) {
+      placementError(error);
+    }
+  }),
+);
+
+v2Routes.post(
+  "/v2/placements/:placementId/settle",
+  asyncRoute(async (req, res) => {
+    if (!BYTES32.test(req.params.placementId)) {
+      throw badRequest("invalid-placement", "placementId must be bytes32.");
+    }
+    if (!operatorSettlementReady(config.operatorSettlementToken)) {
+      throw new HttpError(
+        503,
+        "operator-settlement-unavailable",
+        "Authenticated settlement is not configured on this deployment.",
+      );
+    }
+    if (!authorizeOperator(req.headers.authorization, config.operatorSettlementToken)) {
+      throw new HttpError(
+        401,
+        "operator-authorization-required",
+        "A valid operator token is required.",
+      );
+    }
+    try {
+      return res.json(await settleSignedPlacement(v2Store, req.params.placementId));
     } catch (error) {
       placementError(error);
     }

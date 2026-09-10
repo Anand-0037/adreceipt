@@ -398,6 +398,7 @@ export interface V2RuntimeStatus {
   organicAnswer: "configured-unverified" | "unavailable";
   policyProofLevel: "CRE_SIMULATED";
   settlement: "PlacementSettlementV1";
+  operatorSettlement: "configured" | "unavailable";
   placementBindings:
     | {
         publisher: string;
@@ -487,6 +488,17 @@ export const placementApi = {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ signature }),
+    }),
+  settle: (placementId: string, operatorToken: string) =>
+    request<{
+      receiptId: string;
+      approvalRequired: boolean;
+      approvalTx?: string;
+      settlementTx: string;
+      blockNumber: number;
+    }>(`/v2/placements/${placementId}/settle`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${operatorToken}` },
     }),
   verify: (placementId: string) =>
     request<{ placement: PlacementRecordV2; verification: VerificationResult }>(

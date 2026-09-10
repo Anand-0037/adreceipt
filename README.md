@@ -268,7 +268,7 @@ Unknown age, mental-health or other sensitive context, irrelevant campaigns, pro
 | **/receipts/:id** | Read the human receipt and expand the full cryptographic evidence |
 | **/campaign** and **/ask** | Direct aliases for the advertiser and publisher journeys |
 
-The public receipt API is read-only. Privy payment submission remains operator-controlled, so a website visitor cannot spend from the organization wallet. Authenticated in-product settlement is planned as a separate security-sensitive improvement.
+Receipt discovery is public and read-only. Settlement is available inside the publisher proof trace only after the publisher signs the exact quote and an authorized operator supplies a separate settlement token. The token is not stored by the browser. The backend rechecks the quote, replay state, payer balance, allowance, chain, and contract before asking Privy to send anything; Privy's default-deny policy independently restricts the asset, recipient, function, and maximum amount.
 
 ## Run locally
 
@@ -392,7 +392,7 @@ The long-term invariant remains simple:
 
 - The web app, API, contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live; the deployed routes and known verified receipt passed a cold-browser check on September 10, 2026.
 - Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
-- Settlement submission is operator-controlled; authenticated in-product orchestration remains future work.
+- In-product settlement remains operator-controlled through a separate bearer token; public visitors cannot spend from the Privy organization wallet.
 - AdCP/MCP interoperability is specified and tracked, not yet implemented.
 - The project demonstrates testnet infrastructure with team-controlled participants, not production adoption.
 

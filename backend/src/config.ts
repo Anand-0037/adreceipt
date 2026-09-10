@@ -135,6 +135,9 @@ export const config = {
   privyPolicyId: process.env.PRIVY_POLICY_ID ?? "",
   privyAuthorizationPrivateKey:
     process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY ?? process.env.PRIVATE_KEY_PRIVY ?? "",
+  operatorSettlementToken: process.env.OPERATOR_SETTLEMENT_TOKEN ?? "",
+  creCredentialsBase64: process.env.CRE_CREDENTIALS_BASE64 ?? "",
+  creContextBase64: process.env.CRE_CONTEXT_BASE64 ?? "",
 };
 
 export function requireSimulatorKey(): string {

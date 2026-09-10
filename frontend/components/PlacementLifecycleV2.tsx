@@ -30,6 +30,8 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
   const [price, setPrice] = useState("");
   const [placement, setPlacement] = useState<PlacementRecordV2 | null>(null);
   const [metrics, setMetrics] = useState<PlacementMetricsV2 | null>(null);
+  const [operatorToken, setOperatorToken] = useState("");
+  const [settlementTx, setSettlementTx] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const card = useRef<HTMLElement | null>(null);
@@ -124,6 +126,31 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
       if (result.verification.status !== "PAID_VERIFIED") setError(result.verification.reason);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Receipt verification failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function settle() {
+    if (!placement) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await placementApi.settle(placement.placementId, operatorToken);
+      setOperatorToken("");
+      setSettlementTx(result.settlementTx);
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        const checked = await placementApi.verify(placement.placementId);
+        setPlacement(checked.placement);
+        if (checked.verification.status === "PAID_VERIFIED") return;
+        if (checked.verification.status === "INVALID") throw new Error(checked.verification.reason);
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
+      }
+      setError(
+        "Payment is confirmed. The Graph is still indexing this receipt; verify again shortly.",
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Settlement failed.");
     } finally {
       setBusy(false);
     }
@@ -273,14 +300,61 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
                 <div className="payment-review">
                   <p>
                     Publisher signature verified and campaign budget reserved. The configured Privy
-                    wallet can now execute the bounded approval and settlement packet.
+                    wallet can execute the bounded approval and settlement packet after operator
+                    authorization.
                   </p>
+                  <dl className="decision-facts">
+                    <div>
+                      <dt>Amount</dt>
+                      <dd>{formatUnits(placement.quote.amount, 6)} test USDC</dd>
+                    </div>
+                    <div>
+                      <dt>Recipient</dt>
+                      <dd className="mono">{short(placement.quote.recipient)}</dd>
+                    </div>
+                  </dl>
+                  {runtime?.operatorSettlement === "configured" ? (
+                    <>
+                      <label htmlFor="operator-settlement-token">Operator settlement token</label>
+                      <input
+                        id="operator-settlement-token"
+                        type="password"
+                        autoComplete="off"
+                        value={operatorToken}
+                        onChange={(event) => setOperatorToken(event.target.value)}
+                        placeholder="Entered by the authorized operator"
+                      />
+                      <p className="field-help">
+                        Used only for this request. Privy still enforces the chain, contract,
+                        recipient, asset, and amount ceiling.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={busy || operatorToken.length < 32}
+                        onClick={() => void settle()}
+                      >
+                        {busy ? "Settling and verifying…" : "Approve and settle with Privy"}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="form-error">Authenticated settlement is unavailable.</p>
+                  )}
                 </div>
               )}
               {placement.status === "SIGNED" && (
                 <button type="button" disabled={busy} onClick={() => void verify()}>
                   {busy ? "Checking The Graph and RPC…" : "Verify indexed receipt"}
                 </button>
+              )}
+              {settlementTx && (
+                <a
+                  className="text-link"
+                  href={`https://sepolia.etherscan.io/tx/${settlementTx}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View settlement transaction ↗
+                </a>
               )}
             </>
           )}

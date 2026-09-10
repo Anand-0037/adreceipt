@@ -170,6 +170,21 @@
         }
       }
     },
+    "/v2/placements/{placementId}/settle": {
+      "post": {
+        "operationId": "settlePlacementWithPrivy",
+        "summary": "Settle a publisher-signed placement through the bounded Privy wallet",
+        "description": "Operator-only. Rechecks the quote, replay state, balance, allowance, chain, and settlement contract before submitting the bounded approval and settlement calls.",
+        "security": [{ "operatorBearer": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/PlacementId" }],
+        "responses": {
+          "200": { "description": "Confirmed settlement transaction and receipt ID" },
+          "401": { "description": "Operator authorization required" },
+          "400": { "description": "Placement is unsigned, expired, invalid, or already used" },
+          "503": { "description": "Privy, RPC, payer funds, or settlement service unavailable" }
+        }
+      }
+    },
     "/v2/receipts/{receiptId}/evidence": {
       "get": {
         "operationId": "getPlacementEvidenceBundle",
@@ -259,6 +274,13 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "operatorBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Separate operator secret. Never expose it to an autonomous agent or public client."
+      }
+    },
     "parameters": {
       "CampaignId": {
         "name": "campaignId",

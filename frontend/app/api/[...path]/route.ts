@@ -16,7 +16,7 @@ async function proxy(request: NextRequest, context: RouteContext): Promise<Respo
   target.search = request.nextUrl.search;
 
   const headers = new Headers();
-  for (const name of ["accept", "content-type"]) {
+  for (const name of ["accept", "content-type", "authorization"]) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
@@ -30,7 +30,7 @@ async function proxy(request: NextRequest, context: RouteContext): Promise<Respo
       body:
         request.method === "GET" || request.method === "HEAD" ? undefined : await request.text(),
       cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(path.at(-1) === "settle" ? 150_000 : 30_000),
     });
     return new Response(response.body, {
       status: response.status,

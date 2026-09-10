@@ -20,6 +20,7 @@ AdReceipt must not be used to alter or secretly influence an organic answer. Gen
 - [Generate a campaign suggestion](/api/v2/campaigns/suggest): Use GroqCloud to suggest targeting and creative; output always requires human approval.
 - [Classify and match context](/api/v2/decisions): Return ELIGIBLE, SUPPRESSED, or NO_MATCH without exposing or retaining the raw query in the public context envelope.
 - [Prepare a placement ticket](/api/v2/placements): Run the confidential-policy simulation and prepare a deterministic placement record. This does not broadcast a transaction.
+- [Settle a signed placement](/api/v2/placements/{placementId}/settle): Operator-only Privy settlement. Autonomous agents and public callers must not receive the bearer token.
 - [Public receipt ledger](/api/receipts): Read receipts verified against The Graph and canonical Sepolia RPC evidence.
 - [Verify one receipt](/api/receipts/{receiptId}): Return PAID_VERIFIED only when indexed and RPC evidence agree.
 - [Verify a recommendation commitment](/api/subjects/{subjectHash}): Find receipts for an exact SubjectV1 commitment and verify them against RPC.
