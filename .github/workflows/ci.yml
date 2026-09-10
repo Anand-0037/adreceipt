@@ -3,6 +3,10 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Unit tests construct providers but never require a live chain endpoint.
+      # Keep CI independent from deployment credentials and repository secrets.
+      SEPOLIA_RPC_URL: http://127.0.0.1:8545
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
