@@ -1,16 +1,11 @@
 import { config as loadEnv } from "dotenv";
-import { existsSync, readFileSync } from "fs";
-import { join, resolve } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
-/**
- * Environment comes from `backend/.env` first, then the repo-root `.env`.
- * The root file is where the contract work already put CRE_SIMULATOR_PRIVATE_KEY,
- * so a fresh clone works without copying secrets around.
- */
+/** Keep one runtime source of truth. Every package reads the repo-root `.env`. */
 const backendRoot = resolve(__dirname, "..");
 const repoRoot = resolve(backendRoot, "..");
 
-loadEnv({ path: join(backendRoot, ".env"), quiet: true });
 loadEnv({ path: join(repoRoot, ".env"), quiet: true });
 
 export interface Deployment {
@@ -75,11 +70,7 @@ export const deployment = loadDeployment();
 export const contracts = deployment.contracts;
 
 function loadSettlementDeployment(): SettlementDeployment {
-  const path = join(
-    repoRoot,
-    "deployments",
-    `placement-settlement-${NETWORK}.json`,
-  );
+  const path = join(repoRoot, "deployments", `placement-settlement-${NETWORK}.json`);
   if (!existsSync(path)) {
     throw new Error(`No settlement deployment record at ${path}.`);
   }
@@ -94,10 +85,19 @@ function required(name: string): string {
   return value;
 }
 
+function positiveInteger(name: string, fallback: number): number {
+  const value = Number(process.env[name] ?? fallback);
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`${name} must be a positive integer`);
+  }
+  return value;
+}
+
 export const config = {
   network: NETWORK,
   chainId: deployment.chainId,
   rpcUrl: required("SEPOLIA_RPC_URL"),
+  operatorRpcUrl: process.env.SEPOLIA_OPERATOR_RPC_URL ?? "",
 
   /**
    * The attestation key. This is deliberately NOT the deployer key: it holds
@@ -115,21 +115,26 @@ export const config = {
   dnsRecordKey: process.env.DNS_RECORD_KEY ?? "disclosed-verification",
 
   /** Resolvers queried for the challenge lookup. Agreement is required. */
-  dnsResolvers: (process.env.DNS_RESOLVERS ?? "1.1.1.1,8.8.8.8")
-    .split(",")
-    .map((s) => s.trim()),
+  dnsResolvers: (process.env.DNS_RESOLVERS ?? "1.1.1.1,8.8.8.8").split(",").map((s) => s.trim()),
   graphQueryUrl: process.env.GRAPH_QUERY_URL ?? "",
   graphApiKey: process.env.GRAPH_API_KEY ?? "",
   graphMaxLag: Number(process.env.GRAPH_MAX_BLOCK_LAG ?? 20),
+  receiptReadLimit: positiveInteger("RECEIPT_READ_LIMIT", 60),
+  receiptReadWindowMs: positiveInteger("RECEIPT_READ_WINDOW_MS", 60_000),
+  databaseUrl: process.env.DATABASE_URL ?? "",
+  groqApiKey: process.env.GROQ_API_KEY ?? "",
+  groqModel: process.env.GROQ_MODEL ?? "openai/gpt-oss-20b",
+  groqBaseUrl: process.env.GROQ_BASE_URL ?? "https://api.groq.com/openai/v1",
   settlementAddress: process.env.PLACEMENT_SETTLEMENT_ADDRESS ?? "",
+  v2PublisherAddress: process.env.V2_PUBLISHER_ADDRESS ?? "",
+  v2PayerAddress: process.env.V2_PAYER_ADDRESS ?? "",
+  v2RecipientAddress: process.env.V2_RECIPIENT_ADDRESS ?? "",
   privyAppId: process.env.PRIVY_APP_ID ?? "",
   privyAppSecret: process.env.PRIVY_APP_SECRET ?? "",
   privyWalletId: process.env.PRIVY_WALLET_ID ?? "",
   privyPolicyId: process.env.PRIVY_POLICY_ID ?? "",
   privyAuthorizationPrivateKey:
-    process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY ??
-    process.env.PRIVATE_KEY_PRIVY ??
-    "",
+    process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY ?? process.env.PRIVATE_KEY_PRIVY ?? "",
 };
 
 export function requireSimulatorKey(): string {

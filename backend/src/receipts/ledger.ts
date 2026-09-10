@@ -18,10 +18,10 @@ export interface VerifiedReceiptCollection {
 /** Require every displayed Graph row to match its canonical Sepolia receipt. */
 export async function verifyReceiptCollection(
   graph: GraphSubjectEvidence,
+  limit = 25,
 ): Promise<VerifiedReceiptCollection> {
   const provider = getProvider();
   const rpcHead = await provider.getBlockNumber();
-  const limit = 25;
   const receipts = graph.receipts.slice(0, limit);
   const health = classifyReceipt({
     receiptId: `0x${"00".repeat(32)}`,

@@ -4,6 +4,7 @@ import { getProvider } from "../chain/provider";
 import { queryAllReceipts, queryReceiptsByPayer } from "../receipts/by-payer";
 import type { GraphSubjectEvidence } from "../receipts/graph";
 import { verifyReceiptCollection } from "../receipts/ledger";
+import { ReadSingleFlight, retryRead } from "../receipts/retry";
 import { verifyReceipt, verifySubject } from "../receipts/service";
 import { privyReadiness } from "../privy/client";
 import { asyncRoute, badRequest, notFound, parseAddress, tooManyRequests } from "./errors";
@@ -27,6 +28,12 @@ const domainAuthorisations = new DomainAuthorisationStore(config.chainId);
 const domainStatusLimit = new FixedWindowRateLimiter(20, 60_000);
 const domainAuthorisationLimit = new FixedWindowRateLimiter(10, 60_000);
 const domainAttestationLimit = new FixedWindowRateLimiter(5, 60_000);
+const receiptReadLimit = new FixedWindowRateLimiter(
+  config.receiptReadLimit,
+  config.receiptReadWindowMs,
+);
+const verificationReads = new ReadSingleFlight();
+const collectionReads = new ReadSingleFlight();
 
 function requireDomainCapacity(
   limiter: FixedWindowRateLimiter,
@@ -35,6 +42,12 @@ function requireDomainCapacity(
 ): void {
   if (!limiter.allow(`${ip ?? "unknown"}:${address.toLowerCase()}`)) {
     throw tooManyRequests("Too many domain requests. Wait a minute and try again.");
+  }
+}
+
+function requireReceiptCapacity(ip: string | undefined): void {
+  if (!receiptReadLimit.allow(ip ?? "unknown")) {
+    throw tooManyRequests("Too many receipt verification requests. Wait a minute and try again.");
   }
 }
 
@@ -74,11 +87,16 @@ routes.get("/health/privy", (_req, res) => res.json(privyReadiness()));
 routes.get(
   "/receipts/:receiptId",
   asyncRoute(async (req, res) => {
+    requireReceiptCapacity(req.ip);
     const atBlockRaw = req.query.atBlock;
     const atBlock = typeof atBlockRaw === "string" ? Number(atBlockRaw) : undefined;
     if (atBlock !== undefined && (!Number.isSafeInteger(atBlock) || atBlock <= 0))
       throw badRequest("invalid-block", "atBlock must be a positive integer");
-    const result = await verifyReceipt(req.params.receiptId, atBlock);
+    const receiptId = req.params.receiptId;
+    const result = await verificationReads.run(
+      `receipt:${receiptId.toLowerCase()}:${atBlock ?? "latest"}`,
+      () => verifyReceipt(receiptId, atBlock),
+    );
     return res.status(result.status === "UNAVAILABLE" ? 503 : 200).json(result);
   }),
 );
@@ -86,25 +104,32 @@ routes.get(
 routes.get(
   "/subjects/:subjectHash",
   asyncRoute(async (req, res) => {
-    const result = await verifySubject(req.params.subjectHash);
+    requireReceiptCapacity(req.ip);
+    const subjectHash = req.params.subjectHash;
+    const result = await verificationReads.run(`subject:${subjectHash.toLowerCase()}`, () =>
+      verifySubject(subjectHash),
+    );
     return res.status(result.status === "UNAVAILABLE" ? 503 : 200).json(result);
   }),
 );
 
-async function loadVerifiedCollection(load: () => Promise<GraphSubjectEvidence>) {
+async function loadVerifiedCollection(key: string, load: () => Promise<GraphSubjectEvidence>) {
   if (!config.graphQueryUrl || !config.settlementAddress) {
     throw new Error("Receipt ledger providers are not configured");
   }
-  return verifyReceiptCollection(await load());
+  return collectionReads.run(key, () =>
+    retryRead(async () => verifyReceiptCollection(await load())),
+  );
 }
 
 /** Latest verified receipts paid by one address. This endpoint never writes. */
 routes.get(
   "/payers/:address/receipts",
   asyncRoute(async (req, res) => {
+    requireReceiptCapacity(req.ip);
     const address = parseAddress(req.params.address);
     try {
-      const collection = await loadVerifiedCollection(() =>
+      const collection = await loadVerifiedCollection(`payer:${address.toLowerCase()}`, () =>
         queryReceiptsByPayer(config.graphQueryUrl, config.graphApiKey, address),
       );
       return res.json({ address, ...collection });
@@ -120,9 +145,10 @@ routes.get(
 /** Latest verified sponsorship receipts with deterministic payer/publisher totals. */
 routes.get(
   "/receipts",
-  asyncRoute(async (_req, res) => {
+  asyncRoute(async (req, res) => {
+    requireReceiptCapacity(req.ip);
     try {
-      const collection = await loadVerifiedCollection(() =>
+      const collection = await loadVerifiedCollection("all", () =>
         queryAllReceipts(config.graphQueryUrl, config.graphApiKey),
       );
       const byPayer = new Map<string, { paid: bigint; placements: number }>();

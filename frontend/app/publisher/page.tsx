@@ -1,23 +1,22 @@
-import { PublisherFlow } from "@/components/PublisherFlow";
+import { PublisherExperienceV2 } from "@/components/PublisherExperienceV2";
 
 export const metadata = {
-  title: "Publisher · AdReceipt",
-  description: "Declare a placement, sign the exact recommendation, and get paid for it.",
+  title: "Publisher experience · AdReceipt",
+  description: "Ask normally and show sponsored content only after its payment is verified.",
 };
 
 export default function PublisherPage() {
   return (
     <div className="page-stack">
       <section className="intro compact-intro">
-        <p className="eyebrow">For AI publishers and agents</p>
-        <h1>Sign what you recommend, then get paid for it.</h1>
+        <p className="eyebrow">AI publisher experience</p>
+        <h1>Ask normally. See commercial influence clearly.</h1>
         <p>
-          You commit to the exact wording and the price before any money moves. That signature is
-          what lets a reader check the recommendation in front of them against the payment behind it
-          — and it lets you prove whose money you took.
+          The answer is generated independently. A separate advertisement can appear only after
+          contextual safety, campaign policy, and its exact payment have been verified.
         </p>
       </section>
-      <PublisherFlow />
+      <PublisherExperienceV2 />
     </div>
   );
 }

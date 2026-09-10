@@ -120,7 +120,7 @@ export function DomainControl({ account }: { account: string | null }) {
             </button>
           </div>
           <p className="field-help">
-            One claim per wallet, permanent, and it costs Sepolia gas. A display name is not a
+            One active claim per wallet, and registration costs Sepolia gas. A display name is not a
             trademark claim — this records what you call yourself, not who owns the name.
           </p>
         </form>

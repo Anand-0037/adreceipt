@@ -2,6 +2,7 @@ import express from "express";
 import { config, settlementDeployment } from "../config";
 import { errorHandler } from "./errors";
 import { routes } from "./routes";
+import { v2Routes } from "../v2/routes";
 
 export function createServer() {
   const app = express();
@@ -24,6 +25,7 @@ export function createServer() {
   app.options("*", (_req, res) => res.sendStatus(204));
 
   app.use(routes);
+  app.use(v2Routes);
   app.use((_req, res) => res.status(404).json({ error: "not-found" }));
   app.use(errorHandler);
 

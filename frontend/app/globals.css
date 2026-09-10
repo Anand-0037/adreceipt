@@ -121,6 +121,36 @@ a {
   font: 700 9.5px / 1 var(--body);
 }
 
+.wordmark-logo {
+  display: block;
+  width: 172px;
+  height: 42px;
+  overflow: hidden;
+}
+
+.wordmark .wordmark-logo-crop {
+  position: relative;
+  display: block;
+  width: 172px;
+  height: 42px;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.wordmark-logo-crop img {
+  position: absolute;
+  top: -56px;
+  left: 6px;
+  display: block;
+  width: 160px;
+  height: auto;
+  mix-blend-mode: multiply;
+}
+
 nav {
   display: flex;
   gap: 26px;
@@ -967,6 +997,18 @@ details input {
     font-size: 11px;
   }
 
+  .wordmark-logo,
+  .wordmark .wordmark-logo-crop {
+    width: 132px;
+    height: 34px;
+  }
+
+  .wordmark-logo-crop img {
+    top: -43px;
+    left: 4px;
+    width: 124px;
+  }
+
   nav {
     margin-left: auto;
   }
@@ -990,6 +1032,499 @@ details input {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* V2 campaign and publisher surfaces. These reuse the existing receipt visual
+   language while keeping organic output and commercial eligibility separate. */
+.v2-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  border: var(--edge);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.v2-campaign-form {
+  min-width: 0;
+}
+
+.form-heading h2,
+.campaign-state h2,
+.organic-answer h2,
+.sponsored-candidate h2 {
+  margin: 7px 0 10px;
+  letter-spacing: -0.035em;
+}
+
+.form-heading p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  padding: 14px;
+}
+
+legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 14px;
+}
+
+.choice-grid label,
+.publisher-query fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.choice-grid input,
+.publisher-query fieldset input {
+  width: 15px;
+  min-height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.campaign-state {
+  min-width: 0;
+  padding: 28px;
+  background: #ebe5d9;
+}
+
+.state-chip,
+.candidate-label {
+  display: inline-flex;
+  border: 1px solid currentColor;
+  padding: 6px 8px;
+  color: var(--pending);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.state-active {
+  color: var(--verified);
+}
+
+.compact-evidence {
+  margin: 20px 0;
+}
+
+.compact-evidence > div {
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.compact-evidence dt {
+  color: var(--faint);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.compact-evidence dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.saved-campaigns {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.campaign-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 18px 0 0;
+  background: var(--line);
+}
+
+.campaign-metrics > div {
+  padding: 12px;
+  background: var(--surface);
+}
+
+.campaign-metrics dt {
+  color: var(--faint);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.campaign-metrics dd {
+  margin: 5px 0 0;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.placement-lifecycle {
+  display: grid;
+  gap: 16px;
+  border: var(--edge);
+  padding: 22px;
+  background: #ebe5d9;
+}
+
+.placement-lifecycle h3 {
+  margin: 0;
+}
+
+.placement-lifecycle .example-button {
+  margin-top: 7px;
+}
+
+.ticket-proof {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ticket-proof strong {
+  border: 1px solid var(--pending);
+  padding: 6px 8px;
+  color: var(--pending);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.ticket-proof span,
+.payment-review p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sponsored-verified {
+  border-color: var(--verified);
+}
+
+.saved-campaigns h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.saved-campaign {
+  width: 100%;
+  min-height: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-width: 0 0 1px;
+  padding: 10px 0;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+
+.saved-campaign:hover {
+  color: var(--accent-dark);
+  background: transparent;
+}
+
+.saved-campaign span {
+  color: var(--faint);
+  font-size: 10px;
+}
+
+.technical-tool {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.technical-tool > summary {
+  margin-bottom: 20px;
+  font-weight: 750;
+}
+
+.publisher-v2 {
+  max-width: 900px;
+  display: grid;
+  gap: 22px;
+}
+
+.publisher-query {
+  display: grid;
+  gap: 16px;
+  border: var(--edge);
+  padding: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.publisher-query > button {
+  justify-self: start;
+}
+
+.publisher-query fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.publisher-result {
+  display: grid;
+  gap: 18px;
+}
+
+.organic-answer,
+.policy-decision,
+.sponsored-candidate,
+.no-sponsored-slot {
+  border: var(--edge);
+  padding: 22px 24px;
+  background: var(--surface);
+}
+
+.organic-answer > p:not(.eyebrow) {
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+
+.policy-decision {
+  border-left-width: 7px;
+  border-left-color: var(--invalid);
+  background: #ebe5d9;
+}
+
+.policy-eligible {
+  border-left-color: var(--verified);
+}
+
+.policy-decision > strong {
+  display: block;
+  margin: 7px 0 4px;
+  font-size: 18px;
+}
+
+.policy-decision > p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+.decision-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 18px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.decision-facts > div {
+  padding: 12px 10px 0 0;
+}
+
+.decision-facts dt {
+  color: var(--faint);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.decision-facts dd {
+  margin: 5px 0 0;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.sponsored-candidate {
+  border-left: 7px solid var(--pending);
+}
+
+.candidate-withheld {
+  background: color-mix(in srgb, var(--surface) 92%, var(--pending));
+}
+
+.eligibility-gate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.eligibility-gate legend {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.text-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.developer-trace {
+  border: var(--edge);
+  background: var(--surface);
+}
+
+.developer-trace > summary,
+.cryptographic-evidence > summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.developer-trace-body {
+  padding: 4px 18px 18px;
+}
+
+.advanced-targeting {
+  border: var(--edge);
+  background: var(--wash);
+}
+
+.advanced-targeting > summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.advanced-targeting-body {
+  display: grid;
+  gap: 18px;
+  padding: 4px 16px 18px;
+}
+
+.why-ad-summary {
+  display: grid;
+  gap: 4px;
+  margin: 16px 0 10px;
+  padding: 12px;
+  background: var(--wash);
+}
+
+.why-ad-summary span {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.receipt-human-summary {
+  margin-top: 22px;
+  padding: 22px;
+  border: var(--edge);
+  background: var(--wash);
+}
+
+.receipt-human-summary h3 {
+  margin: 6px 0 10px;
+  font-size: clamp(20px, 3vw, 30px);
+  letter-spacing: -0.035em;
+}
+
+.receipt-story {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 18px 0;
+  background: var(--line);
+}
+
+.receipt-story > div {
+  padding: 12px;
+  background: var(--surface);
+}
+
+.receipt-story > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.receipt-story dt {
+  color: var(--faint);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.receipt-story dd {
+  margin: 5px 0 0;
+}
+
+.verification-chain {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.verification-chain li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.verification-chain strong {
+  color: var(--accent-dark);
+  font-size: 12px;
+}
+
+.cryptographic-evidence {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.candidate-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.candidate-meta span {
+  border: 1px solid var(--line);
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.no-sponsored-slot {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.no-sponsored-slot p {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .v2-workspace,
+  .choice-grid,
+  .decision-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-state {
+    border-top: 1px solid var(--line);
+    padding: 20px;
+  }
+
+  .publisher-query fieldset {
+    align-items: start;
+    flex-direction: column;
   }
 }
 
@@ -1575,6 +2110,7 @@ details input {
 
 .nb-page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 96px;
 }
 
@@ -3920,4 +4456,22 @@ label {
   max-width: 900px;
   margin-inline: auto;
   width: 100%;
+  min-width: 0;
+}
+
+.ledger > * {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  /* These declarations must follow the later desktop hero refinements above. */
+  .nb-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nb-disc,
+  .nb-receipt,
+  .table-scroll {
+    max-width: 100%;
+  }
 }

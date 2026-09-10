@@ -8,94 +8,91 @@ import { protocol } from "@/lib/protocol";
 const FEATURES = [
   {
     Icon: SignIcon,
-    tag: "Sign",
-    title: "Signed before payment",
-    body: "The publisher signs the exact recommendation text, product and price. The commitment exists before any money moves.",
+    tag: "Context",
+    title: "Relevant before bidding",
+    body: "A sanitized context envelope must pass age, safety, topic, intent and relevance rules before a campaign can compete.",
   },
   {
     Icon: SettleIcon,
-    tag: "Settle",
-    title: "Settled directly",
-    body: "Advertiser to publisher in one transaction. The contract witnesses the transfer and emits an immutable receipt.",
+    tag: "Authorize",
+    title: "Policy-bound placement",
+    body: "The advertiser signs campaign terms. Chainlink CRE evaluates private targeting and bid rules for the exact placement ticket.",
   },
   {
     Icon: VerifyIcon,
-    tag: "Verify",
-    title: "Re-checked from source",
-    body: "The Graph finds the receipt; Sepolia RPC confirms it. Disagreement on any field fails closed, with no badge.",
+    tag: "Prove",
+    title: "Paid and independently checked",
+    body: "Privy controls settlement. The Graph finds the receipt and Sepolia RPC confirms every field before a verified badge appears.",
   },
 ];
 
-/** The two role journeys, in the order a person actually walks them. */
 const FLOWS = [
   {
-    role: "Advertiser",
-    blurb: "You pay for placements and want proof of what you bought.",
-    href: "/advertiser",
-    cta: "Start as an advertiser",
+    role: "Advertiser agent",
+    blurb: "Turn a human objective into reviewable, signed campaign rules.",
+    href: "/campaign",
+    cta: "Create a campaign",
     steps: [
       {
-        href: "/login",
-        label: "Log in",
-        note: "Connect a wallet on Sepolia. No account, no password.",
-      },
-      {
-        href: "/advertiser",
-        label: "Prove domain",
-        note: "Register a claim, then verify it with a DNS record.",
+        href: "/campaign",
+        label: "Describe the objective",
+        note: "State the product, audience, goal and budget in plain language.",
       },
       {
         href: "/campaign",
-        label: "Create campaign",
-        note: "Name the product, the copy, and the price.",
+        label: "Review the manifest",
+        note: "Edit topics, intents, creative, placement cap and safety exclusions.",
       },
-      { href: "/advertiser", label: "Fund", note: "Approve a bounded amount of test USDC." },
       {
-        href: "/ledger",
-        label: "See receipts",
-        note: "Every settlement you paid for, re-checked.",
+        href: "/campaign",
+        label: "Sign the revision",
+        note: "The advertiser wallet activates only the exact terms it reviewed.",
+      },
+      {
+        href: "/campaign",
+        label: "Measure outcomes",
+        note: "Verified impressions and clicks produce real CTR, eCPC and eCPM.",
       },
     ],
   },
   {
-    role: "Publisher",
-    blurb: "You write recommendations and want to be paid for them.",
-    href: "/publisher",
-    cta: "Start as a publisher",
+    role: "AI publisher",
+    blurb: "Keep the organic answer separate and prove any paid placement.",
+    href: "/ask",
+    cta: "Open the publisher",
     steps: [
       {
-        href: "/register",
-        label: "Register",
-        note: "Connect the wallet that will sign your quotes.",
+        href: "/ask",
+        label: "Classify the query",
+        note: "Use minimal context signals without exposing raw chat to advertisers.",
       },
       {
-        href: "/publisher",
-        label: "Declare a slot",
-        note: "Say where the recommendation will appear.",
+        href: "/ask",
+        label: "Gate and match",
+        note: "Sensitive, under-age, unknown or irrelevant contexts show no ad.",
       },
       {
-        href: "/publisher",
-        label: "Sign a quote",
-        note: "Commit the exact wording, product and price.",
+        href: "/ask",
+        label: "Authorize and settle",
+        note: "A ticket binds context, policy, campaign revision, creative and price.",
       },
       {
-        href: "/publisher",
-        label: "Get paid",
-        note: "The payer settles straight to your address.",
+        href: "/ledger",
+        label: "Render verified",
+        note: "Only Graph plus RPC agreement unlocks Sponsored · Verified.",
       },
-      { href: "/ask", label: "Render disclosure", note: "Show a badge anyone can re-verify." },
     ],
   },
 ];
 
 const BOUND = [
-  "Publisher signer",
-  "Allowed payer",
-  "Recipient",
-  "Asset and amount",
+  "Advertiser-signed campaign revision",
+  "Sanitized context commitment",
+  "Creative and product",
+  "Private policy commitment",
+  "Publisher, payer and recipient",
+  "Asset, amount and expiry",
   "Chain and contract",
-  "Subject hash",
-  "Schema version",
   "Replay nonce",
 ];
 
@@ -169,7 +166,7 @@ const VERDICTS = [
 const FAQ = [
   {
     q: "What does a verified receipt prove?",
-    a: "That a named payer transferred a specific amount to a named recipient, for a recommendation whose exact wording was signed beforehand. It does not prove the payment caused the recommendation, or that the product is any good.",
+    a: "That a named payer transferred a specific amount for a signed placement bound to one campaign revision, sanitized context, creative and policy commitment. It does not prove that the product is good.",
     open: true,
   },
   {
@@ -190,8 +187,8 @@ const FAQ = [
     a: "Ethereum Sepolia, settled in Circle test USDC. It is a testnet integration, not production money.",
   },
   {
-    q: "Do I need an account?",
-    a: "No. There are no accounts or passwords. Your wallet is the identity, and any claim you register is written on-chain where anyone can check it.",
+    q: "Can money make an irrelevant ad win?",
+    a: "No. Safety, age, topic, intent and a relevance floor are hard eligibility gates. Price is considered only after a campaign is eligible for the current context.",
   },
 ];
 
@@ -204,18 +201,18 @@ export default function Home() {
       <section className="nb-hero">
         <Reveal immediate>
           <div>
-            <h1 className="nb-display">Verify the payment behind the recommendation.</h1>
+            <h1 className="nb-display">The trust layer for advertising inside AI answers.</h1>
             <p className="nb-hero-lede">
-              A &ldquo;sponsored&rdquo; label is just the platform&rsquo;s word. AdReceipt binds a
-              payment to the exact recommendation it paid for, indexes it publicly, and re-checks it
-              against Ethereum before showing a badge.
+              Advertiser agents can buy relevant placements. AI publishers can prove the context,
+              policy, content and payment behind every sponsored result—without mixing it into the
+              organic answer.
             </p>
             <div className="nb-hero-actions">
-              <Link href="/ask" className="nb-btn nb-btn-lime">
-                Verify a recommendation
+              <Link href="/campaign" className="nb-btn nb-btn-lime">
+                Launch a campaign
               </Link>
-              <Link href="/register" className="nb-btn">
-                Connect wallet
+              <Link href="/ask" className="nb-btn">
+                Test the publisher
               </Link>
             </div>
           </div>
@@ -225,20 +222,20 @@ export default function Home() {
           <div className="nb-disc">
             {/* Protocol preview. It deliberately makes no live payment claim. */}
             <article className="nb-receipt">
-              <div className="nb-receipt-top">Protocol preview &mdash; v1</div>
+              <div className="nb-receipt-top">Placement proof &mdash; V2 on V1 settlement</div>
               <div className="nb-receipt-body">
                 <ReceiptArtwork />
                 <span className="nb-badge nb-badge-float">
                   <i aria-hidden />
-                  Graph + RPC required
+                  Context + policy + payment
                 </span>
               </div>
               <div className="nb-receipt-split">
-                <div>Exact USDC amount</div>
+                <div>Sepolia settlement</div>
                 <div className="mono">{short}</div>
               </div>
               <Link href="/ask" className="nb-receipt-foot">
-                Open the live verifier
+                Open the publisher experience
               </Link>
             </article>
           </div>
@@ -264,8 +261,8 @@ export default function Home() {
       {/* ── Role journeys ─────────────────────────────────────────────────── */}
       <section className="nb-section">
         <Reveal>
-          <p className="nb-eyebrow">Two sides, one receipt</p>
-          <h2>Pick your path</h2>
+          <p className="nb-eyebrow">One complete advertising lifecycle</p>
+          <h2>Agents manage the ad. People can verify it.</h2>
         </Reveal>
         <div className="nb-flows">
           {FLOWS.map((flow, i) => (
@@ -305,11 +302,11 @@ export default function Home() {
         <Reveal delay={0.08}>
           <div>
             <p className="nb-eyebrow nb-eyebrow-left">How a badge earns its place</p>
-            <h2>Payment bound to the exact recommendation</h2>
+            <h2>One ticket binds the commercial decision</h2>
             <p>
-              AdReceipt computes commitments from the content you supply. It never attaches a sample
-              receipt to a different recommendation. These are the fields the publisher signs before
-              any money moves.
+              AdReceipt turns campaign terms, sanitized context, private policy, creative and price
+              into one placement commitment. The publisher signs that exact commitment before any
+              money moves.
             </p>
             <div className="nb-chips">
               {BOUND.map((b) => (
@@ -409,13 +406,15 @@ export default function Home() {
       {/* ── Closing CTA ───────────────────────────────────────────────────── */}
       <Reveal>
         <section className="nb-cta">
-          <h2 className="nb-display">Bind a payment to what you actually recommended.</h2>
+          <h2 className="nb-display">
+            Make commercial influence visible and independently checkable.
+          </h2>
           <div className="nb-cta-actions">
-            <Link href="/register" className="nb-btn">
-              Get started
+            <Link href="/campaign" className="nb-btn">
+              Create a campaign
             </Link>
-            <Link href="/ledger" className="nb-btn">
-              Open the ledger
+            <Link href="/ask" className="nb-btn">
+              Run a contextual placement
             </Link>
           </div>
         </section>

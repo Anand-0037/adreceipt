@@ -1,0 +1,67 @@
+# AdReceipt
+
+> AdReceipt is verifiable infrastructure for sponsored placements inside AI experiences. It creates policy-bound campaign and placement records, settles an authorized placement in test USDC, indexes the resulting receipt with The Graph, and verifies Graph evidence against Ethereum Sepolia RPC before showing `Sponsored · Verified`.
+
+AdReceipt is useful when an agent or publisher needs to:
+
+- prepare an advertiser campaign for explicit wallet approval;
+- decide whether a user context is adult, non-sensitive, and relevant to an active campaign;
+- create a placement ticket bound to the campaign revision, sanitized context, creative, policy, chain, and settlement contract;
+- verify whether a claimed sponsorship payment exists and exactly matches the placement;
+- read public sponsorship receipts or campaign measurement totals.
+
+AdReceipt must not be used to alter or secretly influence an organic answer. Generate the organic answer independently. Render any eligible advertisement in a separate, clearly labeled sponsored slot. If model, policy, Graph, RPC, signature, or payment evidence is unavailable, suppress verified sponsorship rather than inferring success.
+
+## Agent integration
+
+- [OpenAPI description](/openapi.json): Callable REST operations and request schemas.
+- [Runtime status](/api/v2/status): Storage, model, settlement, policy-proof, publisher, payer, and recipient readiness.
+- [Create a campaign draft](/api/v2/campaigns): Persist a human-reviewed CampaignManifestV2 draft.
+- [Generate a campaign suggestion](/api/v2/campaigns/suggest): Use GroqCloud to suggest targeting and creative; output always requires human approval.
+- [Classify and match context](/api/v2/decisions): Return ELIGIBLE, SUPPRESSED, or NO_MATCH without exposing or retaining the raw query in the public context envelope.
+- [Prepare a placement ticket](/api/v2/placements): Run the confidential-policy simulation and prepare a deterministic placement record. This does not broadcast a transaction.
+- [Public receipt ledger](/api/receipts): Read receipts verified against The Graph and canonical Sepolia RPC evidence.
+- [Verify one receipt](/api/receipts/{receiptId}): Return PAID_VERIFIED only when indexed and RPC evidence agree.
+- [Verify a recommendation commitment](/api/subjects/{subjectHash}): Find receipts for an exact SubjectV1 commitment and verify them against RPC.
+
+## Required lifecycle
+
+1. A human advertiser provides a product, budget, allowed topics, allowed intents, creative, validity window, and settlement asset.
+2. The advertiser reviews the draft and signs CampaignManifestV2 with its wallet.
+3. A publisher sends a user query, coarse locale, and declared age eligibility to the context decision endpoint.
+4. Sensitive, under-18, unknown-age, irrelevant, inactive, expired, or disallowed contexts produce no advertisement.
+5. An eligible decision may become a PlacementTicketV2 through Chainlink CRE simulation. The proof level is `CRE_SIMULATED`; it is not a live DON enforcement claim.
+6. The publisher signs the bound PlacementQuoteV1.
+7. A separately authorized operator may submit the bounded Privy approval and settlement transactions.
+8. The application verifies the resulting ReceiptCreated event using The Graph and Sepolia RPC.
+9. Only `PAID_VERIFIED` placements may record an impression or click and display the verified sponsorship status.
+
+## Trust and privacy boundaries
+
+- The deployed V1 contract proves a named payer transferred an exact asset and amount for a signed campaign and recommendation commitment.
+- The Graph is the query layer. Ethereum Sepolia RPC is the canonical corroborating source.
+- Chainlink CRE is currently demonstrated through authenticated local simulation and must be labeled `CRE_SIMULATED`.
+- The context envelope contains closed categories and a salted commitment. It does not contain the raw user query.
+- Advertisers do not receive raw conversations or user identity from this API.
+- A receipt does not prove that a recommendation is correct, unbiased, useful, or caused by the payment.
+- Settlement is never implied by ticket preparation. An on-chain ReceiptCreated event is required.
+
+## Public application
+
+- [Ask](/ask): Independent answer, context decision, and separate sponsored placement.
+- [Campaigns](/campaign): Advertiser-agent campaign preparation and wallet approval.
+- [Receipts](/ledger): Live public receipt ledger and Graph freshness.
+- [Source](https://github.com/Anand-0037/adreceipt): Contracts, backend, frontend, Subgraph, CRE workflow, and tests.
+
+## Network
+
+- Chain: Ethereum Sepolia (`11155111`)
+- Settlement: `PlacementSettlementV1`
+- Settlement contract: `0x2fB6889Cc142C622a0479aF56b75B98beAeD3576`
+- Asset: Circle Sepolia test USDC (`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`)
+- Receipt schema: `ReceiptCreated` V1
+
+## Optional
+
+- [Project README](https://github.com/Anand-0037/adreceipt#readme): Architecture, setup, proof boundaries, and deployment evidence.
+- [llms.txt proposal](https://llmstxt.org/): Format used by this discovery document.

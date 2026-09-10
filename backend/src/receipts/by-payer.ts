@@ -117,3 +117,39 @@ export async function queryAllReceipts(
   if (!response.ok) throw new Error(`Graph returned HTTP ${response.status}`);
   return parseGraphSubjectResponse(await response.json());
 }
+
+const CAMPAIGN_QUERY = `
+query ReceiptsByCampaign($campaignId: Bytes!, $first: Int = 101) {
+  receipts(
+    first: $first
+    where: { campaignId: $campaignId }
+    orderBy: blockNumber
+    orderDirection: desc
+  ) {
+    id campaignId subjectHash publisher payer recipient asset amount settledAt
+    schemaVersion settlementContract transactionHash logIndex blockNumber blockTimestamp
+  }
+  _meta { block { number hash timestamp } hasIndexingErrors }
+}
+`;
+
+export async function queryReceiptsByCampaign(
+  endpoint: string,
+  apiKey: string,
+  campaignId: string,
+): Promise<GraphSubjectEvidence> {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      query: CAMPAIGN_QUERY,
+      variables: { campaignId: campaignId.toLowerCase(), first: 101 },
+    }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error(`Graph returned HTTP ${response.status}`);
+  return parseGraphSubjectResponse(await response.json());
+}

@@ -1,38 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-/* "Get started" is not here on purpose: the landing page already offers it in
-   the hero and the closing CTA, so repeating it in the nav on every page was
-   redundant. Sign-up lives on the page that sells it. */
 const NAV = [
-  { href: "/ask", label: "Verify" },
-  { href: "/ledger", label: "Ledger" },
-  { href: "/campaign", label: "Campaign" },
+  { href: "/ask", label: "Ask" },
+  { href: "/campaign", label: "Campaigns" },
+  { href: "/ledger", label: "Receipts" },
 ];
 
 const FOOTER = [
   {
-    title: "Verify",
+    title: "Product",
     links: [
-      { href: "/ask", label: "Check a recommendation" },
+      { href: "/ask", label: "Publisher experience" },
+      { href: "/campaign", label: "Advertiser campaign" },
       { href: "/ledger", label: "Receipt ledger" },
     ],
   },
   {
-    title: "Take part",
+    title: "Proof",
     links: [
-      { href: "/publisher", label: "Publisher onboarding" },
-      { href: "/advertiser", label: "Payer onboarding" },
-      { href: "/campaign", label: "Campaign builder" },
-    ],
-  },
-  {
-    title: "Account",
-    links: [
-      { href: "/register", label: "Create an identity" },
-      { href: "/login", label: "Sign in" },
+      { href: "/ledger", label: "Live Graph receipts" },
+      { href: "/ask", label: "Context and policy" },
+      { href: "/campaign", label: "Signed campaign terms" },
     ],
   },
 ];
@@ -56,9 +48,10 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
     <>
       <header className="site-header">
         <div className="header-inner">
-          <Link href="/" className="wordmark">
-            <span aria-hidden>AR</span>
-            AdReceipt
+          <Link href="/" className="wordmark wordmark-logo" aria-label="AdReceipt home">
+            <span className="wordmark-logo-crop" aria-hidden>
+              <Image src="/brand/adreceipt-logo.png" alt="" width={1254} height={1254} priority />
+            </span>
           </Link>
           <nav aria-label="Primary navigation">
             {NAV.map((item) => (
@@ -78,13 +71,14 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
       <footer className="site-footer">
         <div className="site-footer-top">
           <div className="site-footer-brand">
-            <Link href="/" className="wordmark">
-              <span aria-hidden>AR</span>
-              AdReceipt
+            <Link href="/" className="wordmark wordmark-logo" aria-label="AdReceipt home">
+              <span className="wordmark-logo-crop" aria-hidden>
+                <Image src="/brand/adreceipt-logo.png" alt="" width={1254} height={1254} />
+              </span>
             </Link>
             <p>
-              A payment receipt bound to the exact recommendation it paid for, re-checked against
-              Ethereum before any badge appears.
+              Agentic ad campaigns whose context, policy, content, and payment can be checked before
+              a verified sponsored badge appears.
             </p>
             <a href="https://github.com/Anand-0037/adreceipt" target="_blank" rel="noreferrer">
               Source ↗
@@ -105,8 +99,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
         <div className="site-footer-base">
           <p>
-            <strong>Payment transparency, not product quality.</strong> AdReceipt verifies one
-            direct testnet payment and its signed context.
+            <strong>Commercial provenance, not product quality.</strong> AdReceipt verifies the
+            signed placement and its direct testnet payment.
           </p>
           <p>Ethereum Sepolia · test USDC</p>
         </div>

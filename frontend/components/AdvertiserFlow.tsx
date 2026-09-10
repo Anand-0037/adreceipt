@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FlowDone } from "@/components/FlowDone";
 import { explorer, ledgerApi, type ReceiptEvidence } from "@/lib/api";
 import { DomainControl } from "./DomainControl";
@@ -17,6 +17,7 @@ import {
   currentAccount,
   describeWalletError,
   hasWallet,
+  injected,
   type Balances,
 } from "@/lib/wallet";
 
@@ -54,16 +55,38 @@ export function AdvertiserFlow() {
   const [receipts, setReceipts] = useState<ReceiptEvidence[]>([]);
   const [quoteBlob, setQuoteBlob] = useState("");
   const [busy, setBusy] = useState(false);
+  const [fundsBusy, setFundsBusy] = useState(false);
+  const [fundsError, setFundsError] = useState<string | null>(null);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
   const [progress, setProgress] = useState<SettleProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const refreshSequence = useRef(0);
 
   const refresh = useCallback(async (address: string) => {
+    const sequence = ++refreshSequence.current;
+    setFundsBusy(true);
+    setFundsError(null);
+    setLedgerError(null);
     const [walletFunds, history] = await Promise.allSettled([
       balances(address),
       ledgerApi.byPayer(address),
     ]);
-    setFunds(walletFunds.status === "fulfilled" ? walletFunds.value : null);
-    setReceipts(history.status === "fulfilled" ? history.value.receipts : []);
+    if (sequence !== refreshSequence.current) return;
+    if (walletFunds.status === "fulfilled") {
+      setFunds(walletFunds.value);
+    } else {
+      setFunds(null);
+      setFundsError(describeWalletError(walletFunds.reason));
+    }
+    if (history.status === "fulfilled") {
+      setReceipts(history.value.receipts);
+    } else {
+      setReceipts([]);
+      setLedgerError(
+        history.reason instanceof Error ? history.reason.message : String(history.reason),
+      );
+    }
+    setFundsBusy(false);
   }, []);
 
   // Resolved after mount. Calling hasWallet() during render reads
@@ -81,6 +104,33 @@ export function AdvertiserFlow() {
     });
   }, [refresh]);
 
+  useEffect(() => {
+    const wallet = injected();
+    if (!wallet?.on) return;
+
+    const syncAccount = (...args: unknown[]) => {
+      const accounts = args[0] as string[] | undefined;
+      const address = accounts?.[0] ?? null;
+      refreshSequence.current += 1;
+      setAccount(address);
+      setFunds(null);
+      setFundsError(null);
+      setLedgerError(null);
+      setReceipts([]);
+      if (address) void refresh(address);
+    };
+    const syncNetwork = () => {
+      if (account) void refresh(account);
+    };
+
+    wallet.on("accountsChanged", syncAccount);
+    wallet.on("chainChanged", syncNetwork);
+    return () => {
+      wallet.removeListener?.("accountsChanged", syncAccount);
+      wallet.removeListener?.("chainChanged", syncNetwork);
+    };
+  }, [account, refresh]);
+
   async function onConnect() {
     setBusy(true);
     setError(null);
@@ -92,6 +142,20 @@ export function AdvertiserFlow() {
       setError(describeWalletError(cause));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onRefreshFunds() {
+    setFundsBusy(true);
+    setFundsError(null);
+    try {
+      const connected = await connect();
+      setAccount(connected.address);
+      await refresh(connected.address);
+    } catch (cause) {
+      setFunds(null);
+      setFundsError(describeWalletError(cause));
+      setFundsBusy(false);
     }
   }
 
@@ -152,9 +216,15 @@ export function AdvertiserFlow() {
                 <span className="field-help">placement payment</span>
               </div>
             </dl>
-            <button type="button" className="example-button" onClick={() => void refresh(account)}>
-              Refresh balances
+            <button
+              type="button"
+              className="example-button"
+              disabled={fundsBusy}
+              onClick={() => void onRefreshFunds()}
+            >
+              {fundsBusy ? "Reading Sepolia…" : "Refresh balances"}
             </button>
+            {fundsError && <p className="form-error">{fundsError}</p>}
           </>
         )}
       </Step>
@@ -226,7 +296,9 @@ export function AdvertiserFlow() {
           {!account && <p className="field-help">Connect a wallet to query its receipts.</p>}
           {account && receipts.length === 0 && (
             <p className="field-help">
-              No Graph and RPC verified receipt was found for this payer.
+              {ledgerError
+                ? `Payment history is unavailable: ${ledgerError}`
+                : "No Graph and RPC verified receipt was found for this payer."}
             </p>
           )}
           {receipts.map((receipt) => (

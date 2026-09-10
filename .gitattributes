@@ -1,1 +1,17 @@
+# Keep source files consistent across Windows and Unix checkouts.
 * text=auto eol=lf
+
+# Binary files, which must never be line-ending converted or diffed as text.
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.wasm  binary
+*.woff  binary
+*.woff2 binary
+
+# Generated. Collapsed in diffs so a dependency bump does not bury a review.
+package-lock.json  linguist-generated=true -diff
+bun.lock           linguist-generated=true -diff

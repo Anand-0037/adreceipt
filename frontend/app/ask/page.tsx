@@ -1,17 +1,22 @@
 import { SubjectDecision } from "@/components/SubjectDecision";
+import { PublisherExperienceV2 } from "@/components/PublisherExperienceV2";
 
 export default function AskPage() {
   return (
     <div className="page-stack">
       <section className="intro">
-        <p className="eyebrow">Independent proof for paid AI recommendations</p>
-        <h1>See the payment behind the recommendation.</h1>
+        <p className="eyebrow">Policy-bound agentic advertising</p>
+        <h1>Ask normally. See commercial influence clearly.</h1>
         <p>
-          A Sponsored label is a platform&apos;s claim. AdReceipt allows a paid label only when live
-          Graph data and the Sepolia transaction prove the payment for that exact recommendation.
+          The organic response remains independent. A separate sponsored slot is eligible only in an
+          adult, non-sensitive, relevant context—and becomes verified only with onchain proof.
         </p>
       </section>
-      <SubjectDecision />
+      <PublisherExperienceV2 />
+      <details className="technical-tool">
+        <summary>Verify an existing recommendation commitment</summary>
+        <SubjectDecision />
+      </details>
       <aside className="boundary">
         <p className="eyebrow">Proof boundary</p>
         <p>

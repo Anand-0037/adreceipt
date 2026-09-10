@@ -23,14 +23,17 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AdReceipt — verify paid AI recommendations",
-  description: "Verify a recommendation-bound payment against The Graph and Ethereum Sepolia.",
+  title: "AdReceipt — verifiable agentic advertising",
+  description:
+    "Create context-aware AI ad placements whose policy, content, and payment can be independently verified.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <head>
+        <link rel="describedby" href="/llms.txt" type="text/markdown" />
+        <link rel="service-desc" href="/openapi.json" type="application/vnd.oai.openapi+json" />
         {/*
           Reveal animations are server-rendered at opacity 0 and cleared by JS.
           Without this, a reader with scripting disabled would get a blank page.

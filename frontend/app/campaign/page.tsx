@@ -1,4 +1,5 @@
 import { CampaignBuilder } from "@/components/CampaignBuilder";
+import { CampaignManagerV2 } from "@/components/CampaignManagerV2";
 import { FlowDone } from "@/components/FlowDone";
 import { explorer } from "@/lib/api";
 import { protocol } from "@/lib/protocol";
@@ -7,14 +8,18 @@ export default function CampaignPage() {
   return (
     <div className="page-stack">
       <section className="intro compact-intro">
-        <p className="eyebrow">For advertisers and publishers</p>
-        <h1>Bind payment to the exact recommendation.</h1>
+        <p className="eyebrow">Advertiser control plane</p>
+        <h1>Turn an objective into an authorized campaign.</h1>
         <p>
-          Prepare the public commitment first. The publisher then signs the full quote; the Privy
-          payer can settle only within its Sepolia policy.
+          Set the product, contextual rules, creative and budget. The campaign becomes eligible for
+          placement only after the advertiser signs its exact revision.
         </p>
       </section>
-      <CampaignBuilder />
+      <CampaignManagerV2 />
+      <details className="technical-tool">
+        <summary>Open the V1 commitment utility</summary>
+        <CampaignBuilder />
+      </details>
       <section className="policy-proof" aria-labelledby="policy-title">
         <div>
           <p className="eyebrow">Privy policy</p>
@@ -33,7 +38,7 @@ export default function CampaignPage() {
             </dd>
           </div>
           <div>
-            <dt>Bounded 0.1 USDC settlement</dt>
+            <dt>Bounded settlement</dt>
             <dd>
               <strong>Amount and recipient bounded</strong>
               <span>Verified settlements appear in the live ledger</span>
@@ -86,14 +91,12 @@ export default function CampaignPage() {
         </div>
       </aside>
 
-      {/* The builder used to end here. Funding is the next step of the payer
-          journey, so say so rather than leaving the page a dead end. */}
       <FlowDone
-        title="Commitment prepared. Next: fund and settle"
-        next={{ href: "/advertiser", label: "Back to payer tools" }}
+        title="Campaign signed. Next: match a live context"
+        next={{ href: "/ask", label: "Open the publisher experience" }}
       >
-        Hand these hashes to the publisher so they sign the same commitment. Once they return a
-        signed quote, approve the bounded amount and settle it from the payer tools.
+        Ask a relevant question, pass the safety and relevance gates, authorize the exact placement
+        ticket, then settle and verify its receipt.
       </FlowDone>
     </div>
   );

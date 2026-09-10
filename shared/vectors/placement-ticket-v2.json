@@ -1,0 +1,55 @@
+{
+  "$comment": "Cross-runtime vectors for PlacementTicketV2. Regenerate with `npx hardhat run scripts/ticket-vectors.ts`. Asserted by test/PlacementTicketV2.test.ts (ethers) and cre/placement-authorization/workflow.test.ts (viem).",
+  "contextSalt": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "context": {
+    "schemaVersion": 2,
+    "topics": [
+      "DATASETS",
+      "DEVELOPER_TOOLS",
+      "MACHINE_LEARNING"
+    ],
+    "intent": "COMPARE_OPTIONS",
+    "commercialIntentBand": "HIGH",
+    "coarseLocale": "en-US",
+    "surface": "CHAT_ANSWER",
+    "ageEligibility": "ADULT_DECLARED",
+    "sensitiveClass": "NONE",
+    "personalization": false
+  },
+  "ticket": {
+    "schemaVersion": 2,
+    "ticketNonce": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "campaignRevisionHash": "0x3333333333333333333333333333333333333333333333333333333333333333",
+    "publisher": "0x9999999999999999999999999999999999999999",
+    "contextCommitment": "0xa148ed3ef2bcc5f7035f7f491b2a32aecc6ff1b4f89aebc488dcadaaaf4b00b0",
+    "productRefHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+    "contentHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "policyCommitment": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "policyProofLevel": 1,
+    "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "amount": "1000000",
+    "validUntil": "1800000000",
+    "chainId": "11155111",
+    "settlementContract": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576"
+  },
+  "quote": {
+    "schemaVersion": 1,
+    "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "subjectHash": "0xca983abde6d1f4b498d14e1c62c3e73de0d1adc46e735bb4ae2e3cbdb45f5ffb",
+    "payer": "0x84B5711b5Ff458478A2E55bb4797F5b254517a57",
+    "recipient": "0x5555555555555555555555555555555555555555",
+    "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "amount": "1000000",
+    "validUntil": 1800000000,
+    "nonce": "0x7777777777777777777777777777777777777777777777777777777777777777",
+    "chainId": 11155111,
+    "settlementContract": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576"
+  },
+  "expected": {
+    "contextCommitment": "0xa148ed3ef2bcc5f7035f7f491b2a32aecc6ff1b4f89aebc488dcadaaaf4b00b0",
+    "ticketCommitment": "0xb5af086cbd6dad74469321f72fff1afb3712ebb2b5aa17f1699c58d5cb8a73f4",
+    "subjectHash": "0xca983abde6d1f4b498d14e1c62c3e73de0d1adc46e735bb4ae2e3cbdb45f5ffb",
+    "receiptId": "0x472560983c7cea60166c7758f175ddc28dc013056752d187edf93ab137855526"
+  }
+}

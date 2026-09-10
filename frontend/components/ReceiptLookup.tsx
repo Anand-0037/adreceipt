@@ -1,7 +1,12 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-import { api, type VerificationResult } from "@/lib/api";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  api,
+  placementApi,
+  type PlacementEvidenceBundleV2,
+  type VerificationResult,
+} from "@/lib/api";
 import { ReceiptResult } from "./ReceiptResult";
 
 const BYTES32 = /^0x[0-9a-fA-F]{64}$/;
@@ -16,13 +21,35 @@ export function ReceiptLookup({
   const [receiptId, setReceiptId] = useState(initialId);
   const [atBlock, setAtBlock] = useState("");
   const [result, setResult] = useState<VerificationResult | null>(null);
+  const [bundle, setBundle] = useState<PlacementEvidenceBundleV2 | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  const verify = useCallback(async (value: string, block?: number) => {
+    setLoading(true);
     setError("");
     setResult(null);
+    setBundle(null);
+    try {
+      const verified = await api.verifyReceipt(value, block);
+      setResult(verified);
+      if (verified.status === "PAID_VERIFIED") {
+        setBundle(await placementApi.evidence(value).catch(() => null));
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The verifier request failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const value = initialId.trim();
+    if (BYTES32.test(value)) void verify(value);
+  }, [initialId, verify]);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
     if (!BYTES32.test(receiptId.trim())) {
       setError("Enter a 32-byte receipt ID beginning with 0x.");
       return;
@@ -32,14 +59,7 @@ export function ReceiptLookup({
       setError("Historical block must be a positive integer.");
       return;
     }
-    setLoading(true);
-    try {
-      setResult(await api.verifyReceipt(receiptId.trim(), block));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The verifier request failed.");
-    } finally {
-      setLoading(false);
-    }
+    await verify(receiptId.trim(), block);
   }
 
   return (
@@ -88,7 +108,7 @@ export function ReceiptLookup({
           aria-busy="true"
         />
       )}
-      {result && <ReceiptResult result={result} compact={compact} />}
+      {result && <ReceiptResult result={result} compact={compact} bundle={bundle} />}
     </div>
   );
 }

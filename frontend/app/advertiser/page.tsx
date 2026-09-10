@@ -1,22 +1,22 @@
-import { AdvertiserFlow } from "@/components/AdvertiserFlow";
+import { CampaignManagerV2 } from "@/components/CampaignManagerV2";
 
 export const metadata = {
-  title: "Advertiser · AdReceipt",
-  description: "Validate a signed placement quote, settle it, and read back verified receipts.",
+  title: "Advertiser agent · AdReceipt",
+  description: "Turn a product objective and budget into an advertiser-authorized campaign.",
 };
 
 export default function AdvertiserPage() {
   return (
     <div className="page-stack">
       <section className="intro compact-intro">
-        <p className="eyebrow">For advertisers</p>
-        <h1>Pay only for the recommendation you approved.</h1>
+        <p className="eyebrow">Advertiser agent</p>
+        <h1>Describe the outcome. Review the campaign.</h1>
         <p>
-          Connect the wallet named in a publisher-signed quote. AdReceipt validates the complete
-          authorization before requesting a bounded approval and direct test USDC settlement.
+          The agent drafts contextual targeting and creative from your brief. You review the exact
+          campaign revision and authorize it with your wallet before it can buy a placement.
         </p>
       </section>
-      <AdvertiserFlow />
+      <CampaignManagerV2 />
     </div>
   );
 }

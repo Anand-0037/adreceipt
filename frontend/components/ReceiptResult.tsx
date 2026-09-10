@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   explorer,
+  type PlacementEvidenceBundleV2,
   type ReceiptEvidence,
   type ReceiptStatus,
   type VerificationResult,
@@ -88,9 +89,11 @@ function ReceiptFields({ receipt }: { receipt: ReceiptEvidence }) {
 export function ReceiptResult({
   result,
   compact = false,
+  bundle = null,
 }: {
   result: VerificationResult;
   compact?: boolean;
+  bundle?: PlacementEvidenceBundleV2 | null;
 }) {
   const copy = STATUS_COPY[result.status];
   const receipt = result.evidence?.graph.receipt;
@@ -105,6 +108,78 @@ export function ReceiptResult({
       </div>
       <p className="result-summary">{copy.summary}</p>
       <p className="reason">{result.reason}</p>
+      {receipt && result.status === "PAID_VERIFIED" && (
+        <div className="receipt-human-summary">
+          <p className="eyebrow">Sponsorship payment verified</p>
+          <h3>
+            {Number(receipt.amount) / 1_000_000} test USDC was paid for this exact sponsored
+            placement.
+          </h3>
+          <p>
+            The Graph discovered the receipt and Sepolia RPC independently confirmed the transaction
+            and event fields.
+          </p>
+          {bundle && (
+            <>
+              <dl className="receipt-story">
+                <div>
+                  <dt>Advertiser</dt>
+                  <dd>{bundle.campaign.manifest.brandDisplayName}</dd>
+                </div>
+                <div>
+                  <dt>Sponsored text</dt>
+                  <dd>{bundle.placement.displayText}</dd>
+                </div>
+                <div>
+                  <dt>Why matched</dt>
+                  <dd>
+                    {bundle.decision.context.topics
+                      .map((topic) => topic.toLowerCase().replaceAll("_", " "))
+                      .join(" · ")}{" "}
+                    · {bundle.decision.context.intent.toLowerCase().replaceAll("_", " ")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Personalization</dt>
+                  <dd>Off</dd>
+                </div>
+                <div>
+                  <dt>Sensitive context</dt>
+                  <dd>
+                    {bundle.decision.context.sensitiveClass === "NONE"
+                      ? "None"
+                      : bundle.decision.context.sensitiveClass}
+                  </dd>
+                </div>
+              </dl>
+              <ol className="verification-chain" aria-label="Verification chain">
+                <li>
+                  Advertiser signed campaign <strong>✓</strong>
+                </li>
+                <li>
+                  Context matched safely <strong>✓</strong>
+                </li>
+                <li>
+                  Private policy authorized{" "}
+                  <strong>{bundle.placement.authorization.proofLevel} ✓</strong>
+                </li>
+                <li>
+                  Publisher signed placement <strong>✓</strong>
+                </li>
+                <li>
+                  Privy payment confirmed <strong>✓</strong>
+                </li>
+                <li>
+                  The Graph indexed receipt <strong>✓</strong>
+                </li>
+                <li>
+                  Sepolia RPC corroborated it <strong>✓</strong>
+                </li>
+              </ol>
+            </>
+          )}
+        </div>
+      )}
       {result.evidence && (
         <dl className="graph-health" aria-label="Graph freshness">
           <div>
@@ -127,7 +202,12 @@ export function ReceiptResult({
           </div>
         </dl>
       )}
-      {receipt && !compact && <ReceiptFields receipt={receipt} />}
+      {receipt && !compact && (
+        <details className="cryptographic-evidence">
+          <summary>View cryptographic evidence</summary>
+          <ReceiptFields receipt={receipt} />
+        </details>
+      )}
       {receipt && compact && (
         <Link className="text-link" href={`/receipts/${receipt.id}`}>
           Open complete evidence →

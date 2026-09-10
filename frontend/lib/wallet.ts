@@ -1,6 +1,13 @@
 "use client";
 
-import { BrowserProvider, Contract, formatEther, formatUnits, type Eip1193Provider } from "ethers";
+import {
+  BrowserProvider,
+  Contract,
+  formatEther,
+  formatUnits,
+  id,
+  type Eip1193Provider,
+} from "ethers";
 import { protocol } from "./protocol";
 
 /**
@@ -79,6 +86,10 @@ export async function balances(address: string): Promise<Balances> {
   const eth = injected();
   if (!eth) throw new Error("No wallet");
   const provider = new BrowserProvider(eth);
+  const network = await provider.getNetwork();
+  if (network.chainId !== SEPOLIA_CHAIN_ID) {
+    throw new Error("Switch your wallet to Ethereum Sepolia, then refresh the balances.");
+  }
 
   const native = await provider.getBalance(address);
   const token = new Contract(USDC, ERC20_ABI as unknown as string[], provider);
@@ -133,4 +144,48 @@ export async function signAuthorisation(message: string): Promise<string> {
   if (!eth) throw new Error("No wallet");
   const signer = await new BrowserProvider(eth).getSigner();
   return signer.signMessage(message);
+}
+
+/** Sign the exact server-produced CampaignManifestV2 EIP-712 payload. */
+export async function signCampaignTypedData(typedData: {
+  domain: Record<string, unknown>;
+  types: readonly { readonly name: string; readonly type: string }[];
+  message: Record<string, string | number>;
+}): Promise<string> {
+  const eth = injected();
+  if (!eth) throw new Error("No wallet");
+  const signer = await new BrowserProvider(eth).getSigner();
+  return signer.signTypedData(
+    typedData.domain,
+    { CampaignManifestV2: [...typedData.types] },
+    typedData.message,
+  );
+}
+
+export async function signCampaignPause(input: {
+  domain: Record<string, unknown>;
+  campaignId: string;
+  campaignRevisionHash: string;
+  validUntil: number;
+}): Promise<string> {
+  const eth = injected();
+  if (!eth) throw new Error("No wallet");
+  const signer = await new BrowserProvider(eth).getSigner();
+  return signer.signTypedData(
+    input.domain,
+    {
+      CampaignActionV2: [
+        { name: "campaignId", type: "bytes32" },
+        { name: "campaignRevisionHash", type: "bytes32" },
+        { name: "actionHash", type: "bytes32" },
+        { name: "validUntil", type: "uint64" },
+      ],
+    },
+    {
+      campaignId: input.campaignId,
+      campaignRevisionHash: input.campaignRevisionHash,
+      actionHash: id("PAUSE"),
+      validUntil: input.validUntil,
+    },
+  );
 }

@@ -193,7 +193,7 @@ export function parseSignedQuote(raw: string, now = Math.floor(Date.now() / 1000
   ) {
     throw new Error("The signed quote contains a malformed hash or signature.");
   }
-  if (subject.disclosureVersion !== 1 || quote.schemaVersion !== SCHEMA_VERSION) {
+  if (![1, 2].includes(subject.disclosureVersion) || quote.schemaVersion !== SCHEMA_VERSION) {
     throw new Error("This quote uses an unsupported AdReceipt schema.");
   }
   if (quote.chainId !== protocol.chainId)

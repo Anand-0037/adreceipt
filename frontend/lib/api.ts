@@ -95,7 +95,9 @@ function parseVerification(value: unknown): VerificationResult {
 async function get(path: string): Promise<unknown> {
   const response = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
   const body = await response.json().catch(() => null);
-  if (!response.ok && !(response.status === 503 && isObject(body))) {
+  const unavailableVerification =
+    response.status === 503 && isObject(body) && body.status === "UNAVAILABLE";
+  if (!response.ok && !unavailableVerification) {
     const error = isObject(body) ? body : {};
     throw new ApiError(
       response.status,
@@ -231,6 +233,280 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return body as T;
 }
+
+export type CampaignStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED";
+export type AgeEligibility = "ADULT_DECLARED" | "UNDER_18" | "UNKNOWN";
+
+export interface CampaignManifestV2 {
+  schemaVersion: 2;
+  campaignId: string;
+  revision: number;
+  status: CampaignStatus;
+  campaignRevisionHash: string;
+  advertiserWallet: string;
+  brandDisplayName: string;
+  productRef: string;
+  landingPage: string;
+  objective: "WEBSITE_VISIT";
+  settlementAsset: string;
+  totalBudget: string;
+  maxPlacementAmount: string;
+  targetTopics: string[];
+  targetIntents: string[];
+  allowedLocales: string[];
+  blockedContextClasses: string[];
+  creativeHeadline: string;
+  creativeBody: string;
+  validFrom: string;
+  validUntil: string;
+}
+
+export interface CampaignTypedData {
+  domain: { name: string; version: string; chainId: number; verifyingContract: string };
+  primaryType: string;
+  types: readonly { readonly name: string; readonly type: string }[];
+  message: Record<string, string | number>;
+}
+
+export interface CampaignRecordV2 {
+  manifest: CampaignManifestV2;
+  typedData: CampaignTypedData;
+  advertiserSignature?: string;
+  approvedAt?: string;
+}
+
+export interface CampaignInputV2 {
+  advertiserWallet: string;
+  brandDisplayName: string;
+  productRef: string;
+  landingPage: string;
+  objective: "WEBSITE_VISIT";
+  settlementAsset: string;
+  totalBudget: string;
+  maxPlacementAmount: string;
+  targetTopics: string[];
+  targetIntents: string[];
+  allowedLocales: string[];
+  blockedContextClasses: string[];
+  creativeHeadline: string;
+  creativeBody: string;
+  validFrom: string;
+  validUntil: string;
+}
+
+export interface ContextDecisionV2 {
+  decisionId: string;
+  status: "ELIGIBLE" | "SUPPRESSED" | "NO_MATCH" | "UNAVAILABLE";
+  reasonCode: string;
+  context: {
+    topics: string[];
+    intent: string;
+    commercialIntentBand: string;
+    coarseLocale: string;
+    sensitiveClass: string;
+    ageEligibility: AgeEligibility;
+    personalization: false;
+    contextCommitment: string;
+  };
+  winner?: {
+    campaignId: string;
+    revision: number;
+    relevance: string;
+    campaign: CampaignManifestV2;
+  };
+  rejected: { campaignId: string; reasonCode: string }[];
+}
+
+export interface PlacementRecordV2 {
+  placementId: string;
+  decisionId: string;
+  campaignId: string;
+  ticket: {
+    schemaVersion: 2;
+    ticketNonce: string;
+    campaignId: string;
+    campaignRevisionHash: string;
+    publisher: string;
+    contextCommitment: string;
+    productRefHash: string;
+    contentHash: string;
+    policyCommitment: string;
+    policyProofLevel: 1;
+    asset: string;
+    amount: string;
+    validUntil: string;
+    chainId: string;
+    settlementContract: string;
+  };
+  subject: {
+    publisher: string;
+    placementId: string;
+    productRefHash: string;
+    contentHash: string;
+    disclosureVersion: 2;
+  };
+  quote: {
+    schemaVersion: 1;
+    campaignId: string;
+    subjectHash: string;
+    payer: string;
+    recipient: string;
+    asset: string;
+    amount: string;
+    validUntil: number;
+    nonce: string;
+    chainId: number;
+    settlementContract: string;
+  };
+  authorization: {
+    proofLevel: "CRE_SIMULATED";
+    eligible: true;
+    ticketCommitment: string;
+    quoteId: string;
+    campaignRevisionHash: string;
+    contextCommitment: string;
+    policyCommitment: string;
+    policyProofLevel: 1;
+    simulation: { broadcast: false };
+  };
+  signedQuote?: {
+    subject: PlacementRecordV2["subject"];
+    quote: PlacementRecordV2["quote"];
+    signature: string;
+    receiptId: string;
+  };
+  receiptId: string;
+  displayText: string;
+  landingPage: string;
+  status: "AUTHORIZED" | "SIGNED" | "PAID_VERIFIED" | "INVALID";
+}
+
+export interface PlacementMetricsV2 {
+  campaignId: string;
+  verifiedPlacements: number;
+  spendAtomic: string;
+  impressions: number;
+  clicks: number;
+  ctrPercent: string | null;
+  effectiveCpcAtomic: string | null;
+  effectiveCpmAtomic: string | null;
+}
+
+export interface V2RuntimeStatus {
+  schemaVersion: 2;
+  storage: "configured" | "unavailable";
+  organicAnswer: "configured-unverified" | "unavailable";
+  policyProofLevel: "CRE_SIMULATED";
+  settlement: "PlacementSettlementV1";
+  placementBindings:
+    | {
+        publisher: string;
+        payer: string;
+        recipient: string;
+      }
+    | "unavailable";
+}
+
+export interface PlacementEvidenceBundleV2 {
+  placement: PlacementRecordV2;
+  decision: ContextDecisionV2;
+  campaign: CampaignRecordV2;
+}
+
+export const campaignApi = {
+  suggest: (input: { brief: string; brandDisplayName: string; productRef: string }) =>
+    request<{
+      targetTopics: string[];
+      targetIntents: string[];
+      creativeHeadline: string;
+      creativeBody: string;
+      provider: "GroqCloud";
+      model: string;
+      requiresHumanApproval: true;
+    }>("/v2/campaigns/suggest", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  create: (input: CampaignInputV2) =>
+    request<CampaignRecordV2>("/v2/campaigns", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  list: () => request<{ campaigns: CampaignRecordV2[] }>("/v2/campaigns"),
+  approve: (campaign: CampaignRecordV2, signature: string) =>
+    request<CampaignRecordV2>(
+      `/v2/campaigns/${campaign.manifest.campaignId}/revisions/${campaign.manifest.revision}/approve`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          revisionHash: campaign.manifest.campaignRevisionHash,
+          signature,
+        }),
+      },
+    ),
+  pause: (campaignId: string, signature: string, validUntil: number) =>
+    request<CampaignRecordV2>(`/v2/campaigns/${campaignId}/pause`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signature, validUntil }),
+    }),
+  decide: (query: string, ageEligibility: AgeEligibility, coarseLocale = "en") =>
+    request<ContextDecisionV2>("/v2/decisions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query, ageEligibility, coarseLocale }),
+    }),
+  answer: (query: string) =>
+    request<{ text: string; provider: "GroqCloud"; model: string; storedByApplication: false }>(
+      "/v2/answers",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query }),
+      },
+    ),
+};
+
+export const placementApi = {
+  status: () => request<V2RuntimeStatus>("/v2/status"),
+  get: (placementId: string) =>
+    request<PlacementRecordV2>(`/v2/placements/${encodeURIComponent(placementId)}`),
+  evidence: (receiptId: string) =>
+    request<PlacementEvidenceBundleV2>(`/v2/receipts/${encodeURIComponent(receiptId)}/evidence`),
+  prepare: (input: { decisionId: string; amount: string }) =>
+    request<PlacementRecordV2>("/v2/placements", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  sign: (placementId: string, signature: string) =>
+    request<PlacementRecordV2>(`/v2/placements/${placementId}/sign`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signature }),
+    }),
+  verify: (placementId: string) =>
+    request<{ placement: PlacementRecordV2; verification: VerificationResult }>(
+      `/v2/placements/${placementId}/verify`,
+      { method: "POST" },
+    ),
+  measure: (
+    placementId: string,
+    kind: "IMPRESSION" | "CLICK",
+    eventId: string,
+    sessionId: string,
+  ) =>
+    request<PlacementMetricsV2>(`/v2/placements/${placementId}/measurements`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind, eventId, sessionId }),
+    }),
+  metrics: (campaignId: string) =>
+    request<PlacementMetricsV2>(`/v2/campaigns/${campaignId}/metrics`),
+};
 
 export const domainApi = {
   /** Live DNS check. No gas, no writes, no authentication needed. */

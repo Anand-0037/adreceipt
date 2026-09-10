@@ -1,23 +1,51 @@
 {
   "schedule": "0 */1 * * * *",
   "schemaVersion": 1,
-  "quoteId": "0x7232e186f76f24b18ca6d38836bb03c5a1ad551a026dca67be74c18abaddf1e9",
+  "quoteId": "0x99ac623aac1c6f78cdcce5b382274d6370f16dd2675ebe7206aac748b3fcecff",
   "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
-  "subjectHash": "0x6696182b952e1854487402ac581aa8bcc709f90eaaf4a09c90c16e4a9428143c",
+  "subjectHash": "0x5d965ce364b8cac37fee1f76485320bb983705dbb6af248f76e08f2ce98a1f2c",
   "payer": "0x84B5711b5Ff458478A2E55bb4797F5b254517a57",
   "recipient": "0x5555555555555555555555555555555555555555",
   "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
   "amount": "1000001",
   "chainId": "11155111",
-  "settlementContract": "0x6666666666666666666666666666666666666666",
+  "settlementContract": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576",
   "validUntil": "1800000000",
   "nonce": "0x8888888888888888888888888888888888888888888888888888888888888888",
   "policySecretId": "CAMPAIGN_POLICY",
   "subject": {
     "publisher": "0x9999999999999999999999999999999999999999",
-    "placementId": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "placementId": "0x29ddf4f6a3f0ba00d5ad96e5bca2d9301e91a96fbad3f05ef8605bfd89cddab4",
     "productRefHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
     "contentHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "disclosureVersion": 1
+    "disclosureVersion": 2
+  },
+  "ticket": {
+    "schemaVersion": 2,
+    "ticketNonce": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "campaignId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "campaignRevisionHash": "0x3333333333333333333333333333333333333333333333333333333333333333",
+    "publisher": "0x9999999999999999999999999999999999999999",
+    "contextCommitment": "0xa148ed3ef2bcc5f7035f7f491b2a32aecc6ff1b4f89aebc488dcadaaaf4b00b0",
+    "productRefHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+    "contentHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "policyCommitment": "0xbc15cf0e3d8da0f6955626e06d96908dff604dd71ce6477d456b4f057d3d08e8",
+    "policyProofLevel": 1,
+    "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "amount": "1000001",
+    "validUntil": "1800000000",
+    "chainId": "11155111",
+    "settlementContract": "0x2fB6889Cc142C622a0479aF56b75B98beAeD3576"
+  },
+  "context": {
+    "schemaVersion": 2,
+    "topics": ["DATASETS", "DEVELOPER_TOOLS", "MACHINE_LEARNING"],
+    "intent": "COMPARE_OPTIONS",
+    "commercialIntentBand": "HIGH",
+    "coarseLocale": "en-US",
+    "surface": "CHAT_ANSWER",
+    "ageEligibility": "ADULT_DECLARED",
+    "sensitiveClass": "NONE",
+    "personalization": false
   }
 }
