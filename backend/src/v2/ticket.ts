@@ -286,7 +286,35 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       quoteId: match[3].toLowerCase(),
       policyCommitment: match[4].toLowerCase(),
     };
-  } catch {
+  } catch (error) {
+    const failure = error as NodeJS.ErrnoException & {
+      killed?: boolean;
+      signal?: string;
+      stderr?: string;
+      stdout?: string;
+    };
+    const diagnostic = `${failure.message ?? ""}\n${failure.stderr ?? ""}`.toLowerCase();
+    const category =
+      failure.code === "ENOENT"
+        ? "CLI_NOT_FOUND"
+        : failure.killed || failure.signal
+          ? "CLI_TIMEOUT"
+          : /unauth|login|token|credential|401|403/.test(diagnostic)
+            ? "AUTHENTICATION"
+            : /config|yaml|target|context/.test(diagnostic)
+              ? "CONFIGURATION"
+              : /compile|build|wasm|bun/.test(diagnostic)
+                ? "COMPILATION"
+                : /network|connect|timeout|dns/.test(diagnostic)
+                  ? "NETWORK"
+                  : "UNKNOWN";
+    console.error("CRE simulation failed", {
+      category,
+      code: failure.code ?? null,
+      signal: failure.signal ?? null,
+      stdoutBytes: Buffer.byteLength(failure.stdout ?? ""),
+      stderrBytes: Buffer.byteLength(failure.stderr ?? ""),
+    });
     throw new Error("CRE_SIMULATION_UNAVAILABLE");
   } finally {
     await rm(directory, { recursive: true, force: true });
