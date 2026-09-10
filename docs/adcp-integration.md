@@ -1,5 +1,9 @@
 # AdCP integration boundary
 
+> **Status:** the four-tool adapter described below is implemented. See
+> [adcp-mcp-adapter.md](./adcp-mcp-adapter.md) for how to run it, the request mapping, the runtime
+> conformance boundary, and what is and is not verified. This document remains the design rationale.
+
 AdReceipt should integrate with Ad Context Protocol as a trust and settlement extension for
 agent-bought advertising. It should not fork AdCP's media-buy vocabulary or claim conformance before
 an actual MCP transport passes the AdCP storyboards.
