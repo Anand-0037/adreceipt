@@ -298,7 +298,8 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       stderr?: string;
       stdout?: string;
     };
-    const diagnostic = `${failure.message ?? ""}\n${failure.stderr ?? ""}`.toLowerCase();
+    const stderr = failure.stderr ?? "";
+    const diagnostic = stderr.toLowerCase();
     const category =
       failure.code === "ENOENT"
         ? "CLI_NOT_FOUND"
@@ -318,7 +319,16 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       code: failure.code ?? null,
       signal: failure.signal ?? null,
       stdoutBytes: Buffer.byteLength(failure.stdout ?? ""),
-      stderrBytes: Buffer.byteLength(failure.stderr ?? ""),
+      stderrBytes: Buffer.byteLength(stderr),
+      indicators: {
+        bun: /\bbun\b/.test(diagnostic),
+        missing: /not found|no such file|does not exist/.test(diagnostic),
+        permission: /permission denied|operation not permitted/.test(diagnostic),
+        authentication: /unauth|login|token|credential|401|403/.test(diagnostic),
+        configuration: /config|yaml|target|context/.test(diagnostic),
+        compilation: /compile|build|wasm/.test(diagnostic),
+        network: /network|connect|timeout|dns/.test(diagnostic),
+      },
     });
     throw new Error("CRE_SIMULATION_UNAVAILABLE");
   } finally {
