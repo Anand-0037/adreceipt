@@ -328,6 +328,11 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
         configuration: /config|yaml|target|context/.test(diagnostic),
         compilation: /compile|build|wasm/.test(diagnostic),
         network: /network|connect|timeout|dns/.test(diagnostic),
+        executable: /executable|fork\/exec/.test(diagnostic),
+        workflow: /workflow|main\.ts/.test(diagnostic),
+        dependencies: /node_modules|package\.json|module/.test(diagnostic),
+        credentialsFile: /cre\.yaml|context\.yaml/.test(diagnostic),
+        directory: /directory|path/.test(diagnostic),
       },
     });
     throw new Error("CRE_SIMULATION_UNAVAILABLE");
