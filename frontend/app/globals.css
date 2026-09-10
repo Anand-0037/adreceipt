@@ -1498,6 +1498,35 @@ legend {
   padding: 4px 18px 18px;
 }
 
+.operation-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--pending);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.operation-status-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--pending);
+  animation: operation-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes operation-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .advanced-targeting {
   border: var(--edge);
   background: var(--wash);

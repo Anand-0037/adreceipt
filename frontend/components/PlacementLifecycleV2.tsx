@@ -80,6 +80,7 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
   const [operatorToken, setOperatorToken] = useState("");
   const [settlementTx, setSettlementTx] = useState("");
   const [busy, setBusy] = useState(false);
+  const [operationStatus, setOperationStatus] = useState("");
   const [error, setError] = useState("");
   const card = useRef<HTMLElement | null>(null);
   const impressionSent = useRef(false);
@@ -131,6 +132,9 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
   async function prepare() {
     if (!campaign) return;
     setBusy(true);
+    setOperationStatus(
+      "Running the confidential campaign-policy simulation. The hosted CRE check can take about 30 seconds.",
+    );
     setError("");
     try {
       if (!runtime || runtime.placementBindings === "unavailable") {
@@ -146,12 +150,14 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
       setError(cause instanceof Error ? cause.message : "Ticket authorization failed.");
     } finally {
       setBusy(false);
+      setOperationStatus("");
     }
   }
 
   async function sign() {
     if (!placement) return;
     setBusy(true);
+    setOperationStatus("Waiting for the publisher wallet to sign this exact placement quote.");
     setError("");
     try {
       const signed = await signQuote(placement.subject, placement.quote);
@@ -160,12 +166,14 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
       setError(describeWalletError(cause));
     } finally {
       setBusy(false);
+      setOperationStatus("");
     }
   }
 
   async function verify() {
     if (!placement) return;
     setBusy(true);
+    setOperationStatus("Checking the indexed receipt against canonical Sepolia RPC evidence.");
     setError("");
     try {
       const result = await placementApi.verify(placement.placementId);
@@ -175,12 +183,16 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
       setError(cause instanceof Error ? cause.message : "Receipt verification failed.");
     } finally {
       setBusy(false);
+      setOperationStatus("");
     }
   }
 
   async function settle() {
     if (!placement) return;
     setBusy(true);
+    setOperationStatus(
+      "Privy is submitting the bounded payment. AdReceipt will then wait for The Graph and verify it against Sepolia RPC.",
+    );
     setError("");
     try {
       const result = await placementApi.settle(placement.placementId, operatorToken);
@@ -200,6 +212,7 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
       setError(cause instanceof Error ? cause.message : "Settlement failed.");
     } finally {
       setBusy(false);
+      setOperationStatus("");
     }
   }
 
@@ -268,7 +281,7 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
         <p className="eyebrow">Verification chain</p>
         <ProofTimeline placement={placement} />
       </div>
-      <details className="developer-trace" open={placement?.status === "PAID_VERIFIED"}>
+      <details className="developer-trace" open={placement?.status !== "PAID_VERIFIED"}>
         <summary>Developer proof trace</summary>
         <div className="developer-trace-body">
           <p className="eyebrow">PlacementTicketV2</p>
@@ -411,6 +424,12 @@ export function PlacementLifecycleV2({ decision }: { decision: ContextDecisionV2
           )}
         </div>
       </details>
+      {operationStatus && (
+        <p className="operation-status" role="status" aria-live="polite">
+          <span className="operation-status-dot" aria-hidden="true" />
+          {operationStatus}
+        </p>
+      )}
       {placement?.status === "PAID_VERIFIED" && (
         <article ref={card} className="sponsored-candidate sponsored-verified">
           <div className="candidate-label">Sponsored · Verified ✓</div>

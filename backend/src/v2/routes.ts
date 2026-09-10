@@ -8,7 +8,11 @@ import { createOrganicAnswer } from "./answer";
 import { verifyReceipt } from "../receipts/service";
 import { queryReceiptsByCampaign } from "../receipts/by-payer";
 import { verifyReceiptCollection } from "../receipts/ledger";
-import { attachPublisherSignature, preparePlacement } from "./ticket";
+import {
+  assertPlacementEvidenceConsistency,
+  attachPublisherSignature,
+  preparePlacement,
+} from "./ticket";
 import { suggestCampaign } from "./agent";
 import { authorizeOperator, operatorSettlementReady } from "./operator";
 import { settleSignedPlacement } from "./settlement";
@@ -118,6 +122,13 @@ function placementError(error: unknown): never {
   }
   if (message === "PLACEMENT_NOT_FOUND") {
     throw notFound("placement-not-found", "Placement ticket not found.");
+  }
+  if (message === "PLACEMENT_EVIDENCE_MISMATCH") {
+    throw new HttpError(
+      409,
+      "placement-evidence-mismatch",
+      "Stored campaign, decision, and placement evidence do not agree.",
+    );
   }
   if (message === "PLACEMENT_NOT_SIGNED") {
     throw badRequest(
@@ -290,6 +301,7 @@ v2Routes.get(
         v2Store.getCampaign(placement.campaignId),
       ]);
       if (!decision || !campaign) throw new Error("PLACEMENT_EVIDENCE_INCOMPLETE");
+      assertPlacementEvidenceConsistency({ placement, decision, campaign });
       const { privateSalt: _privateSalt, ...publicDecision } = decision;
       return res.json({ placement, decision: publicDecision, campaign });
     } catch (error) {

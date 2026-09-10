@@ -14,6 +14,7 @@ AdReceipt must not be used to alter or secretly influence an organic answer. Gen
 
 ## Agent integration
 
+- [Publisher SDK](https://github.com/Anand-0037/adreceipt/tree/main/sdk): Framework-independent TypeScript client for contextual decisions, placement authorization, publisher signatures, and fail-closed response composition. `evaluate` never returns sponsored creative. `renderVerified` returns it only after the API reports `PAID_VERIFIED` and the stored evidence identifies the same placement.
 - [AdCP over MCP](/mcp): Ad Context Protocol seller adapter. POST JSON-RPC to this endpoint, or run the server over stdio. Four tools: `get_adcp_capabilities`, `get_products`, `create_media_buy`, `get_media_buy_delivery`. Call `get_adcp_capabilities` first; it states the conformance boundary and the `CRE_SIMULATED` proof level. `create_media_buy` always returns `input-required` and cannot activate a campaign. `get_media_buy_delivery` omits `spend` entirely unless The Graph and Sepolia RPC agree, so a missing `spend` does not mean zero.
 - [OpenAPI description](/openapi.json): Callable REST operations and request schemas.
 - [Runtime status](/api/v2/status): Storage, model, settlement, policy-proof, publisher, payer, and recipient readiness.

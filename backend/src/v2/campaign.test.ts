@@ -8,6 +8,7 @@ import {
   CAMPAIGN_ACTION_TYPES,
   decideCampaign,
   hashContextEnvelope,
+  normalizeLocale,
   type CampaignInput,
   type PublicContext,
   verifyCampaignAction,
@@ -68,6 +69,13 @@ test("campaign hash and approval bind the advertiser input", async () => {
     record.manifest.campaignId,
   );
   assert.notEqual(changed.manifest.campaignRevisionHash, record.manifest.campaignRevisionHash);
+});
+
+test("campaign and request locales use canonical BCP 47 values", async () => {
+  assert.equal(normalizeLocale("EN-us"), "en-US");
+  const record = buildCampaign({ ...input, allowedLocales: ["EN-us", "en-US"] });
+  assert.deepEqual(record.manifest.allowedLocales, ["en-US"]);
+  assert.throws(() => buildCampaign({ ...input, allowedLocales: ["not_a_locale"] }), /BCP 47/);
 });
 
 test("campaign pause requires a fresh advertiser action signature", async () => {
@@ -136,6 +144,34 @@ test("eligible context selects a relevant active campaign", async () => {
   assert.equal(decision.winner?.campaign.productRef, "kaggle-ingest");
   assert.equal("query" in decision.context, false);
   assert.equal("privateSalt" in decision.context, false);
+});
+
+test("language-wide campaigns accept regional locales without weakening regional targeting", async () => {
+  const broad = await activeCampaign();
+  const regional = await activeCampaign();
+  regional.manifest.allowedLocales = ["en-US"];
+
+  const broadDecision = decideCampaign({
+    decisionId: randomUUID(),
+    query: "How can I load Kaggle datasets into my coding agent?",
+    ageEligibility: "ADULT_DECLARED",
+    coarseLocale: "EN-in",
+    campaigns: [broad],
+    now,
+  });
+  assert.equal(broadDecision.status, "ELIGIBLE");
+  assert.equal(broadDecision.context.coarseLocale, "en-IN");
+
+  const regionalDecision = decideCampaign({
+    decisionId: randomUUID(),
+    query: "How can I load Kaggle datasets into my coding agent?",
+    ageEligibility: "ADULT_DECLARED",
+    coarseLocale: "en-IN",
+    campaigns: [regional],
+    now,
+  });
+  assert.equal(regionalDecision.status, "NO_MATCH");
+  assert.equal(regionalDecision.reasonCode, "LOCALE_NOT_ALLOWED");
 });
 
 test("a tool-discovery question is not downgraded by the problem it should solve", async () => {

@@ -199,6 +199,35 @@ export interface PlacementMetrics {
   effectiveCpmAtomic: string | null;
 }
 
+export function assertPlacementEvidenceConsistency(args: {
+  placement: PlacementRecord;
+  decision: ContextDecision;
+  campaign: CampaignRecord;
+}): void {
+  const { placement, decision, campaign } = args;
+  const manifest = campaign.manifest;
+  const displayText = `${manifest.creativeHeadline}\n${manifest.creativeBody}`;
+  const same = (left: string, right: string) => left.toLowerCase() === right.toLowerCase();
+  if (
+    placement.decisionId !== decision.decisionId ||
+    decision.status !== "ELIGIBLE" ||
+    !decision.winner ||
+    !same(placement.campaignId, manifest.campaignId) ||
+    !same(decision.winner.campaignId, manifest.campaignId) ||
+    decision.winner.revision !== manifest.revision ||
+    !same(placement.ticket.campaignId, manifest.campaignId) ||
+    !same(placement.quote.campaignId, manifest.campaignId) ||
+    !same(placement.ticket.campaignRevisionHash, manifest.campaignRevisionHash) ||
+    !same(placement.ticket.contextCommitment, decision.context.contextCommitment) ||
+    !same(placement.subject.contentHash, placement.ticket.contentHash) ||
+    !same(placement.ticket.contentHash, id(displayText)) ||
+    placement.displayText !== displayText ||
+    placement.landingPage !== manifest.landingPage
+  ) {
+    throw new Error("PLACEMENT_EVIDENCE_MISMATCH");
+  }
+}
+
 function address(value: unknown, field: string): string {
   if (typeof value !== "string" || !isAddress(value)) throw new Error(`${field} is invalid`);
   const normalized = getAddress(value);

@@ -231,6 +231,10 @@ export function PublisherExperienceV2() {
                 <dd>{human(decision.context.intent)}</dd>
               </div>
               <div>
+                <dt>Locale</dt>
+                <dd>{decision.context.coarseLocale}</dd>
+              </div>
+              <div>
                 <dt>Safety</dt>
                 <dd>{human(decision.context.sensitiveClass)}</dd>
               </div>

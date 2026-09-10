@@ -91,7 +91,7 @@ The advertiser starts with a plain-language brief instead of a large ad-manager 
 
 ### For AI publishers
 
-The publisher keeps the organic answer separate from advertising. For an eligible query, it can request an exact placement ticket, obtain a signed quote, and receive payment through the existing settlement protocol.
+The publisher keeps the organic answer separate from advertising. For an eligible query, it can request an exact placement ticket, obtain a signed quote, and receive payment through the existing settlement protocol. The framework-independent [publisher SDK](sdk/README.md) wraps this lifecycle and releases sponsored creative only after live verification returns `PAID_VERIFIED`.
 
 ### For users and auditors
 
@@ -344,6 +344,7 @@ backend/src/receipts/          Graph queries, RPC evidence, and fail-closed veri
 backend/src/v2/                Campaigns, context, tickets, budgets, and measurements
 backend/src/mcp/               Four-tool AdCP seller adapter over MCP
 backend/migrations/            PostgreSQL V2 schema
+sdk/                           Fail-closed publisher client and response composer
 subgraph/                      Live ReceiptCreated indexing
 cre/placement-authorization/   Confidential placement-policy workflow and tests
 frontend/                      Advertiser, publisher, ledger, and receipt product
@@ -377,7 +378,7 @@ GET  /api/health
 POST /mcp                       Streamable HTTP MCP transport
 ~~~
 
-See [frontend/public/openapi.json](frontend/public/openapi.json) for schemas and [frontend/public/llms.txt](frontend/public/llms.txt) for agent guidance.
+See [frontend/public/openapi.json](frontend/public/openapi.json) for schemas, [frontend/public/llms.txt](frontend/public/llms.txt) for agent guidance, [docs/adcp-mcp-adapter.md](docs/adcp-mcp-adapter.md) for agent buying, and [sdk/README.md](sdk/README.md) for publisher integration.
 
 The MCP server exposes four narrow tools: `get_adcp_capabilities`, `get_products`, `create_media_buy`, and `get_media_buy_delivery`. Run it locally over stdio with `npm --prefix backend run mcp`, or connect over Streamable HTTP at `POST https://adreceipt-api.onrender.com/mcp`. A complete example and the conformance boundary are documented in [docs/adcp-mcp-adapter.md](docs/adcp-mcp-adapter.md).
 
@@ -406,6 +407,7 @@ The long-term invariant remains simple:
 - The web app, API, contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live; the deployed routes and known verified receipt passed a cold-browser check on September 10, 2026.
 - Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
 - In-product settlement remains operator-controlled through a separate bearer token; public visitors cannot spend from the Privy organization wallet.
+- The publisher SDK is implemented locally and fails closed when receipt evidence is pending, unavailable, invalid, or inconsistent.
 - AdCP seller interoperability is implemented through four MCP tools over stdio and Streamable HTTP; public catalogue registration, A2A, auctions, and the remaining AdCP media-buy operations are outside the current release.
 - The project demonstrates testnet infrastructure with team-controlled participants, not production adoption.
 

@@ -230,6 +230,22 @@ export function normalizeUrl(value: unknown): string {
   return parsed.toString();
 }
 
+export function normalizeLocale(value: unknown, field = "locale"): string {
+  const locale = text(value, field, 35);
+  try {
+    return Intl.getCanonicalLocales(locale)[0];
+  } catch {
+    throw new Error(`${field} must be a valid BCP 47 locale`);
+  }
+}
+
+function localeMatches(contextLocale: string, allowedLocale: string): boolean {
+  const context = normalizeLocale(contextLocale, "coarseLocale").toLowerCase();
+  const allowed = normalizeLocale(allowedLocale, "allowedLocales").toLowerCase();
+  if (context === allowed) return true;
+  return !allowed.includes("-") && context.split("-")[0] === allowed;
+}
+
 function hashList(values: string[]): string {
   return keccak256(abi.encode(["bytes32[]"], [values.map((value) => id(value))]));
 }
@@ -248,7 +264,9 @@ export function parseCampaignInput(value: unknown): CampaignInput {
   }
   if (input.objective !== "WEBSITE_VISIT") throw new Error("objective must be WEBSITE_VISIT");
   const allowedLocales = Array.isArray(input.allowedLocales)
-    ? [...new Set(input.allowedLocales.map((item) => text(item, "allowedLocales", 35)))].sort()
+    ? [
+        ...new Set(input.allowedLocales.map((item) => normalizeLocale(item, "allowedLocales"))),
+      ].sort()
     : [];
   if (allowedLocales.length === 0) throw new Error("allowedLocales must not be empty");
 
@@ -468,7 +486,7 @@ export function decideCampaign(args: {
     throw new Error("ageEligibility is invalid");
   }
   const ageEligibility = args.ageEligibility as AgeEligibility;
-  const coarseLocale = args.coarseLocale ? text(args.coarseLocale, "coarseLocale", 35) : "en";
+  const coarseLocale = normalizeLocale(args.coarseLocale ?? "en", "coarseLocale");
   const topics = inferTopics(query);
   const intent = inferIntent(query, topics);
   const sensitive = sensitiveClass(query);
@@ -515,11 +533,7 @@ export function decideCampaign(args: {
       rejected.push({ campaignId: campaign.campaignId, reasonCode: "OUTSIDE_CAMPAIGN_WINDOW" });
       continue;
     }
-    if (
-      !campaign.allowedLocales.some((locale) =>
-        coarseLocale.toLowerCase().startsWith(locale.toLowerCase()),
-      )
-    ) {
+    if (!campaign.allowedLocales.some((locale) => localeMatches(coarseLocale, locale))) {
       rejected.push({ campaignId: campaign.campaignId, reasonCode: "LOCALE_NOT_ALLOWED" });
       continue;
     }
