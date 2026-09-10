@@ -1,0 +1,33 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/adcp-mcp-adapter",
+    "feat/cre-authenticated-reports",
+    "feat/graph-receipts",
+    "feat/placement-ticket-v2",
+    "feature/long-poll-domain-status",
+    "main",
+    "origin",
+    "security/harden-build-config"
+  ],
+  "parent": {
+    "feat/adcp-mcp-adapter": "main",
+    "feat/cre-authenticated-reports": "main",
+    "feat/graph-receipts": "main",
+    "feat/placement-ticket-v2": "main",
+    "feature/long-poll-domain-status": "main",
+    "main": null,
+    "origin": "main",
+    "security/harden-build-config": "main"
+  },
+  "order": [
+    "main",
+    "feat/adcp-mcp-adapter",
+    "feat/cre-authenticated-reports",
+    "feat/graph-receipts",
+    "feat/placement-ticket-v2",
+    "feature/long-poll-domain-status",
+    "origin",
+    "security/harden-build-config"
+  ]
+}
