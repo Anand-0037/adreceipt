@@ -253,7 +253,8 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
       );
       childEnv.HOME = home;
     }
-    const creCli = process.env.CRE_CLI_PATH || "cre";
+    const configuredCreCli = process.env.CRE_CLI_PATH || "cre";
+    const creCli = configuredCreCli === "cre" ? configuredCreCli : resolve(configuredCreCli);
     if (creCli !== "cre") {
       childEnv.PATH = `${dirname(creCli)}${delimiter}${childEnv.PATH ?? ""}`;
     }
