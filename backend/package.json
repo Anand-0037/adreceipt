@@ -6,6 +6,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
+    "postinstall": "node scripts/install-cre-runtime.cjs",
     "dev": "ts-node src/server/index.ts",
     "mcp": "ts-node src/mcp/stdio.ts",
     "mcp:example": "ts-node examples/adcp-agent.ts",
