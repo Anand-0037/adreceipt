@@ -22,6 +22,29 @@ import { hashContextEnvelope } from "./campaign";
 const runFile = promisify(execFile);
 const abi = AbiCoder.defaultAbiCoder();
 
+export function creSimulationArguments(args: {
+  projectRoot: string;
+  configPath: string;
+  envPath: string;
+}): string[] {
+  return [
+    "--project-root",
+    args.projectRoot,
+    "workflow",
+    "simulate",
+    "placement-authorization",
+    "--target",
+    "staging-settings",
+    "--config",
+    args.configPath,
+    "--env",
+    args.envPath,
+    "--non-interactive",
+    "--trigger-index",
+    "0",
+  ];
+}
+
 export const SUBJECT_TYPES = {
   SubjectV1: [
     { name: "publisher", type: "address" },
@@ -258,26 +281,17 @@ async function simulateCre(config: Record<string, unknown>, rawPolicy: string) {
     if (creCli !== "cre") {
       childEnv.PATH = `${dirname(creCli)}${delimiter}${childEnv.PATH ?? ""}`;
     }
+    // CRE_CLI_PATH belongs to the host application, not the CRE CLI. Keep it
+    // out of Viper's environment lookup and pass the project root explicitly.
+    delete childEnv.CRE_CLI_PATH;
+    const creProjectRoot = resolve(repoRoot, "cre");
     const { stdout } = await runFile(
       creCli,
-      [
-        "workflow",
-        "simulate",
-        "placement-authorization",
-        "--target",
-        "staging-settings",
-        "--config",
-        configPath,
-        "--env",
-        envPath,
-        "--non-interactive",
-        "--trigger-index",
-        "0",
-      ],
+      creSimulationArguments({ projectRoot: creProjectRoot, configPath, envPath }),
       {
-        cwd: resolve(repoRoot, "cre"),
+        cwd: creProjectRoot,
         env: childEnv,
-        timeout: 90_000,
+        timeout: 180_000,
         maxBuffer: 10 * 1024 * 1024,
       },
     );

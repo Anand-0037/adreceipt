@@ -6,9 +6,19 @@ services:
     region: singapore
     repo: https://github.com/Anand-0037/adreceipt
     branch: main
-    rootDir: backend
-    buildCommand: npm ci
-    startCommand: npm start
+    buildCommand: >-
+      mkdir -p .render/bin /tmp/adreceipt-bun &&
+      curl -fsSL https://github.com/smartcontractkit/cre-cli/releases/download/v1.33.0/cre_linux_amd64.tar.gz |
+      tar -xz -C .render/bin &&
+      mv .render/bin/cre_v1.33.0_linux_amd64 .render/bin/cre &&
+      curl -fsSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64.zip -o /tmp/adreceipt-bun.zip &&
+      unzip -q /tmp/adreceipt-bun.zip -d /tmp/adreceipt-bun &&
+      cp /tmp/adreceipt-bun/bun-linux-x64/bun .render/bin/bun &&
+      chmod +x .render/bin/cre .render/bin/bun &&
+      npm --prefix backend ci &&
+      cd cre/placement-authorization &&
+      ../../.render/bin/bun install --no-save
+    startCommand: npm --prefix backend start
     healthCheckPath: /health
     autoDeployTrigger: off
     envVars:
@@ -29,6 +39,8 @@ services:
         sync: false
       - key: CRE_CONTEXT_BASE64
         sync: false
+      - key: CRE_CLI_PATH
+        value: runtime-bin/cre
       # Protects the in-product Privy settlement action. This is never exposed
       # through a NEXT_PUBLIC variable or stored in the browser.
       - key: OPERATOR_SETTLEMENT_TOKEN
