@@ -76,3 +76,20 @@ CREATE INDEX IF NOT EXISTS v2_measurements_placement_idx
 CREATE UNIQUE INDEX IF NOT EXISTS v2_measurements_placement_session_kind_idx
   ON v2_measurements(placement_id, session_id, kind)
   WHERE session_id IS NOT NULL;
+
+-- Consumed CRE reports, for replay protection.
+--
+-- The primary key is the DON execution id, so claiming one is a single atomic
+-- INSERT: two concurrent submissions of the same report cannot both succeed,
+-- which a check-then-write in application code could not guarantee.
+CREATE TABLE IF NOT EXISTS v2_cre_reports (
+  execution_id text PRIMARY KEY,
+  placement_id text NOT NULL REFERENCES v2_placements(placement_id),
+  report_id text NOT NULL,
+  workflow_id text NOT NULL,
+  don_id integer NOT NULL,
+  report_timestamp integer NOT NULL,
+  consumed_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS v2_cre_reports_placement_idx ON v2_cre_reports(placement_id);

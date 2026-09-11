@@ -428,6 +428,54 @@ export class V2Store {
     );
   }
 
+  /**
+   * Claim a DON execution id, once.
+   *
+   * Returns false if it was already consumed. `ON CONFLICT DO NOTHING` makes
+   * this a single atomic statement: two concurrent submissions of the same
+   * report cannot both be told they won, which a read-then-write in application
+   * code could not guarantee.
+   */
+  async claimCreReportExecution(args: {
+    executionId: string;
+    placementId: string;
+    reportId: string;
+    workflowId: string;
+    donId: number;
+    timestamp: number;
+  }): Promise<boolean> {
+    await this.ensureSchema();
+    const result = await this.db().query(
+      `INSERT INTO v2_cre_reports
+         (execution_id, placement_id, report_id, workflow_id, don_id, report_timestamp)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (execution_id) DO NOTHING`,
+      [
+        args.executionId,
+        args.placementId,
+        args.reportId,
+        args.workflowId,
+        args.donId,
+        args.timestamp,
+      ],
+    );
+    return (result.rowCount ?? 0) === 1;
+  }
+
+  /** Replace the stored authorization after a live report changes its level. */
+  async setPlacementAuthorization(
+    placementId: string,
+    authorization: PlacementRecord["authorization"],
+  ): Promise<void> {
+    await this.ensureSchema();
+    await this.db().query(
+      `UPDATE v2_placements
+          SET cre_authorization = $2::jsonb, updated_at = now()
+        WHERE placement_id = $1`,
+      [placementId, JSON.stringify(authorization)],
+    );
+  }
+
   async recordMeasurement(args: {
     placementId: string;
     eventId: string;
