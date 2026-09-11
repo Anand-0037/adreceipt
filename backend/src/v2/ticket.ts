@@ -16,6 +16,7 @@ import {
   verifyTypedData,
 } from "ethers";
 import { settlementDeployment } from "../config";
+import type { ProofLevel } from "./cre-report";
 import type { CampaignRecord, ContextDecision, PublicContext } from "./campaign";
 import { hashContextEnvelope } from "./campaign";
 
@@ -154,7 +155,14 @@ export interface PlacementQuoteV1 {
 }
 
 export interface AuthorizationResult {
-  proofLevel: "CRE_SIMULATED";
+  /**
+   * One canonical proof level, shared with the live report boundary.
+   *
+   * Widened from the `CRE_SIMULATED` literal so that provider failure has
+   * somewhere to go other than into a decision. Only `isAuthorizedProofLevel`
+   * levels may be settled against or shown.
+   */
+  proofLevel: ProofLevel;
   eligible: true;
   ticketCommitment: string;
   quoteId: string;

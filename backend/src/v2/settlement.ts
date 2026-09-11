@@ -1,6 +1,7 @@
 import { Contract, Interface, JsonRpcProvider, getAddress } from "ethers";
 import { config, settlementDeployment } from "../config";
 import { sendPrivyTransaction } from "../privy/client";
+import { isAuthorizedProofLevel } from "./cre-report";
 import type { V2Store } from "./store";
 
 const erc20 = new Interface([
@@ -79,6 +80,13 @@ async function executeSettlement(store: V2Store, placementId: string): Promise<S
   const placement = await store.getPlacement(placementId);
   if (!placement?.signedQuote || placement.status !== "SIGNED") {
     throw new Error("PLACEMENT_NOT_SIGNED");
+  }
+  // A placement whose authorization is unavailable or invalid must never reach
+  // a transaction. `CRE_UNAVAILABLE` means the provider could not be consulted
+  // and `CRE_INVALID` means a report arrived and failed - neither is a policy
+  // approval, and spending money on either would be settling on no decision.
+  if (!isAuthorizedProofLevel(placement.authorization.proofLevel)) {
+    throw new Error("PLACEMENT_NOT_AUTHORIZED");
   }
   const { subject, quote, signature } = placement.signedQuote;
   if (quote.validUntil <= Math.floor(Date.now() / 1_000)) throw new Error("QUOTE_EXPIRED");

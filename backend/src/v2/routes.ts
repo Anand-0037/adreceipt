@@ -16,6 +16,12 @@ import {
 import { suggestCampaign } from "./agent";
 import { authorizeOperator, operatorSettlementReady } from "./operator";
 import { settleSignedPlacement } from "./settlement";
+import {
+  consumeAuthorizationReport,
+  expectedBindingFor,
+  liveWorkflowIdentity,
+  PROOF_LEVELS,
+} from "./cre-report";
 
 export const v2Routes = Router();
 export const v2Store = new V2Store(config.databaseUrl);
@@ -136,6 +142,12 @@ function placementError(error: unknown): never {
       "The publisher must sign the exact placement quote before settlement.",
     );
   }
+  if (message === "PLACEMENT_NOT_AUTHORIZED") {
+    throw badRequest(
+      "placement-not-authorized",
+      "This placement has no usable confidential authorization. No settlement was attempted.",
+    );
+  }
   if (message === "QUOTE_ALREADY_USED") {
     throw badRequest("quote-already-used", "This placement quote has already been settled.");
   }
@@ -161,6 +173,22 @@ v2Routes.get("/v2/status", (_req, res) =>
     storage: v2Store.configured() ? "configured" : "unavailable",
     organicAnswer: config.groqApiKey ? "configured-unverified" : "unavailable",
     policyProofLevel: "CRE_SIMULATED",
+    // What it would take to say CRE_ENFORCED, and whether any of it is in
+    // place. `deployAccess` is an external prerequisite from Chainlink, so it
+    // is reported rather than inferred from our own configuration.
+    creAuthorization: {
+      current: "CRE_SIMULATED",
+      states: PROOF_LEVELS,
+      liveWorkflow: liveWorkflowIdentity()
+        ? {
+            configured: true,
+            workflowId: liveWorkflowIdentity()?.workflowId,
+            workflowName: liveWorkflowIdentity()?.workflowName,
+            donId: liveWorkflowIdentity()?.donId,
+          }
+        : { configured: false },
+      deployAccess: process.env.CRE_DEPLOY_ACCESS === "enabled" ? "enabled" : "not-enabled",
+    },
     settlement: "PlacementSettlementV1",
     placementBindings: placementBindingsReady() ? placementBindings : "unavailable",
     operatorSettlement: operatorSettlementReady(config.operatorSettlementToken)
@@ -284,6 +312,91 @@ v2Routes.get(
     } catch (error) {
       placementError(error);
     }
+  }),
+);
+
+/**
+ * Consume a live Chainlink CRE report for one placement.
+ *
+ * Deliberately unauthenticated: the DON signatures *are* the authentication,
+ * and nothing is written unless the report passes every check in
+ * consumeAuthorizationReport. A caller who can produce a valid report for our
+ * deployed workflow is delivering the decision we were waiting for; a caller
+ * who cannot changes nothing.
+ *
+ * The replay claim is passed as the `seen` predicate rather than checked
+ * separately, because the verifier runs it last - so the execution id is only
+ * claimed for a report that would otherwise have been accepted, and the claim
+ * itself is one atomic INSERT.
+ */
+v2Routes.post(
+  "/v2/placements/:placementId/authorization",
+  asyncRoute(async (req, res) => {
+    if (!BYTES32.test(req.params.placementId)) {
+      throw badRequest("invalid-placement", "placementId must be bytes32.");
+    }
+    let placement: Awaited<ReturnType<typeof v2Store.getPlacement>>;
+    try {
+      placement = await v2Store.getPlacement(req.params.placementId);
+    } catch (error) {
+      storageError(error);
+    }
+    if (!placement) throw notFound("placement-not-found", "Placement ticket not found.");
+
+    const outcome = await consumeAuthorizationReport({
+      envelope: {
+        rawReport: String(req.body?.rawReport ?? ""),
+        reportContext: String(req.body?.reportContext ?? ""),
+        signatures: Array.isArray(req.body?.signatures) ? req.body.signatures.map(String) : [],
+      },
+      identity: liveWorkflowIdentity(),
+      // Built from what we already hold, never from the request body - a report
+      // that gets to choose what it is compared against proves nothing.
+      expected: expectedBindingFor(placement),
+      now: Math.floor(Date.now() / 1_000),
+      seen: async (executionId) =>
+        !(await v2Store.claimCreReportExecution({
+          executionId,
+          placementId: placement.placementId,
+          reportId: "pending",
+          workflowId: liveWorkflowIdentity()?.workflowId ?? "",
+          donId: liveWorkflowIdentity()?.donId ?? 0,
+          timestamp: Math.floor(Date.now() / 1_000),
+        })),
+    });
+
+    if (outcome.proofLevel !== "CRE_ENFORCED") {
+      // A refused report is not a decision, so the stored authorization is left
+      // exactly as it was. Reporting the refusal is the whole response.
+      return res.status(outcome.proofLevel === "CRE_UNAVAILABLE" ? 503 : 409).json({
+        placementId: placement.placementId,
+        proofLevel: outcome.proofLevel,
+        reasonCode: outcome.reasonCode,
+        reason: outcome.reason,
+        settlementAllowed: false,
+      });
+    }
+
+    const authorization = {
+      ...placement.authorization,
+      proofLevel: "CRE_ENFORCED" as const,
+      live: {
+        executionId: outcome.report.executionId,
+        reportId: outcome.report.reportId,
+        workflowId: outcome.report.workflowId,
+        workflowName: outcome.report.workflowName,
+        donId: outcome.report.donId,
+        timestamp: outcome.report.timestamp,
+        signerCount: outcome.report.signers.length,
+      },
+    };
+    await v2Store.setPlacementAuthorization(placement.placementId, authorization);
+    return res.json({
+      placementId: placement.placementId,
+      proofLevel: "CRE_ENFORCED",
+      authorization,
+      settlementAllowed: true,
+    });
   }),
 );
 
