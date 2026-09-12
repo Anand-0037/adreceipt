@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Markdown } from "./Markdown";
 
 /**
  * Reveal text the way an assistant appears to write it.
@@ -67,10 +68,10 @@ export function TypedText({
   }, [text, animate]);
 
   return (
-    <p className="typed-text">
-      {shown}
+    <div className="typed-text">
+      <Markdown text={shown} />
       {!done && <span className="typed-caret" aria-hidden="true" />}
-    </p>
+    </div>
   );
 }
 
