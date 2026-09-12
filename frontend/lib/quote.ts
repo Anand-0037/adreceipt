@@ -235,7 +235,7 @@ export async function signQuote(subject: SubjectV1, quote: PlacementQuoteV1): Pr
 
   if (signerAddress.toLowerCase() !== subject.publisher.toLowerCase()) {
     throw new Error(
-      `This wallet is ${signerAddress}, but the quote names ${subject.publisher} as publisher. The signature would recover to the wrong address and settlement would revert.`,
+      `You are connected as ${signerAddress}, but this placement must be signed by the AI app's wallet, ${subject.publisher}. Switch your wallet to that account and try again. (Signing from any other wallet would be rejected on-chain.)`,
     );
   }
 
