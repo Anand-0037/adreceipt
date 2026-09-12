@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/ask", label: "Ask" },
+  { href: "/publisher", label: "Publisher" },
   { href: "/campaign", label: "Campaigns" },
   { href: "/ledger", label: "Receipts" },
 ];
@@ -14,7 +15,8 @@ const FOOTER = [
   {
     title: "Product",
     links: [
-      { href: "/ask", label: "Publisher experience" },
+      { href: "/ask", label: "Assistant" },
+      { href: "/publisher", label: "Publisher console" },
       { href: "/campaign", label: "Advertiser campaign" },
       { href: "/ledger", label: "Receipt ledger" },
     ],
@@ -23,7 +25,7 @@ const FOOTER = [
     title: "Proof",
     links: [
       { href: "/ledger", label: "Live Graph receipts" },
-      { href: "/ask", label: "Context and policy" },
+      { href: "/publisher", label: "Context and policy" },
       { href: "/campaign", label: "Signed campaign terms" },
     ],
   },

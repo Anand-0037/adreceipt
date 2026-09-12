@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { formatUnits, parseUnits } from "ethers";
 import { useEffect, useRef, useState } from "react";
+import { SponsoredCard } from "./SponsoredCard";
 import {
   placementApi,
   type ContextDecisionV2,
-  type PlacementMetricsV2,
   type PlacementRecordV2,
   type V2RuntimeStatus,
 } from "@/lib/api";
@@ -14,7 +14,6 @@ import { signQuote } from "@/lib/quote";
 import { describeWalletError } from "@/lib/wallet";
 
 const short = (value: string) => `${value.slice(0, 8)}…${value.slice(-6)}`;
-const MEASUREMENT_SESSION_KEY = "adreceipt:v2:measurement-session";
 
 type TraceState = "complete" | "current" | "pending";
 
@@ -66,14 +65,6 @@ function ProofTimeline({ placement }: { placement: PlacementRecordV2 | null }) {
   );
 }
 
-function measurementSessionId(): string {
-  const current = sessionStorage.getItem(MEASUREMENT_SESSION_KEY);
-  if (current && /^[0-9a-f-]{36}$/i.test(current)) return current;
-  const created = crypto.randomUUID();
-  sessionStorage.setItem(MEASUREMENT_SESSION_KEY, created);
-  return created;
-}
-
 export function PlacementLifecycleV2({
   decision,
   autoOpen = false,
@@ -90,15 +81,11 @@ export function PlacementLifecycleV2({
   const [runtime, setRuntime] = useState<V2RuntimeStatus | null>(null);
   const [price, setPrice] = useState("");
   const [placement, setPlacement] = useState<PlacementRecordV2 | null>(null);
-  const [metrics, setMetrics] = useState<PlacementMetricsV2 | null>(null);
   const [operatorToken, setOperatorToken] = useState("");
   const [settlementTx, setSettlementTx] = useState("");
   const [busy, setBusy] = useState(false);
   const [operationStatus, setOperationStatus] = useState("");
   const [error, setError] = useState("");
-  const card = useRef<HTMLElement | null>(null);
-  const impressionSent = useRef(false);
-  const impressionInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,9 +107,7 @@ export function PlacementLifecycleV2({
   useEffect(() => {
     let cancelled = false;
     setPlacement(null);
-    setMetrics(null);
     setError("");
-    impressionSent.current = false;
     const stored = localStorage.getItem(`adreceipt:v2:placement:${decision.decisionId}`);
     if (!stored) return () => undefined;
     void placementApi
@@ -253,63 +238,6 @@ export function PlacementLifecycleV2({
     }
   }
 
-  useEffect(() => {
-    if (placement?.status !== "PAID_VERIFIED" || !card.current || impressionSent.current) return;
-    const node = card.current;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-          timer ??= setTimeout(() => {
-            if (impressionSent.current || impressionInFlight.current) return;
-            impressionInFlight.current = true;
-            void placementApi
-              .measure(
-                placement.placementId,
-                "IMPRESSION",
-                crypto.randomUUID(),
-                measurementSessionId(),
-              )
-              .then((next) => {
-                impressionSent.current = true;
-                setMetrics(next);
-              })
-              .catch(() => undefined)
-              .finally(() => {
-                impressionInFlight.current = false;
-              });
-          }, 1_000);
-        } else if (timer) {
-          clearTimeout(timer);
-          timer = undefined;
-        }
-      },
-      { threshold: 0.5 },
-    );
-    observer.observe(node);
-    return () => {
-      if (timer) clearTimeout(timer);
-      observer.disconnect();
-    };
-  }, [placement]);
-
-  async function clickThrough() {
-    if (!placement) return;
-    setError("");
-    try {
-      const next = await placementApi.measure(
-        placement.placementId,
-        "CLICK",
-        crypto.randomUUID(),
-        measurementSessionId(),
-      );
-      setMetrics(next);
-      window.open(placement.landingPage, "_blank", "noopener,noreferrer");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Click could not be recorded.");
-    }
-  }
-
   if (!campaign) return null;
 
   // One sentence telling the person which button matters right now. The
@@ -334,7 +262,6 @@ export function PlacementLifecycleV2({
           {placement ? "Continue verifying the ad" : "See how the ad gets verified"}
         </button>
       )}
-
       <dialog
         ref={dialog}
         className="verification-window"
@@ -545,51 +472,18 @@ export function PlacementLifecycleV2({
           </p>
         )}
       </dialog>
-
       {verified && (
-        <article ref={card} className="sponsored-candidate sponsored-verified">
-          <div className="candidate-label">Sponsored · Verified ✓</div>
-          <h2>{campaign.creativeHeadline}</h2>
-          <p>{campaign.creativeBody}</p>
-          <div className="candidate-meta">
-            <span>{campaign.brandDisplayName}</span>
-            <span>Payment and context bound</span>
-            <Link href={`/receipts/${placement.receiptId}`}>View receipt</Link>
-          </div>
-          <div className="why-ad-summary">
-            <strong>Why this ad?</strong>
-            <span>
-              {decision.context.topics
-                .map((topic) => topic.toLowerCase().replaceAll("_", " "))
-                .join(" · ")}
-              {" · "}
-              {Math.round(Number(decision.winner?.relevance ?? 0) * 100)}% match · No
-              personalization · Payment verified
-            </span>
-          </div>
-          <details className="why-ad-details">
-            <summary>Show complete explanation</summary>
-            <p className="field-help">
-              Matched{" "}
-              {decision.context.topics
-                .map((topic) => topic.toLowerCase().replaceAll("_", " "))
-                .join(", ")}{" "}
-              at {Math.round(Number(decision.winner?.relevance ?? 0) * 100)}% relevance. Adult
-              eligibility was declared, the context was non-sensitive, personalization was off, CRE
-              simulation approved the exact ticket, and Graph plus RPC verified its payment.
-            </p>
-          </details>
-          <button type="button" onClick={() => void clickThrough()}>
-            Visit sponsor
-          </button>
-        </article>
-      )}
-      {metrics && (
-        <p className="field-help">
-          Verified activity: {metrics.impressions} impression · {metrics.clicks} click
-          {metrics.impressions >= 10 ? ` · CTR ${metrics.ctrPercent ?? "—"}%` : ""}
-        </p>
-      )}
+        <>
+          <p className="field-help">
+            Verified. This is what the user now sees in the conversation - shown here as a preview,
+            so views on this page are not counted.
+          </p>
+          <SponsoredCard placement={placement} decision={decision} measure={false} />
+          <Link href="/ask" className="text-link">
+            Open the conversation →
+          </Link>
+        </>
+      )}{" "}
       {/* Errors while the window is closed would otherwise be invisible. */}
       {error && !verified && dismissed && (
         <p className="form-error" role="alert">

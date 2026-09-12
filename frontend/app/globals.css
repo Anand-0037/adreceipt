@@ -1355,6 +1355,54 @@ legend {
   background: var(--paper);
 }
 
+/* Once verified, the slot stops looking like a placeholder and gives the
+   card room: full width, solid edge, no dashed "pending" treatment. */
+.chat-ad-verified {
+  max-width: 100%;
+  border-style: solid;
+  background: var(--surface);
+}
+
+.chat-ad-verified .sponsored-candidate {
+  margin: 4px 0 0;
+}
+
+/* ── Publisher console ──────────────────────────────────────────────── */
+.console-question {
+  display: grid;
+  gap: 8px;
+  padding: 20px 24px;
+  border: var(--edge);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.console-question blockquote {
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 3px solid var(--ink);
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.console-empty {
+  display: grid;
+  gap: 8px;
+  padding: 28px 24px;
+  border: 1.5px dashed var(--line);
+  background: var(--paper);
+}
+
+.console-empty h2 {
+  margin: 0;
+  font-family: var(--display);
+}
+
+.console-empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .chat-note {
   color: var(--muted);
   font-size: 12px;
@@ -1421,6 +1469,9 @@ legend {
    small window over the conversation, so the chat stays what it is and the
    plumbing has a place of its own. */
 .verification-window {
+  /* The global reset zeroes every margin, which also removes the browser's
+     default `margin: auto` on <dialog> - the thing that centres it. */
+  margin: auto;
   width: min(600px, calc(100vw - 32px));
   max-height: min(86vh, 900px);
   padding: 22px;

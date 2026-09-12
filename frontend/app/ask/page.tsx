@@ -1,28 +1,30 @@
-import { SubjectDecision } from "@/components/SubjectDecision";
-import { PublisherExperienceV2 } from "@/components/PublisherExperienceV2";
+import { AssistantChat } from "@/components/AssistantChat";
+
+export const metadata = {
+  title: "Ask · AdReceipt",
+  description:
+    "Ask an AI assistant. A sponsored suggestion appears only once its payment is verified.",
+};
 
 export default function AskPage() {
   return (
     <div className="page-stack">
-      <section className="intro">
-        <p className="eyebrow">Policy-bound agentic advertising</p>
-        <h1>Ask normally. See commercial influence clearly.</h1>
+      <section className="intro compact-intro">
+        <p className="eyebrow">AI assistant</p>
+        <h1>Ask anything.</h1>
         <p>
-          The organic response remains independent. A separate sponsored slot is eligible only in an
-          adult, non-sensitive, relevant context—and becomes verified only with onchain proof.
+          The answer is written first. If a relevant ad exists, it appears below only after the
+          advertiser has paid for it and the payment has been confirmed on-chain. Sensitive
+          questions never get an ad.
         </p>
       </section>
-      <PublisherExperienceV2 />
-      <details className="technical-tool">
-        <summary>Verify an existing recommendation commitment</summary>
-        <SubjectDecision />
-      </details>
+      <AssistantChat />
       <aside className="boundary">
-        <p className="eyebrow">Proof boundary</p>
+        <p className="eyebrow">What a badge means</p>
         <p>
-          A verified receipt proves a named payer transferred a specific amount for a signed
-          recommendation context. It does not prove the recommendation is good, independent, or
-          caused by the payment.
+          <strong>Sponsored · Verified</strong> means a named advertiser paid an exact amount for
+          this exact placement, and two independent sources agree. It does not mean the product is
+          good, or that the answer above was influenced.
         </p>
       </aside>
     </div>
