@@ -1,0 +1,43 @@
+# Keep the build context to what the API image actually needs. Without this
+# the frontend's node_modules and .next alone add hundreds of megabytes to
+# every build upload.
+
+# Never ship secrets or local state.
+.env
+.env.*
+!.env.example
+cre/.env
+cre/secrets*.local*
+
+# Dependencies are installed inside the image from lockfiles.
+node_modules
+**/node_modules
+
+# Other packages and their outputs.
+frontend
+sdk
+subgraph
+contracts
+test
+scripts
+artifacts
+cache
+typechain-types
+docs
+.github
+.next
+**/dist
+**/.next
+
+# CRE workflows the API does not run, and any locally compiled output.
+cre/domain-verification
+cre/placement-authorization/wasm
+
+# Tooling and editor noise.
+.git
+.gitattributes
+.gitignore
+*.md
+!backend/**/*.md
+.vscode
+.idea
