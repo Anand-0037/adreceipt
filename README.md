@@ -28,30 +28,31 @@ Routing can become a publisher integration layer for AdReceipt, but routing alon
 
 ## Live demo
 
-The current release is deployed at **[adreceipt-web.onrender.com](https://adreceipt-web.onrender.com)**.
+The current release is deployed at **[adreceipt-tzus.vercel.app](https://adreceipt-tzus.vercel.app)**.
 
 | Start here | What to try |
 | --- | --- |
-| [Advertiser](https://adreceipt-web.onrender.com/advertiser) | Turn a product brief into an editable campaign and sign the approved revision |
-| [Publisher](https://adreceipt-web.onrender.com/publisher) | Ask a question, inspect the contextual decision, and follow the placement proof |
-| [Receipt ledger](https://adreceipt-web.onrender.com/ledger) | Browse receipts indexed from the live Sepolia settlement contract |
-| [Verified V2 receipt](https://adreceipt-web.onrender.com/receipts/0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1) | Read the human summary and expand the Graph, RPC, signature, and transaction evidence |
+| [Advertiser](https://adreceipt-tzus.vercel.app/advertiser) | Turn a product brief into an editable campaign and sign the approved revision |
+| [Ask](https://adreceipt-tzus.vercel.app/ask) | Ask the assistant a question and watch the sponsored slot fill only once payment is verified |
+| [Publisher console](https://adreceipt-tzus.vercel.app/publisher) | Run the five verification steps for the matched placement in its own window |
+| [Receipt ledger](https://adreceipt-tzus.vercel.app/ledger) | Browse receipts indexed from the live Sepolia settlement contract |
+| [Verified V2 receipt](https://adreceipt-tzus.vercel.app/receipts/0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1) | Read the human summary and expand the Graph, RPC, signature, and transaction evidence |
 
-The public API is available at **[adreceipt-api.onrender.com](https://adreceipt-api.onrender.com)**. Its [health endpoint](https://adreceipt-api.onrender.com/health) reports the current Sepolia, Graph, settlement, Privy, and V2 runtime status. Free instances may need a short cold start after inactivity.
+The public API is available at **[adreceipt-api-production.up.railway.app](https://adreceipt-api-production.up.railway.app)**. Its [health endpoint](https://adreceipt-api-production.up.railway.app/health) reports the current Sepolia, Graph, settlement, Privy, and V2 runtime status. The frontend is served by Vercel and the API runs as a persistent container on Railway; neither sleeps.
 
 ## Product walkthrough
 
 The advertiser describes the outcome, reviews the agent-prepared campaign, and signs the exact revision before it can become active.
 
-[![AdReceipt advertiser campaign setup](docs/screenshots/advertiser-campaign.png)](https://adreceipt-web.onrender.com/advertiser)
+[![AdReceipt advertiser campaign setup](docs/screenshots/advertiser-campaign.png)](https://adreceipt-tzus.vercel.app/advertiser)
 
 The publisher keeps the organic answer separate, applies adult and sensitive-context safeguards, and withholds sponsored creative until its payment proof is verified.
 
-[![AdReceipt publisher query and safety controls](docs/screenshots/publisher-experience.png)](https://adreceipt-web.onrender.com/publisher)
+[![AdReceipt publisher query and safety controls](docs/screenshots/publisher-experience.png)](https://adreceipt-tzus.vercel.app/publisher)
 
 The public receipt starts with the human-readable result. This live V2 receipt shows the real 0.1 test-USDC payment and the agreement between The Graph and canonical Sepolia RPC evidence.
 
-[![AdReceipt verified Sepolia payment receipt](docs/screenshots/verified-receipt.png)](https://adreceipt-web.onrender.com/receipts/0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1)
+[![AdReceipt verified Sepolia payment receipt](docs/screenshots/verified-receipt.png)](https://adreceipt-tzus.vercel.app/receipts/0x67ebdc71e8954c534ee6d1bc12dc8728dec9f6a1f5afc301c272bec7be8aebf1)
 
 ## See the idea in one flow
 
@@ -282,13 +283,16 @@ Unknown age, mental-health or other sensitive context, irrelevant campaigns, pro
 
 ## Product screens
 
-| Route | Purpose |
-| --- | --- |
-| **/advertiser** | Turn a brief into an editable campaign, then review and sign the exact revision |
-| **/publisher** | Ask a normal question and see the separate sponsored placement lifecycle |
-| **/ledger** | Browse indexed settlement receipts |
-| **/receipts/:id** | Read the human receipt and expand the full cryptographic evidence |
-| **/campaign** and **/ask** | Direct aliases for the advertiser and publisher journeys |
+| Route | Who it is for | Purpose |
+| --- | --- | --- |
+| **/advertiser** | Advertiser | Turn a brief into an editable campaign, then review and sign the exact revision |
+| **/ask** | User | Ask the assistant. The answer is written first and typed out; a sponsored card appears beneath it only once its payment is verified, and updates live without a reload |
+| **/publisher** | Publisher | The console for whatever was just asked: what the advertiser was told, why a campaign matched or did not, and the five verification steps in their own window |
+| **/ledger** | Auditor | Browse indexed settlement receipts |
+| **/receipts/:id** | Anyone | Read the human receipt and expand the full cryptographic evidence |
+| **/campaign** | Advertiser | Alias for the advertiser journey |
+
+The user's page and the publisher's page are deliberately separate. A person asking a question sees a conversation and, at most, a verified ad; nothing about signatures, payments, or chains appears there. The publisher console picks up the current question on its own — the two can be open side by side in different tabs, and the card lands in the conversation the moment the console finishes.
 
 Receipt discovery is public and read-only. Settlement is available inside the publisher proof trace only after the publisher signs the exact quote and an authorized operator supplies a separate settlement token. The token is not stored by the browser. The backend rechecks the quote, replay state, payer balance, allowance, chain, and contract before asking Privy to send anything; Privy's default-deny policy independently restricts the asset, recipient, function, and maximum amount.
 
@@ -343,10 +347,19 @@ npm --prefix frontend run dev
 Open:
 
 - <http://localhost:3000/advertiser>
+- <http://localhost:3000/ask>
 - <http://localhost:3000/publisher>
 - <http://localhost:3000/ledger>
 
 Local tests and simulations do not replace the public transaction proof above. The CRE simulator is explicitly not a deployed TEE.
+
+### Deploy
+
+The frontend runs on Vercel and the API runs as a container on Railway, built from the repository [Dockerfile](Dockerfile). The API cannot run on a serverless platform: it shells out to the Chainlink `cre` binary for every placement authorization, holds MCP sessions in memory, and waits up to two minutes on a settlement. The Dockerfile reproduces the Render build step for step and was tested locally before first use, including a full CRE simulation inside the container.
+
+The one wiring rule that matters: set `NEXT_PUBLIC_API_BASE` on the frontend to the API's public URL so the browser calls it directly. The frontend's `/api/*` proxy exists for local development only; on a serverless host it would time out during authorization and settlement.
+
+Step-by-step instructions, every environment variable, and the database choice are in [docs/deploy-vercel-railway.md](docs/deploy-vercel-railway.md). [render.yaml](render.yaml) is kept as a record of the previous hosting.
 
 ## Repository map
 
@@ -361,16 +374,17 @@ backend/migrations/            PostgreSQL V2 schema
 sdk/                           Fail-closed publisher client and response composer
 subgraph/                      Live ReceiptCreated indexing
 cre/placement-authorization/   Confidential placement-policy workflow and tests
-frontend/                      Advertiser, publisher, ledger, and receipt product
+frontend/                      Advertiser, assistant, publisher console, ledger, and receipt pages
 deployments/                   Public testnet deployment records
 docs/evidence/                 Provider-specific evidence boundaries
+Dockerfile, railway.json       API container for Railway, built from the repository root
 ~~~
 
 The repository retains DNS, ENS, spend-tier, and refundable-escrow contracts from an earlier prototype. Optional domain control can support advertiser onboarding, but none of those systems gates or alters the accepted settlement receipt path.
 
 ## API and agent discovery
 
-The main V2 lifecycle is available through typed HTTP endpoints. The examples below use the web application's same-origin `/api` proxy. When calling `https://adreceipt-api.onrender.com` directly, omit the `/api` prefix; for example, receipt verification is `GET https://adreceipt-api.onrender.com/receipts/:receiptId`.
+The main V2 lifecycle is available through typed HTTP endpoints. The examples below use the `/api` prefix of the local development proxy. Against the deployed API at `https://adreceipt-api-production.up.railway.app`, omit the prefix; for example, receipt verification is `GET https://adreceipt-api-production.up.railway.app/receipts/:receiptId`.
 
 ~~~http
 POST /api/v2/campaigns/suggest
@@ -394,7 +408,7 @@ POST /mcp                       Streamable HTTP MCP transport
 
 See [frontend/public/openapi.json](frontend/public/openapi.json) for schemas, [frontend/public/llms.txt](frontend/public/llms.txt) for agent guidance, [docs/adcp-mcp-adapter.md](docs/adcp-mcp-adapter.md) for agent buying, and [sdk/README.md](sdk/README.md) for publisher integration.
 
-The MCP server exposes four narrow tools: `get_adcp_capabilities`, `get_products`, `create_media_buy`, and `get_media_buy_delivery`. Run it locally over stdio with `npm --prefix backend run mcp`, or connect over Streamable HTTP at `POST https://adreceipt-api.onrender.com/mcp`. A complete example and the conformance boundary are documented in [docs/adcp-mcp-adapter.md](docs/adcp-mcp-adapter.md).
+The MCP server exposes four narrow tools: `get_adcp_capabilities`, `get_products`, `create_media_buy`, and `get_media_buy_delivery`. Run it locally over stdio with `npm --prefix backend run mcp`, or connect over Streamable HTTP at `POST https://adreceipt-api-production.up.railway.app/mcp`. A complete example and the conformance boundary are documented in [docs/adcp-mcp-adapter.md](docs/adcp-mcp-adapter.md).
 
 The adapter does not claim automatic registration in ChatGPT, a public MCP directory, or an AdCP catalogue, and it does not implement A2A. Campaign activation still requires the advertiser's EIP-712 signature, and delivery spend is reported only after The Graph and Sepolia RPC agree.
 
@@ -406,8 +420,8 @@ The framework-independent [`@adreceipt/sdk`](sdk/) puts AdReceipt in a publisher
 import { AdReceiptClient, createPublisherRouter } from "@adreceipt/sdk";
 
 const adreceipt = new AdReceiptClient({
-  apiBaseUrl: "https://adreceipt-api.onrender.com",
-  receiptBaseUrl: "https://adreceipt-web.onrender.com",
+  apiBaseUrl: "https://adreceipt-api-production.up.railway.app",
+  receiptBaseUrl: "https://adreceipt-tzus.vercel.app",
 });
 
 const router = createPublisherRouter({
@@ -446,8 +460,9 @@ The long-term invariant remains simple:
 
 ## Current boundaries
 
-- The web app, API, contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live; the deployed routes and known verified receipt passed a cold-browser check on September 10, 2026.
-- Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced.
+- The web app (Vercel), API (Railway), contract, test-USDC settlements, Subgraph, and Graph-plus-RPC verification are publicly live and do not sleep between visits.
+- Chainlink placement authorization is **CRE_SIMULATED**, not deployed or onchain-enforced. Deployment access for the organization is not yet enabled by Chainlink; the authenticated report-consumption boundary that would make a live decision `CRE_ENFORCED` is implemented and tested, and is described in [docs/evidence/chainlink.md](docs/evidence/chainlink.md).
+- Verification in the demo is deliberately manual so the trust chain can be watched. The answer is never blocked by it. In production every step is automatic, the policy check is precomputable because the context vocabulary is closed, and settlement is batched; the ad would appear within seconds and its badge would upgrade to Verified when the receipt lands.
 - In-product settlement remains operator-controlled through a separate bearer token; public visitors cannot spend from the Privy organization wallet.
 - The publisher SDK is available on public `main`, is independently package-tested, and fails closed when receipt evidence is pending, unavailable, invalid, or inconsistent. It is source-distributed and is not yet published to the npm registry.
 - AdCP seller interoperability is implemented through four MCP tools over stdio and Streamable HTTP; public catalogue registration, A2A, auctions, and the remaining AdCP media-buy operations are outside the current release.

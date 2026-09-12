@@ -8,8 +8,8 @@ answer separate and returns sponsored creative only after the live AdReceipt API
 import { AdReceiptClient } from "@adreceipt/sdk";
 
 const adreceipt = new AdReceiptClient({
-  apiBaseUrl: "https://adreceipt-api.onrender.com",
-  receiptBaseUrl: "https://adreceipt-web.onrender.com",
+  apiBaseUrl: "https://adreceipt-api-production.up.railway.app",
+  receiptBaseUrl: "https://adreceipt-tzus.vercel.app",
   requestTimeoutMs: 10_000,
 });
 
