@@ -25,7 +25,6 @@ In scope:
 Out of scope:
 
 - Third-party RPC, indexer, or wallet providers
-- Issues that only exist on a discarded local worktree
 
 ## Build-config injection
 
