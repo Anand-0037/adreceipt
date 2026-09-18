@@ -32,6 +32,7 @@ const skipDir = new Set([
   "coverage",
   "dist",
   ".next",
+  "wasm",
 ]);
 
 /** Patterns that do not belong in a CSS/bundler config. */
@@ -46,6 +47,11 @@ const forbidden = [
 
 const maxPostcssBytes = 2048;
 
+function relUnderGithubWorkflows(full) {
+  const rel = relative(root, full).replaceAll("\\", "/");
+  return rel.startsWith(".github/workflows/");
+}
+
 function walk(dir, acc = []) {
   for (const name of readdirSync(dir)) {
     if (skipDir.has(name)) continue;
@@ -53,6 +59,12 @@ function walk(dir, acc = []) {
     const st = statSync(full);
     if (st.isDirectory()) walk(full, acc);
     else if (configNames.has(name)) acc.push(full);
+    else if (
+      relUnderGithubWorkflows(full) &&
+      (name.endsWith(".yml") || name.endsWith(".yaml"))
+    ) {
+      acc.push(full);
+    }
   }
   return acc;
 }
