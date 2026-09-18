@@ -36,6 +36,7 @@ to the root contract suite when your change touches them.
 ## Repository hygiene
 
 - Never commit `.env` files, credentials, private keys, deploy keys, or raw account data.
+- Do not put executable code in bundler configs (`postcss.config.*`, `next.config.*`). Those files are scanned in CI.
 - Do not add generated build output.
 - Do not introduce nested `package-lock.json` files. The existing root lockfile should change only
   when the root dependency tree changes.

@@ -1,0 +1,17 @@
+# Build, deploy, and workflow files need an owner review.
+# GitHub only enforces this when the branch requires code-owner review.
+
+* @Anand-0037
+
+.github/ @Anand-0037
+frontend/postcss.config.mjs @Anand-0037
+frontend/next.config.ts @Anand-0037
+package.json @Anand-0037
+package-lock.json @Anand-0037
+frontend/package.json @Anand-0037
+frontend/package-lock.json @Anand-0037
+backend/package.json @Anand-0037
+backend/package-lock.json @Anand-0037
+Dockerfile @Anand-0037
+railway.json @Anand-0037
+render.yaml @Anand-0037

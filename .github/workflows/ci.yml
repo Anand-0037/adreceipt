@@ -9,6 +9,8 @@ jobs:
       SEPOLIA_RPC_URL: http://127.0.0.1:8545
     steps:
       - uses: actions/checkout@v5
+      - name: Reject injected build-entry configs
+        run: node scripts/check-build-config.mjs
       - uses: actions/setup-node@v5
         with:
           node-version: 22
