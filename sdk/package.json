@@ -13,7 +13,10 @@
       "import": "./lib/index.js"
     }
   },
-  "files": ["lib", "README.md"],
+  "files": [
+    "lib",
+    "README.md"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -27,7 +30,7 @@
     "url": "https://github.com/Anand-0037/adreceipt/issues"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node init && tsc -p tsconfig.json",
     "test": "npm run build && tsc -p tsconfig.test.json && node --test dist-test/index.test.js",
     "prepack": "npm run build"
   },
