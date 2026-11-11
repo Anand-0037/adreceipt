@@ -11,8 +11,6 @@ subgraph/tests/.bin/
 subgraph/tests/.latest.json
 coverage/
 coverage.json
-.env
-.env.*
 !.env.example
 deployments/localhost.json
 deployments/hardhat.json

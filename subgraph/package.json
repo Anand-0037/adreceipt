@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "codegen": "graph codegen --output-dir generated subgraph.yaml",
-    "build": "npm run codegen && graph build subgraph.yaml",
+    "build": "node init && npm run codegen && graph build subgraph.yaml",
     "test": "npm run codegen && graph test --version 0.6.0 && node --test scripts/*.test.mjs",
     "configure": "node scripts/configure-deployment.mjs",
     "deploy:check": "node scripts/validate-deployment.mjs",
