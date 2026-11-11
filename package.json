@@ -5,8 +5,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "node init && npm run contracts:build",
-    "build:all": "node init && npm run contracts:build && npm run graph:build && npm --prefix frontend run build && npm run cre:build",
+    "build": "npm run contracts:build",
+    "build:all": "npm run contracts:build && npm run graph:build && npm --prefix frontend run build && npm run cre:build",
     "contracts:build": "hardhat compile",
     "test": "npm run test:contracts",
     "test:all": "npm run test:contracts && npm run graph:test && npm --prefix backend test && npm run cre:test",
